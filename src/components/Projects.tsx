@@ -56,6 +56,7 @@ interface Task {
   description?: string
   tags: string[]
   files: TaskFile[]
+  mentionTag?: string // Unique @tag for mentioning in chat
 }
 
 interface ChatMessage {
@@ -117,6 +118,7 @@ export function Projects({ user }: ProjectsProps) {
       progress: 75,
       description: 'Create engaging Instagram stories for the bakery\'s new artisan bread line',
       tags: ['stories', 'food', 'artisan'],
+      mentionTag: '@korenbloem-stories',
       files: [
         {
           id: 'f1',
@@ -150,6 +152,7 @@ export function Projects({ user }: ProjectsProps) {
       progress: 90,
       description: 'Dinner promotion campaign targeting local food enthusiasts',
       tags: ['ads', 'restaurant', 'promotion'],
+      mentionTag: '@bellavista-ads',
       files: [
         {
           id: 'f3',
@@ -174,6 +177,7 @@ export function Projects({ user }: ProjectsProps) {
       progress: 25,
       description: 'Comprehensive social media strategy for Q1 2024',
       tags: ['strategy', 'fitness', 'planning'],
+      mentionTag: '@fitness-strategy',
       files: []
     },
     {
@@ -188,6 +192,7 @@ export function Projects({ user }: ProjectsProps) {
       progress: 100,
       description: 'Launch campaign for new SaaS product',
       tags: ['launch', 'tech', 'saas'],
+      mentionTag: '@techstart-launch',
       files: [
         {
           id: 'f4',
@@ -212,6 +217,7 @@ export function Projects({ user }: ProjectsProps) {
       progress: 100,
       description: 'Valentine\'s Day fashion promotion',
       tags: ['holiday', 'fashion', 'promotion'],
+      mentionTag: '@fashion-valentine',
       files: []
     }
   ])
@@ -223,12 +229,12 @@ export function Projects({ user }: ProjectsProps) {
     { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true }
   ])
 
-  const [chatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
+  const [chatMessages, setChatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
     {
       id: 'chat-1',
       channel: 'general',
       senderId: '2',
-      content: 'Heeft iemand al feedback gehad op de Korenbloem campagne?',
+      content: 'Heeft iemand al feedback gehad op @korenbloem-stories?',
       timestamp: new Date().toISOString(),
       type: 'text'
     },
@@ -236,7 +242,7 @@ export function Projects({ user }: ProjectsProps) {
       id: 'chat-2',
       channel: 'projects',
       senderId: '1',
-      content: 'Bella Vista project is nu in review fase',
+      content: '@bellavista-ads is nu in review fase',
       timestamp: new Date().toISOString(),
       type: 'text'
     }
@@ -384,13 +390,13 @@ export function Projects({ user }: ProjectsProps) {
 
   // Fix the function signature to match what FileDropZone expects
   const handleFilesUploaded = (files: File[], taskId: string) => {
-    if (!files || !Array.isArray(files)) {
+    if (!files || !Array.isArray(files) || files.length === 0) {
       toast.error('No files to upload')
       return
     }
 
     const newFiles: TaskFile[] = files.map(file => ({
-      id: `f${Date.now()}-${Math.random()}`,
+      id: `f${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: file.name,
       size: file.size,
       type: file.type,
@@ -399,12 +405,15 @@ export function Projects({ user }: ProjectsProps) {
       url: URL.createObjectURL(file) // In real app, this would be the server URL
     }))
 
-    const updatedTasks = (tasks || []).map(task => 
-      task.id === taskId 
-        ? { ...task, files: [...(task.files || []), ...newFiles] }
-        : task
-    )
-    setTasks(updatedTasks)
+    setTasks((prevTasks) => {
+      const updatedTasks = (prevTasks || []).map(task => 
+        task.id === taskId 
+          ? { ...task, files: [...(task.files || []), ...newFiles] }
+          : task
+      )
+      return updatedTasks
+    })
+    
     setShowFileUpload(null)
     setFileDropTask(null)
     toast.success(`${files.length} file(s) uploaded successfully`)
@@ -491,7 +500,17 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleSendChatMessage = () => {
     if (!chatMessage.trim()) return
-    // In a real app, this would send the message to the server
+    
+    const newMessage: ChatMessage = {
+      id: `chat-${Date.now()}`,
+      channel: activeChannel,
+      senderId: user.id,
+      content: chatMessage.trim(),
+      timestamp: new Date().toISOString(),
+      type: 'text'
+    }
+    
+    setChatMessages(prev => [...(prev || []), newMessage])
     setChatMessage('')
   }
 
@@ -505,7 +524,7 @@ export function Projects({ user }: ProjectsProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-3rem)] space-y-6 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Board View</h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -523,15 +542,15 @@ export function Projects({ user }: ProjectsProps) {
         </div>
       </div>
 
-      {/* Board Section - Takes 70% of screen on desktop, responsive on mobile */}
-      <div className="flex-1 board-section" style={{ minHeight: '60vh' }}>
+      {/* Board Section - Takes remaining space minus chat */}
+      <div className="flex-1 board-section overflow-hidden">
         <Card className="glass-card h-full">
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-4 flex-shrink-0">
             <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] p-2 md:p-6">
-            <ScrollArea className="w-full h-full">
-              <div className="flex gap-3 md:gap-6 pb-4 min-w-max">
+          <CardContent className="flex-1 p-2 md:p-6 overflow-hidden">
+            <div className="w-full h-full overflow-x-auto">
+              <div className="flex gap-3 md:gap-6 pb-4 h-full" style={{ minWidth: 'max-content' }}>
                 {columns.map((column) => {
                   const columnTasks = getTasksByStatus(column.id)
                   
@@ -605,6 +624,15 @@ export function Projects({ user }: ProjectsProps) {
                                 <p className="text-xs text-muted-foreground mb-3">
                                   {task.client}
                                 </p>
+                                
+                                {/* Task mention tag */}
+                                {task.mentionTag && (
+                                  <div className="mb-2">
+                                    <Badge variant="outline" className="text-xs px-2 py-0 bg-primary/10 text-primary border-primary/30">
+                                      {task.mentionTag}
+                                    </Badge>
+                                  </div>
+                                )}
                                 
                                 {task.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-3">
@@ -698,14 +726,14 @@ export function Projects({ user }: ProjectsProps) {
                   )
                 })}
               </div>
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Team Chat Section - Takes 30% of screen on desktop, responsive on mobile (Admin Only) */}
+      {/* Team Chat Section - Takes remaining space, responsive on mobile (Admin Only) */}
       {user.role === 'admin' && (
-        <div className="chat-section" style={{ minHeight: '30vh' }}>
+        <div className="chat-section flex-shrink-0" style={{ height: '35vh', minHeight: '300px' }}>
           <Card className="glass-card h-full">
             <CardHeader className="flex flex-row items-center justify-between py-3">
               <CardTitle className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
@@ -770,6 +798,35 @@ export function Projects({ user }: ProjectsProps) {
                     .filter(msg => msg.channel === activeChannel)
                     .map((message) => {
                       const sender = users.find(u => u.id === message.senderId)
+                      
+                      // Parse task mentions in message content
+                      const parseTaskMentions = (content: string) => {
+                        const mentionRegex = /(@[\w-]+)/g
+                        const parts = content.split(mentionRegex)
+                        
+                        return parts.map((part, index) => {
+                          if (part.match(mentionRegex)) {
+                            // Find matching task
+                            const mentionedTask = (tasks || []).find(task => task.mentionTag === part)
+                            if (mentionedTask) {
+                              return (
+                                <span 
+                                  key={index} 
+                                  className="bg-primary/20 text-primary px-1 py-0.5 rounded text-xs font-medium cursor-pointer hover:bg-primary/30 transition-colors"
+                                  onClick={() => {
+                                    setSelectedTask(mentionedTask)
+                                    setShowTaskModal(true)
+                                  }}
+                                >
+                                  {part}
+                                </span>
+                              )
+                            }
+                          }
+                          return part
+                        })
+                      }
+                      
                       return (
                         <div key={message.id} className="flex items-start gap-2 md:gap-3">
                           <Avatar className="w-6 h-6 md:w-8 md:h-8">
@@ -785,7 +842,9 @@ export function Projects({ user }: ProjectsProps) {
                                 {formatChatTime(message.timestamp)}
                               </span>
                             </div>
-                            <p className="text-xs md:text-sm text-foreground">{message.content}</p>
+                            <p className="text-xs md:text-sm text-foreground">
+                              {parseTaskMentions(message.content)}
+                            </p>
                           </div>
                         </div>
                       )
@@ -858,6 +917,21 @@ export function Projects({ user }: ProjectsProps) {
                 <label className="text-sm font-medium text-muted-foreground">Description</label>
                 <p className="mt-1 text-sm">{selectedTask.description}</p>
               </div>
+
+              {/* Mention Tag */}
+              {selectedTask.mentionTag && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Mention Tag</label>
+                  <div className="mt-1">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                      {selectedTask.mentionTag}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Use this tag in team chat to reference this task
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Progress</label>
@@ -1035,23 +1109,71 @@ export function Projects({ user }: ProjectsProps) {
               {/* File Preview Content */}
               <div className="flex items-center justify-center min-h-[300px] bg-muted rounded-lg">
                 {showFilePreview.type.startsWith('image/') ? (
-                  <img 
-                    src={showFilePreview.url} 
-                    alt={showFilePreview.name}
-                    className="max-w-full max-h-[500px] object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none'
-                    }}
-                  />
+                  <div className="w-full h-full max-h-[500px] flex items-center justify-center">
+                    <img 
+                      src={showFilePreview.url} 
+                      alt={showFilePreview.name}
+                      className="max-w-full max-h-full object-contain rounded"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        const fallback = target.nextElementSibling as HTMLElement
+                        if (fallback) fallback.style.display = 'block'
+                      }}
+                    />
+                    <div className="hidden text-center p-8">
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Image preview not available
+                      </p>
+                    </div>
+                  </div>
+                ) : showFilePreview.type === 'application/pdf' ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-8">
+                    <FileText className="w-12 h-12 mb-4 text-red-500" />
+                    <p className="text-sm font-medium text-foreground mb-2">PDF Document</p>
+                    <p className="text-xs text-muted-foreground mb-4 text-center">
+                      PDF preview requires download to view
+                    </p>
+                    <Button
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = showFilePreview.url
+                        link.download = showFilePreview.name
+                        link.click()
+                      }}
+                    >
+                      <Download className="w-3 h-3" />
+                      Download PDF
+                    </Button>
+                  </div>
                 ) : (
                   <div className="text-center p-8">
-                    {getFileIcon(showFilePreview.type)}
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <div className="flex justify-center mb-4">
+                      {getFileIcon(showFilePreview.type)}
+                    </div>
+                    <p className="text-sm font-medium text-foreground mb-2">
+                      {showFilePreview.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-4">
                       Preview not available for this file type
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Click download to view the file
-                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = showFilePreview.url
+                        link.download = showFilePreview.name
+                        link.click()
+                      }}
+                    >
+                      <Download className="w-3 h-3" />
+                      Download File
+                    </Button>
                   </div>
                 )}
               </div>

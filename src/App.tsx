@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
+import { Toaster } from 'sonner'
 import { Sidebar } from './components/Sidebar'
 import { Dashboard } from './components/Dashboard'
 import { Messages } from './components/Messages'
@@ -68,6 +69,7 @@ function App() {
           {renderActiveView()}
         </main>
       </div>
+      <Toaster position="top-right" />
     </div>
   )
 }

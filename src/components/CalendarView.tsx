@@ -44,8 +44,17 @@ export function CalendarView({ user }: CalendarViewProps) {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showEventModal, setShowEventModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    description: '',
+    type: 'meeting' as CalendarEvent['type'],
+    date: '',
+    time: '',
+    client: '',
+    location: ''
+  })
 
-  const [events] = useKV<CalendarEvent[]>('calendar-events', [
+  const [events, setEvents] = useKV<CalendarEvent[]>('calendar-events', [
     {
       id: '1',
       title: 'Client Meeting - De Korenbloem',
@@ -173,6 +182,41 @@ export function CalendarView({ user }: CalendarViewProps) {
 
   const days = getDaysInMonth(currentDate)
   const today = new Date()
+
+  const handleCreateEvent = () => {
+    if (!newEvent.title.trim() || !newEvent.date || !newEvent.time) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    const eventDate = new Date(`${newEvent.date}T${newEvent.time}`)
+    const endDate = new Date(eventDate.getTime() + (60 * 60 * 1000)) // Default 1 hour duration
+
+    const eventToAdd: CalendarEvent = {
+      id: `event-${Date.now()}`,
+      title: newEvent.title,
+      description: newEvent.description || undefined,
+      start: eventDate.toISOString(),
+      end: endDate.toISOString(),
+      type: newEvent.type,
+      client: newEvent.client || undefined,
+      location: newEvent.location || undefined,
+      attendees: [user.id]
+    }
+
+    setEvents(prev => [...(prev || []), eventToAdd])
+    setShowCreateModal(false)
+    setNewEvent({
+      title: '',
+      description: '',
+      type: 'meeting',
+      date: '',
+      time: '',
+      client: '',
+      location: ''
+    })
+    alert('Event created successfully!')
+  }
 
   return (
     <div className="space-y-6">
@@ -491,12 +535,20 @@ export function CalendarView({ user }: CalendarViewProps) {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-muted-foreground">Title</label>
-              <Input placeholder="Event title" className="mt-1" />
+              <Input 
+                placeholder="Event title" 
+                className="mt-1" 
+                value={newEvent.title}
+                onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
+              />
             </div>
             
             <div>
               <label className="text-sm font-medium text-muted-foreground">Type</label>
-              <Select>
+              <Select 
+                value={newEvent.type} 
+                onValueChange={(value: CalendarEvent['type']) => setNewEvent(prev => ({ ...prev, type: value }))}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select event type" />
                 </SelectTrigger>
@@ -513,24 +565,59 @@ export function CalendarView({ user }: CalendarViewProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Start Date</label>
-                <Input type="date" className="mt-1" />
+                <Input 
+                  type="date" 
+                  className="mt-1" 
+                  value={newEvent.date}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Start Time</label>
-                <Input type="time" className="mt-1" />
+                <Input 
+                  type="time" 
+                  className="mt-1" 
+                  value={newEvent.time}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, time: e.target.value }))}
+                />
               </div>
             </div>
             
             <div>
+              <label className="text-sm font-medium text-muted-foreground">Client (Optional)</label>
+              <Input 
+                placeholder="Client name" 
+                className="mt-1" 
+                value={newEvent.client}
+                onChange={(e) => setNewEvent(prev => ({ ...prev, client: e.target.value }))}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Location (Optional)</label>
+              <Input 
+                placeholder="Meeting location" 
+                className="mt-1" 
+                value={newEvent.location}
+                onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
+              />
+            </div>
+            
+            <div>
               <label className="text-sm font-medium text-muted-foreground">Description</label>
-              <Textarea placeholder="Event description" className="mt-1" />
+              <Textarea 
+                placeholder="Event description" 
+                className="mt-1" 
+                value={newEvent.description}
+                onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
+              />
             </div>
             
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                 Cancel
               </Button>
-              <Button>Create Event</Button>
+              <Button onClick={handleCreateEvent}>Create Event</Button>
             </div>
           </div>
         </DialogContent>

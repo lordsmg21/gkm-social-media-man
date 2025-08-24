@@ -168,4 +168,37 @@
       min-height: 40vh;
     }
   }
+
+  /* Custom scrollbar styles */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  /* Task mention styling */
+  .task-mention {
+    background: rgba(var(--primary), 0.1);
+    color: var(--primary);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .task-mention:hover {
+    background: rgba(var(--primary), 0.2);
+  }
 }

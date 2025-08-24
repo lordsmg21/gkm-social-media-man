@@ -239,19 +239,39 @@ export function SettingsView({ user }: SettingsViewProps) {
                       {settings.personalInfo.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
-                  <Button size="sm" className="absolute -bottom-2 -right-2 w-8 h-8 p-0">
-                    <Camera className="w-4 h-4" />
-                  </Button>
                 </div>
                 <div className="space-y-2">
                   <h3 className="font-medium text-foreground">{settings.personalInfo.name}</h3>
                   <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                     {user.role === 'admin' ? 'GKM Team' : 'Client'}
                   </Badge>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Camera className="w-4 h-4" />
-                    Change Photo
-                  </Button>
+                  <div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2"
+                      onClick={() => {
+                        const input = document.createElement('input')
+                        input.type = 'file'
+                        input.accept = 'image/*'
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0]
+                          if (file) {
+                            const reader = new FileReader()
+                            reader.onload = (e) => {
+                              const result = e.target?.result as string
+                              updateSettings('personalInfo', 'avatar', result)
+                            }
+                            reader.readAsDataURL(file)
+                          }
+                        }
+                        input.click()
+                      }}
+                    >
+                      <Camera className="w-4 h-4" />
+                      Change Photo
+                    </Button>
+                  </div>
                 </div>
               </div>
 
