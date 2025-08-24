@@ -38,7 +38,7 @@ interface CalendarViewProps {
   user: User
 }
 
-function CalendarView({ user }: CalendarViewProps) {
+export function CalendarView({ user }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month')
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
@@ -534,5 +534,3 @@ function CalendarView({ user }: CalendarViewProps) {
     </div>
   )
 }
-
-export { CalendarView }

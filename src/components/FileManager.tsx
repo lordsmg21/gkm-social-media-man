@@ -121,7 +121,7 @@ export function FileManager({ user }: FileManagerProps) {
     }
   ])
 
-  const [users] = useKV('all-users', [
+  const [users] = useKV<{ id: string; name: string; role: string }[]>('all-users', [
     { id: '1', name: 'Alex van der Berg', role: 'admin' },
     { id: '2', name: 'Sarah de Jong', role: 'admin' },
     { id: '3', name: 'Mike Visser', role: 'admin' },

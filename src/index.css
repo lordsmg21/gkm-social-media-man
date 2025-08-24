@@ -13,6 +13,13 @@
   .font-heading {
     font-family: 'Poppins', sans-serif;
   }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
 }
 
 :root {

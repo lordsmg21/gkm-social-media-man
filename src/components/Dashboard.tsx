@@ -19,12 +19,44 @@ import {
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
 
+interface RecentProject {
+  id: string
+  name: string
+  client: string
+  status: 'in-progress' | 'review' | 'to-do' | 'completed'
+  progress: number
+  deadline: string
+  team: string[]
+}
+
+interface TeamMember {
+  id: string
+  name: string
+  role: string
+  avatar: string
+  isOnline: boolean
+}
+
+interface KPIData {
+  revenue: number
+  revenueGrowth: number
+  projects: number
+  projectsGrowth: number
+  teamMembers: number
+  conversations: number
+  conversationsGrowth: number
+  facebookReach: number
+  instagramEngagement: number
+  projectBudget: number
+  budgetUsed: number
+}
+
 interface DashboardProps {
   user: User
 }
 
 export function Dashboard({ user }: DashboardProps) {
-  const [kpiData] = useKV('dashboard-kpi', {
+  const [kpiData] = useKV<KPIData>('dashboard-kpi', {
     revenue: 125600,
     revenueGrowth: 12.5,
     projects: 28,
@@ -38,7 +70,7 @@ export function Dashboard({ user }: DashboardProps) {
     budgetUsed: 62400
   })
 
-  const [recentProjects] = useKV('recent-projects', [
+  const [recentProjects] = useKV<RecentProject[]>('recent-projects', [
     {
       id: '1',
       name: 'Bakkerij de Korenbloem - Instagram Campaign',
@@ -68,7 +100,7 @@ export function Dashboard({ user }: DashboardProps) {
     }
   ])
 
-  const [teamMembers] = useKV('team-members', [
+  const [teamMembers] = useKV<TeamMember[]>('team-members', [
     { id: '1', name: 'Alex van der Berg', role: 'Creative Director', avatar: '', isOnline: true },
     { id: '2', name: 'Sarah de Jong', role: 'Social Media Manager', avatar: '', isOnline: true },
     { id: '3', name: 'Mike Visser', role: 'Content Creator', avatar: '', isOnline: false },

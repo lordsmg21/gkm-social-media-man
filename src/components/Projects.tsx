@@ -132,7 +132,7 @@ export function Projects({ user }: ProjectsProps) {
     }
   ])
 
-  const [users] = useKV('all-users', [
+  const [users] = useKV<User[]>('all-users', [
     { id: '1', name: 'Alex van der Berg', role: 'admin', avatar: '' },
     { id: '2', name: 'Sarah de Jong', role: 'admin', avatar: '' },
     { id: '3', name: 'Mike Visser', role: 'admin', avatar: '' },
