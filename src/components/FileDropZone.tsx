@@ -72,43 +72,25 @@ export function FileDropZone({
 
   const getUploadFileIcon = (file: File) => {
     if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" />
-    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w-4 h-4 text-amber-500" />
-    if (file.type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />
     return <File className="w-4 h-4 text-gray-500" />
-  }
 
-  const getStatusIcon = (status: FileUpload['status']) => {
-    switch (status) {
-      case 'uploading': 
-        return <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />
-      case 'completed': 
-        return <Check className="w-3 h-3 text-green-500" />
-      case 'error': 
+    return <File className="w-4 h-4 text-gray-500" />
+   
+
         return <X className="w-3 h-3 text-red-500" />
-      default:
         return null
-    }
-  }
   }
 
-  const processFiles = async (files: FileList | null) => {
     if (!files) return
-
     const newUploads: FileUpload[] = []
-    
-    for (const file of Array.from(files)) {
-      if (file.size > maxFileSize) continue
-      if (!acceptedTypes.includes(file.type)) continue
-
-      const upload: FileUpload = {
-        id: `${Date.now()}-${Math.random()}`,
+    for (const file 
+      if (!acceptedTypes.includes(file.type)) continu
+      const up
         file,
-        progress: 0,
-        status: 'pending'
-      }
-
-      // Create preview for images
-      if (file.type.startsWith('image/')) {
+     
+  }   }
+  }
+/ Create preview for images
         const reader = new FileReader()
         reader.onload = (e) => {
           setUploads(prev => prev.map(u => 
@@ -122,6 +104,24 @@ export function FileDropZone({
     }
 
     setUploads(prev => [...prev, ...newUploads])
+    setIsUploading(true)
+
+    // Start uploading
+    setUploads(prev => 
+      prev.map(u => 
+        newUploads.some(nu => nu.id === u.id) ? { ...u, status: 'uploading' as const } : u
+      )
+    )
+
+    // Simulate progress
+    for (let progress = 0; progress <= 100; progress += 10) {
+      setUploads(prev => 
+        prev.map(u => 
+          u.status === 'uploading' ? { ...u, progress } : u
+        )
+      )
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
     setIsUploading(true)
 
     // Start uploading
@@ -164,32 +164,14 @@ export function FileDropZone({
   }
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+      processFiles(files)
+    }
     setIsDragOver(true)
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDragOver(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(false)
-
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      processFiles(files)
-    }
-  }, [])
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target?.files
-    if (files && files.length > 0) {
-      processFiles(files)
     }
     // Clear input value to allow re-upload of same file
     if (e.target) {
