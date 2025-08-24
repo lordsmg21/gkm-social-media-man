@@ -1,27 +1,15 @@
 import React, { useState, useCallback } from 'react'
 import { Progress } from '@/components/ui/progress'
-import { Button } from '@/components/ui/button'
-import { 
+  X, 
+  Image, 
   X, 
   Upload, 
   Image, 
   FileText, 
-  Archive, 
-  CheckCircle, 
-  Video,
-  Loader2
-} from 'lucide-react'
-
-export interface FileUpload {
-  id: string
-  file: File
-  progress: number
-  status: 'pending' | 'uploading' | 'completed' | 'error'
-  preview?: string
+  file: Fil
+  status: 'pend
 }
-
-export interface FileDropZoneProps {
-  onFilesUploaded: (files: File[]) => void
+export in
   maxFileSize?: number
   acceptedTypes?: string[]
   multiple?: boolean
@@ -56,6 +44,18 @@ export function FileDropZone({
   acceptedTypes = ACCEPTED_TYPES,
   multiple = true,
   className = ""
+}: FileDropZoneProps) {
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [uploads, setUploads] = useState<FileUpload[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
 }: FileDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploads, setUploads] = useState<FileUpload[]>([])
@@ -113,18 +113,6 @@ export function FileDropZone({
         reader.readAsDataURL(file)
       }
 
-      newUploads.push(upload)
-    }
-
-    if (newUploads.length === 0) return
-
-    setUploads(prev => [...prev, ...newUploads])
-    setIsUploading(true)
-
-    // Update status to uploading
-    setUploads(prev => 
-      prev.map(u => 
-        u.status === 'pending' ? { ...u, status: 'uploading' as const } : u
       )
     )
 
