@@ -680,5 +680,3 @@ export function SettingsView({ user }: SettingsViewProps) {
     </div>
   )
 }
-
-export { SettingsView }
