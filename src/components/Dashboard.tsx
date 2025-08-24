@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import { 
   TrendingUp, 
   TrendingDown,
@@ -33,7 +34,6 @@ import {
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
-import { useState } from 'react'
 
 interface RecentProject {
   id: string
