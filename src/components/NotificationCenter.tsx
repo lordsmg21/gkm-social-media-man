@@ -129,9 +129,9 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-3 flex-1 min-w-0 pr-4">
               <span className="text-xl flex-shrink-0">🔔</span>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex-shrink-0">Notifications</h2>
               {unreadCount > 0 && (
                 <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center flex-shrink-0">
                   {unreadCount}
@@ -140,7 +140,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex-shrink-0 ml-2"
+              className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex-shrink-0"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -148,18 +148,18 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
             </button>
           </div>
           
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
             Stay updated with your team and projects
           </p>
 
-          <div className="flex justify-between items-center gap-2">
+          <div className="flex flex-wrap justify-between items-center gap-3">
             <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
               {notifications.length} notifications
             </span>
             {unreadCount > 0 && (
               <button 
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
+                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors px-3 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0"
               >
                 Mark all as read
               </button>
@@ -192,23 +192,33 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
                     </div>
                     
                     {/* Text container with proper wrapping */}
-                    <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-2 gap-3">
-                        <h4 className={`font-medium text-sm leading-5 ${
+                        <h4 className={`font-medium text-sm leading-tight pr-2 ${
                           !notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'
-                        }`}>
+                        } notification-item`} style={{ 
+                          wordBreak: 'break-word',
+                          overflowWrap: 'anywhere',
+                          hyphens: 'auto',
+                          maxWidth: '75%'
+                        }}>
                           {notification.title}
                         </h4>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0 ml-auto">
                           {formatTime(notification.timestamp)}
                         </span>
                       </div>
                       
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-5 mb-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3 notification-item" style={{
+                        wordBreak: 'break-word',
+                        overflowWrap: 'anywhere',
+                        hyphens: 'auto'
+                      }}>
                         {notification.message}
                       </p>
                       
-                      <div className="flex items-center justify-between">
+                      {/* Status and Action Buttons - Separate sections for better layout */}
+                      <div className="space-y-2">
                         {!notification.read && (
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
@@ -216,18 +226,18 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
                           </div>
                         )}
                         
-                        <div className="flex gap-3 ml-auto">
+                        <div className="notification-buttons flex gap-3 justify-end">
                           {!notification.read && (
                             <button
                               onClick={() => markAsRead(notification.id)}
-                              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex-shrink-0"
                             >
                               Mark as read
                             </button>
                           )}
                           <button
                             onClick={() => clearNotification(notification.id)}
-                            className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                            className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
                           >
                             Clear
                           </button>
