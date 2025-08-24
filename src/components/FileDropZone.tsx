@@ -10,7 +10,8 @@ import {
   Video,
   Archive,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  File
 } from 'lucide-react'
 
 interface FileUpload {
@@ -71,26 +72,45 @@ export function FileDropZone({
   }
 
   const getUploadFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />
     if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" />
+    if (file.type === 'application/pdf') return <FileText className="w-4 h-4 text-red-500" />
+    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w-4 h-4 text-orange-500" />
     return <File className="w-4 h-4 text-gray-500" />
+  }
 
-    return <File className="w-4 h-4 text-gray-500" />
-   
-
+  const getStatusIcon = (status: FileUpload['status']) => {
+    switch (status) {
+      case 'uploading':
+        return <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />
+      case 'completed':
+        return <CheckCircle className="w-3 h-3 text-green-500" />
+      case 'error':
         return <X className="w-3 h-3 text-red-500" />
+      default:
         return null
+    }
   }
 
+  const processFiles = async (files: FileList | File[]) => {
     if (!files) return
+    
     const newUploads: FileUpload[] = []
-    for (const file 
-      if (!acceptedTypes.includes(file.type)) continu
-      const up
+    const fileArray = Array.from(files)
+    
+    for (const file of fileArray) {
+      if (!acceptedTypes.includes(file.type)) continue
+      if (file.size > maxFileSize) continue
+      
+      const upload: FileUpload = {
+        id: Math.random().toString(36).substr(2, 9),
         file,
-     
-  }   }
-  }
-/ Create preview for images
+        progress: 0,
+        status: 'pending'
+      }
+
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
         const reader = new FileReader()
         reader.onload = (e) => {
           setUploads(prev => prev.map(u => 
@@ -104,24 +124,6 @@ export function FileDropZone({
     }
 
     setUploads(prev => [...prev, ...newUploads])
-    setIsUploading(true)
-
-    // Start uploading
-    setUploads(prev => 
-      prev.map(u => 
-        newUploads.some(nu => nu.id === u.id) ? { ...u, status: 'uploading' as const } : u
-      )
-    )
-
-    // Simulate progress
-    for (let progress = 0; progress <= 100; progress += 10) {
-      setUploads(prev => 
-        prev.map(u => 
-          u.status === 'uploading' ? { ...u, progress } : u
-        )
-      )
-      await new Promise(resolve => setTimeout(resolve, 200))
-    }
     setIsUploading(true)
 
     // Start uploading
@@ -164,45 +166,64 @@ export function FileDropZone({
   }
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-      processFiles(files)
-    }
+    e.preventDefault()
+    e.stopPropagation()
     setIsDragOver(true)
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    }
-    // Clear input value to allow re-upload of same file
-    if (e.target) {
-    }
+    setIsDragOver(false)
+  }, [])
 
-    const input = documen
-     
-      input.accept = acceptedTypes.join(',')
-        const targe
-          processFiles(ta
-     
-          target.value = ''
-        }
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      processFiles(files)
+    }
+  }, [])
+
+  const handleFileInput = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.multiple = multiple
+    input.accept = acceptedTypes.join(',')
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement
+      if (target.files && target.files.length > 0) {
+        processFiles(target.files)
+        target.value = ''
       }
     }
+    input.click()
+  }
 
-    <div className={`spac
+  return (
+    <div className={`space-y-4 ${className}`}>
       <Card 
-          glass-card file-drop-zone cursor-p
-            ? 'border-primary b
-          }
-        onDragOver={handleDr
+        className={`glass-card file-drop-zone cursor-pointer transition-all ${
+          isDragOver ? 'border-primary bg-primary/5' : ''
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={handleFileInput}
       >
-          <div className="flex flex-col items-center justify
-              <Upload
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="p-4 rounded-full bg-muted/50">
+              <Upload className="w-8 h-8 text-muted-foreground" />
+            </div>
             
-         
-       
-                Max
-     
+            <div className="text-center">
+              <h3 className="font-semibold text-foreground">Drop files here or click to browse</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Max file size: {formatFileSize(maxFileSize)}
               </p>
             </div>
 
