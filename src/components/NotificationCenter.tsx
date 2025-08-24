@@ -112,43 +112,46 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50" 
+        className="fixed inset-0 bg-black/30 notification-overlay" 
         onClick={onClose}
       />
       
       {/* Sheet */}
-      <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l overflow-hidden flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-full max-w-md sm:w-96 notification-panel shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b bg-gray-50">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xl">🔔</span>
-            <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-            {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                {unreadCount}
-              </span>
-            )}
+        <div className="p-4 sm:p-6 border-b border-border bg-muted/50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🔔</span>
+              <h2 className="text-lg font-semibold text-foreground font-heading">Notifications</h2>
+              {unreadCount > 0 && (
+                <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
             <button
               onClick={onClose}
-              className="ml-auto p-1 rounded-md hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+              className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <p className="text-sm text-gray-600 mb-4">
+          
+          <p className="text-sm text-muted-foreground mb-4">
             Stay updated with your team and projects
           </p>
 
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">
+          <div className="flex justify-between items-center gap-2">
+            <span className="text-sm text-muted-foreground flex-shrink-0">
               {notifications.length} notifications
             </span>
             {unreadCount > 0 && (
               <button 
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors whitespace-nowrap"
               >
                 Mark all as read
               </button>
@@ -159,7 +162,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
         {/* Content */}
         <div className="flex-1 p-4 space-y-3 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <div className="text-4xl mb-4">🔔</div>
               <p className="text-lg font-medium mb-2">No notifications yet</p>
               <p className="text-sm">You're all caught up!</p>
@@ -168,53 +171,53 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
             notifications.map((notification) => (
               <div 
                 key={notification.id}
-                className={`p-4 rounded-lg border transition-all hover:shadow-md ${
+                className={`p-3 sm:p-4 rounded-lg border transition-all hover:shadow-md notification-item ${
                   !notification.read 
-                    ? 'border-blue-200 bg-blue-50 shadow-sm' 
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    ? 'border-primary/20 bg-primary/5 shadow-sm' 
+                    : 'border-border bg-card hover:border-border/80'
                 }`}
               >
                 <div className="flex gap-3">
-                  <div className="flex-shrink-0 text-lg">
+                  <div className="flex-shrink-0 text-base sm:text-lg">
                     {getIcon(notification.type)}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <h4 className={`font-medium text-sm leading-tight ${
-                        !notification.read ? 'text-gray-900' : 'text-gray-700'
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex items-start justify-between mb-2 gap-2">
+                      <h4 className={`font-medium text-sm leading-tight break-words ${
+                        !notification.read ? 'text-foreground' : 'text-muted-foreground'
                       }`}>
                         {notification.title}
                       </h4>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2 flex-shrink-0">
                         {formatTime(notification.timestamp)}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-3 break-words">
                       {notification.message}
                     </p>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       {!notification.read && (
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                          <span className="text-xs text-blue-600 font-medium">New</span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="w-2 h-2 bg-primary rounded-full" />
+                          <span className="text-xs text-primary font-medium">New</span>
                         </div>
                       )}
                       
-                      <div className="flex gap-2 ml-auto">
+                      <div className="flex gap-2 ml-auto flex-shrink-0">
                         {!notification.read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                            className="text-xs text-primary hover:text-primary/80 font-medium whitespace-nowrap"
                           >
                             Mark as read
                           </button>
                         )}
                         <button
                           onClick={() => clearNotification(notification.id)}
-                          className="text-xs text-red-600 hover:text-red-800 font-medium"
+                          className="text-xs text-destructive hover:text-destructive/80 font-medium whitespace-nowrap"
                         >
                           Clear
                         </button>
@@ -227,111 +230,6 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-export default function App() {
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const { notifications, unreadCount, addNotification } = useNotifications()
-
-  const handleAddNotification = () => {
-    const types: Array<'message' | 'task' | 'file' | 'calendar' | 'team' | 'deadline'> = 
-      ['message', 'task', 'file', 'calendar', 'team', 'deadline']
-    const randomType = types[Math.floor(Math.random() * types.length)]
-    
-    const sampleNotifications = {
-      message: { title: 'New message received', message: 'You have a new message from a colleague.' },
-      task: { title: 'Task reminder', message: 'Don\'t forget to complete your weekly report.' },
-      file: { title: 'File shared', message: 'A new document has been shared with you.' },
-      calendar: { title: 'Meeting reminder', message: 'Your meeting starts in 30 minutes.' },
-      team: { title: 'Team update', message: 'New team member has joined the project.' },
-      deadline: { title: 'Deadline approaching', message: 'Project deadline is in 2 days.' }
-    }
-    
-    addNotification({
-      type: randomType,
-      title: sampleNotifications[randomType].title,
-      message: sampleNotifications[randomType].message,
-      read: false,
-    })
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Notification System Demo</h1>
-        
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">Dashboard</h2>
-              <p className="text-gray-600">Manage your notifications and stay up to date</p>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddNotification}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Add Notification
-              </button>
-              
-              <button
-                onClick={() => setIsNotificationOpen(true)}
-                className="relative bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <span className="text-lg">🔔</span>
-                <span>Notifications</span>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">💬</span>
-                <h3 className="font-semibold text-gray-800">Messages</h3>
-              </div>
-              <p className="text-gray-600">{notifications.filter(n => n.type === 'message' && !n.read).length} unread</p>
-            </div>
-            
-            <div className="bg-green-50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">✅</span>
-                <h3 className="font-semibold text-gray-800">Tasks</h3>
-              </div>
-              <p className="text-gray-600">{notifications.filter(n => n.type === 'task').length} total</p>
-            </div>
-            
-            <div className="bg-purple-50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">📄</span>
-                <h3 className="font-semibold text-gray-800">Files</h3>
-              </div>
-              <p className="text-gray-600">{notifications.filter(n => n.type === 'file').length} total</p>
-            </div>
-            
-            <div className="bg-orange-50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">⏰</span>
-                <h3 className="font-semibold text-gray-800">Deadlines</h3>
-              </div>
-              <p className="text-gray-600">{notifications.filter(n => n.type === 'deadline').length} total</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <NotificationCenter 
-        isOpen={isNotificationOpen}
-        onClose={() => setIsNotificationOpen(false)}
-      />
     </div>
   )
 }
