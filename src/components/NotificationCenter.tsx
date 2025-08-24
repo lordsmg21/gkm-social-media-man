@@ -1,32 +1,30 @@
 import { useState } from 'react'
-import { toast } from 'sonner'
-  Sheet,
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
+} from '@/components/ui/sheet'
+import {
+  Bell,
+  MessageSquare,
+  CheckCircle,
+  Calendar,
   FileText,
   Users,
 } from 'lucide-react'
-interfac
-  type:
-  descripti
-  read: boolea
-}
-  FileText,
-  onClose: () =>
-  Users,
-  c
-} from 'lucide-react'
+import { toast } from 'sonner'
 
-      timestamp: new Dat
-    },
-      id: '2',
-      title: 'T
-      timestamp: new 
-    },
-      id: '3',
+interface Notification {
+  id: string
+  type: 'message' | 'task' | 'file' | 'calendar' | 'team' | 'other'
+  title: string
+  description: string
+  timestamp: Date
+  read: boolean
   userId?: string
 }
 
@@ -66,10 +64,10 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
   const unreadCount = notifications.filter(n => !n.read).length
 
   const getIcon = (type: Notification['type']) => {
-    setNotification
-  }
+    switch (type) {
+      case 'message':
         return <MessageSquare className="h-4 w-4" />
-    const now = ne
+      case 'task':
         return <CheckCircle className="h-4 w-4" />
       case 'file':
         return <FileText className="h-4 w-4" />
@@ -77,45 +75,45 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
         return <Calendar className="h-4 w-4" />
       case 'team':
         return <Users className="h-4 w-4" />
-    <Sheet ope
+      default:
         return <Bell className="h-4 w-4" />
-     
-   
+    }
+  }
 
   const getIconColor = (type: Notification['type']) => {
     switch (type) {
-            )}
+      case 'message':
         return 'text-blue-500'
       case 'task':
         return 'text-green-500'
       case 'file':
         return 'text-orange-500'
-              <Card 
+      case 'calendar':
         return 'text-indigo-500'
-                }`
+      case 'team':
         return 'text-purple-500'
-              
-                      <div cla
+      default:
+        return 'text-gray-500'
     }
-   
+  }
 
   const markAsRead = (id: string) => {
     setNotifications(current =>
       current.map(n => n.id === id ? { ...n, read: true } : n)
     )
+  }
 
-
-
+  const markAllAsRead = () => {
     setNotifications(current =>
-
-
+      current.map(n => ({ ...n, read: true }))
+    )
     toast.success('All notifications marked as read')
-
+  }
 
   const formatTime = (timestamp: Date) => {
     const now = new Date()
-
-
+    const diff = now.getTime() - timestamp.getTime()
+    const hours = Math.floor(diff / (1000 * 60 * 60))
 
     if (hours < 1) {
       const minutes = Math.floor(diff / (1000 * 60))
@@ -125,27 +123,27 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
   }
 
   return (
-
+    <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-[400px] sm:w-[400px] glass-modal">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-
+            <Bell className="h-5 w-5" />
             Notifications
             {unreadCount > 0 && (
               <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full">
                 {unreadCount}
               </span>
-
+            )}
           </SheetTitle>
           <SheetDescription>
             Stay updated with your team and projects
-
-
+          </SheetDescription>
+          
           <div className="flex justify-between items-center mt-4">
             <span className="text-sm text-muted-foreground">
               {notifications.length} notifications
             </span>
-
+            {unreadCount > 0 && (
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -153,7 +151,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
               >
                 Mark all as read
               </Button>
-
+            )}
           </div>
         </SheetHeader>
 
