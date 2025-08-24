@@ -631,7 +631,7 @@ export function FileManager({ user }: FileManagerProps) {
                     <Share className="w-4 h-4 mr-2" />
                     Share
                   </Button>
-                  {canDelete && (
+                  {selectedFile && canUserDeleteFile(selectedFile) && (
                     <Button variant="destructive">
                       <Trash2 className="w-4 h-4 mr-2" />
                       Delete
