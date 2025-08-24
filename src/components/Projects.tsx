@@ -489,12 +489,6 @@ export function Projects({ user }: ProjectsProps) {
     return <Paperclip className="w-4 h-4" />
   }
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <Image className="w-4 h-4" />
-    if (type.includes('pdf')) return <FileText className="w-4 h-4" />
-    return <Paperclip className="w-4 h-4" />
-  }
-
   const handleSendChatMessage = () => {
     if (!chatMessage.trim()) return
     // In a real app, this would send the message to the server
