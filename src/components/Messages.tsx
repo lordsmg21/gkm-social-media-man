@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { 
   Search, 
   Plus, 
@@ -15,10 +16,12 @@ import {
   Phone,
   Video,
   Circle,
-  MessageSquare
+  MessageSquare,
+  X
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
+import { toast } from 'sonner'
 
 interface Message {
   id: string
@@ -47,6 +50,7 @@ export function Messages({ user }: MessagesProps) {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [messageInput, setMessageInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showNewConversation, setShowNewConversation] = useState(false)
 
   const [users] = useKV<User[]>('all-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
@@ -56,7 +60,7 @@ export function Messages({ user }: MessagesProps) {
     { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client', isOnline: true }
   ])
 
-  const [conversations] = useKV<Conversation[]>('conversations', [
+  const [conversations, setConversations] = useKV<Conversation[]>('conversations', [
     {
       id: 'conv-1',
       participants: ['1', '3'],
@@ -160,6 +164,53 @@ export function Messages({ user }: MessagesProps) {
     setMessageInput('')
   }
 
+  const handleNewConversation = (targetUserId: string) => {
+    // Check if conversation already exists
+    const existingConv = conversations.find(conv => 
+      conv.participants.includes(user.id) && conv.participants.includes(targetUserId)
+    )
+    
+    if (existingConv) {
+      setSelectedConversation(existingConv.id)
+      setShowNewConversation(false)
+      toast.info('Conversation already exists')
+      return
+    }
+    
+    // Create new conversation
+    const newConv: Conversation = {
+      id: `conv-${Date.now()}`,
+      participants: [user.id, targetUserId],
+      unreadCount: 0
+    }
+    
+    setConversations(prev => [...prev, newConv])
+    setSelectedConversation(newConv.id)
+    setShowNewConversation(false)
+    toast.success('New conversation started')
+  }
+
+  // Get available users for new conversation
+  const getAvailableUsers = () => {
+    return users.filter(u => {
+      if (u.id === user.id) return false
+      
+      if (user.role === 'admin') {
+        // Admins can message anyone
+        return true
+      } else {
+        // Clients can only message admins
+        return u.role === 'admin'
+      }
+    }).filter(u => {
+      // Filter out users we already have conversations with
+      const hasConversation = conversations.some(conv => 
+        conv.participants.includes(user.id) && conv.participants.includes(u.id)
+      )
+      return !hasConversation
+    })
+  }
+
   const selectedConv = conversations.find(c => c.id === selectedConversation)
   const selectedMessages = selectedConv ? getConversationMessages(selectedConversation) : []
   const otherUser = selectedConv ? getOtherParticipant(selectedConv) : null
@@ -170,10 +221,59 @@ export function Messages({ user }: MessagesProps) {
       <div className="w-80 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h1 className="font-heading font-bold text-2xl text-foreground">Messages</h1>
-          <Button size="sm" className="gap-2">
-            <Plus className="w-4 h-4" />
-            New
-          </Button>
+          <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-2">
+                <Plus className="w-4 h-4" />
+                New
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Start New Conversation</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <ScrollArea className="max-h-64">
+                  <div className="space-y-2">
+                    {getAvailableUsers().map((availableUser) => (
+                      <div
+                        key={availableUser.id}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => handleNewConversation(availableUser.id)}
+                      >
+                        <div className="relative">
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={availableUser.avatar} />
+                            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                              {availableUser.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          {availableUser.isOnline && (
+                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background"></div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm text-foreground">
+                            {availableUser.name}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {availableUser.role === 'admin' ? 'GKM Team' : 'Client'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {getAvailableUsers().length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No new conversations available</p>
+                        <p className="text-xs">You already have conversations with all available users</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Search */}
@@ -220,22 +320,22 @@ export function Messages({ user }: MessagesProps) {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium text-sm text-foreground truncate">
+                          <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 mr-2">
                             {otherParticipant.name}
                           </h4>
                           {lastMessage && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground flex-shrink-0">
                               {formatTime(lastMessage.timestamp)}
                             </span>
                           )}
                         </div>
                         
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground truncate">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs text-muted-foreground min-w-0 flex-1 mr-2 break-words">
                             {lastMessage ? lastMessage.content : 'No messages yet'}
                           </p>
                           {conversation.unreadCount > 0 && (
-                            <Badge variant="destructive" className="text-xs min-w-[20px] h-5">
+                            <Badge variant="destructive" className="text-xs min-w-[20px] h-5 flex-shrink-0">
                               {conversation.unreadCount}
                             </Badge>
                           )}
@@ -312,12 +412,12 @@ export function Messages({ user }: MessagesProps) {
                     return (
                       <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                          <div className={`p-3 rounded-lg ${
+                          <div className={`p-3 rounded-lg break-words ${
                             isOwn 
                               ? 'bg-primary text-primary-foreground' 
                               : 'bg-muted text-foreground'
                           }`}>
-                            <p className="text-sm">{message.content}</p>
+                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-muted-foreground">
