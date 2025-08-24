@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Sheet,
   SheetContent,
@@ -23,6 +22,7 @@ import {
   Trash2
 } from 'lucide-react'
 import { User } from '../App'
+import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
 export interface Notification {
@@ -33,33 +33,25 @@ export interface Notification {
   timestamp: Date
   read: boolean
   userId: string
-  actionData?: {
-    taskId?: string
-    projectId?: string
-    conversationId?: string
-    fileId?: string
-  }
+  actionData?: any
 }
 
 interface NotificationCenterProps {
   user: User
-  children: React.ReactNode
 }
 
-export function NotificationCenter({ user, children }: NotificationCenterProps) {
+export function NotificationCenter({ user }: NotificationCenterProps) {
   const [notifications, setNotifications] = useKV<Notification[]>('notifications', [])
-  const [isOpen, setIsOpen] = useState(false)
 
-  // Initialize with some sample notifications for demo purposes
   useEffect(() => {
     if (notifications.length === 0) {
       const sampleNotifications: Notification[] = [
         {
           id: '1',
           type: 'message',
-          title: 'New Message',
-          message: 'Sarah heeft je een bericht gestuurd in het Instagram project',
-          timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+          title: 'Nieuw Bericht',
+          message: 'Je hebt een nieuw bericht ontvangen van Sarah de Vries',
+          timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
           read: false,
           userId: user.id
         },
@@ -126,180 +118,129 @@ export function NotificationCenter({ user, children }: NotificationCenterProps) 
 
   const markAsRead = (notificationId: string) => {
     setNotifications(currentNotifications =>
-      currentNotifications.map(notification =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification
+      currentNotifications.map(n =>
+        n.id === notificationId ? { ...n, read: true } : n
       )
     )
   }
 
   const markAllAsRead = () => {
     setNotifications(currentNotifications =>
-      currentNotifications.map(notification =>
-        notification.userId === user.id
-          ? { ...notification, read: true }
-          : notification
-      )
+      currentNotifications.map(n => ({ ...n, read: true }))
     )
-    toast.success('All notifications marked as read')
   }
 
   const deleteNotification = (notificationId: string) => {
     setNotifications(currentNotifications =>
-      currentNotifications.filter(notification => notification.id !== notificationId)
+      currentNotifications.filter(n => n.id !== notificationId)
     )
-    toast.success('Notification deleted')
   }
 
-  const clearAll = () => {
-    setNotifications(currentNotifications =>
-      currentNotifications.filter(notification => notification.userId !== user.id)
-    )
-    toast.success('All notifications cleared')
-  }
-
-  const formatTimestamp = (timestamp: Date) => {
+  const formatTime = (date: Date) => {
     const now = new Date()
-    const diff = now.getTime() - timestamp.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / (1000 * 60))
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-    if (minutes < 1) return 'Nu'
-    if (minutes < 60) return `${minutes}m geleden`
-    if (hours < 24) return `${hours}u geleden`
-    if (days === 1) return 'Gisteren'
-    if (days < 7) return `${days}d geleden`
-    return timestamp.toLocaleDateString('nl-NL')
+    if (minutes < 60) {
+      return `${minutes}m geleden`
+    } else if (hours < 24) {
+      return `${hours}h geleden`
+    } else {
+      return `${days}d geleden`
+    }
   }
-
-  const userNotifications = notifications.filter(n => n.userId === user.id)
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet>
       <SheetTrigger asChild>
-        <div className="relative">
-          {children}
+        <Button variant="outline" className="w-full gap-3 h-11 justify-start">
+          <Bell className="w-4 h-4" />
+          <span className="flex-1 text-left">Notifications</span>
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-2 -right-2 text-xs min-w-[20px] h-5 flex items-center justify-center"
-            >
+            <Badge variant="destructive" className="ml-auto min-w-[20px] h-5 text-xs rounded-full flex items-center justify-center">
               {unreadCount}
             </Badge>
           )}
-        </div>
+        </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-96 glass-modal">
+      <SheetContent className="w-[400px] sm:w-[540px]">
         <SheetHeader>
-          <SheetTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Notifications
-            </div>
+          <div className="flex items-center justify-between">
+            <SheetTitle>Notificaties</SheetTitle>
             {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="text-xs"
-              >
-                Mark all read
+              <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+                Alles markeren als gelezen
               </Button>
             )}
-          </SheetTitle>
+          </div>
         </SheetHeader>
-
-        <div className="flex items-center justify-between mt-4 mb-4">
-          <p className="text-sm text-muted-foreground">
-            {userNotifications.length} notifications
-          </p>
-          {userNotifications.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAll}
-              className="text-xs text-destructive hover:text-destructive"
-            >
-              <Trash2 className="w-3 h-3 mr-1" />
-              Clear all
-            </Button>
-          )}
-        </div>
-
-        <ScrollArea className="h-[calc(100vh-180px)]">
-          {userNotifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Bell className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="font-medium text-foreground mb-2">No notifications</h3>
-              <p className="text-sm text-muted-foreground">
-                You're all caught up! New notifications will appear here.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {userNotifications
-                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                .map((notification, index) => (
-                  <div key={notification.id}>
-                    <Card
-                      className={`cursor-pointer transition-all hover:shadow-md ${
-                        !notification.read ? 'bg-accent/10 border-accent/20' : 'hover:bg-muted/50'
-                      }`}
-                      onClick={() => !notification.read && markAsRead(notification.id)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1">
-                            {getIcon(notification.type)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className={`text-sm font-medium ${
-                                !notification.read ? 'text-foreground' : 'text-muted-foreground'
-                              }`}>
-                                {notification.title}
-                              </h4>
-                              <div className="flex items-center gap-2">
-                                {!notification.read && (
-                                  <div className="w-2 h-2 bg-accent rounded-full"></div>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    deleteNotification(notification.id)
-                                  }}
-                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10"
-                                >
-                                  <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatTimestamp(new Date(notification.timestamp))}
-                            </p>
-                          </div>
+        <ScrollArea className="h-[calc(100vh-120px)] mt-6">
+          <div className="space-y-4">
+            {notifications.map((notification) => (
+              <Card key={notification.id} className={`${
+                !notification.read ? 'border-primary/20 bg-primary/5' : ''
+              }`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getIcon(notification.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className={`text-sm font-medium ${
+                            !notification.read ? 'text-foreground' : 'text-muted-foreground'
+                          }`}>
+                            {notification.title}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {formatTime(notification.timestamp)}
+                          </p>
                         </div>
-                      </CardContent>
-                    </Card>
-                    {index < userNotifications.length - 1 && <Separator />}
+                        <div className="flex items-center gap-1 ml-2">
+                          {!notification.read && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-6 h-6"
+                              onClick={() => markAsRead(notification.id)}
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-6 h-6"
+                            onClick={() => deleteNotification(notification.id)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ))}
-            </div>
-          )}
+                </CardContent>
+              </Card>
+            ))}
+            {notifications.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>Geen notificaties</p>
+              </div>
+            )}
+          </div>
         </ScrollArea>
       </SheetContent>
     </Sheet>
   )
 }
 
-// Hook to add new notifications
 export function useNotifications() {
   const [notifications, setNotifications] = useKV<Notification[]>('notifications', [])
 
@@ -309,15 +250,12 @@ export function useNotifications() {
       id: `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date()
     }
-
     setNotifications(currentNotifications => [newNotification, ...currentNotifications])
     
-    // Show toast for immediate feedback
-    toast.info(notification.title, {
+    // Show toast notification
+    toast(notification.title, {
       description: notification.message,
     })
-
-    return newNotification
   }
 
   return { notifications, addNotification }
