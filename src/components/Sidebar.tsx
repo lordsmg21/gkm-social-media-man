@@ -13,6 +13,7 @@ import {
   Bell
 } from 'lucide-react'
 import { User } from '../App'
+import { NotificationCenter } from './NotificationCenter'
 
 interface SidebarProps {
   user: User
@@ -132,11 +133,12 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
 
         {/* Notifications */}
         <div className="mt-8">
-          <Button variant="outline" className="w-full gap-3 h-11">
-            <Bell className="w-4 h-4" />
-            <span className="flex-1 text-left">Notifications</span>
-            <Badge variant="secondary" className="text-xs">5</Badge>
-          </Button>
+          <NotificationCenter user={user}>
+            <Button variant="outline" className="w-full gap-3 h-11">
+              <Bell className="w-4 h-4" />
+              <span className="flex-1 text-left">Notifications</span>
+            </Button>
+          </NotificationCenter>
         </div>
       </div>
     </div>

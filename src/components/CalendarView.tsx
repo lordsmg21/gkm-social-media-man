@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
+import { useNotifications } from './NotificationCenter'
 
 interface CalendarEvent {
   id: string
@@ -55,6 +56,8 @@ export function CalendarView({ user }: CalendarViewProps) {
     location: ''
   })
 
+  const { addNotification } = useNotifications()
+  
   const [events, setEvents] = useKV<CalendarEvent[]>('calendar-events', [
     {
       id: '1',
@@ -206,6 +209,17 @@ export function CalendarView({ user }: CalendarViewProps) {
     }
 
     setEvents(prev => [...(prev || []), eventToAdd])
+    
+    // Generate notification for new event
+    addNotification({
+      type: 'deadline',
+      title: 'Event Created',
+      message: `"${newEvent.title}" scheduled for ${eventDate.toLocaleDateString('nl-NL')} at ${eventDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`,
+      read: false,
+      userId: user.id,
+      actionData: { eventId: eventToAdd.id }
+    })
+    
     setShowCreateModal(false)
     setNewEvent({
       title: '',

@@ -35,6 +35,7 @@ import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
 import { FileDropZone } from './FileDropZone'
 import { CreateTaskModal } from './CreateTaskModal'
+import { useNotifications } from './NotificationCenter'
 
 interface TaskFile {
   id: string
@@ -92,6 +93,7 @@ export function Projects({ user }: ProjectsProps) {
   const [mentionStartIndex, setMentionStartIndex] = useState(-1)
   const [mentionType, setMentionType] = useState<'task' | 'user' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { addNotification } = useNotifications()
 
   const adminColumns = [
     { id: 'to-do', title: 'To Do', color: 'bg-gray-500' },
@@ -411,6 +413,16 @@ export function Projects({ user }: ProjectsProps) {
       const columnTitle = columns.find(col => col.id === newStatus)?.title || newStatus
       toast.success(`Task moved to ${columnTitle}`)
       
+      // Generate notification for task status change
+      addNotification({
+        type: 'task',
+        title: 'Task Updated',
+        message: `"${draggedTask.title}" has been moved to ${columnTitle}`,
+        read: false,
+        userId: user.id,
+        actionData: { taskId: draggedTask.id }
+      })
+      
       // Auto-update progress based on status
       let newProgress = draggedTask.progress
       if (newStatus === 'completed') newProgress = 100
@@ -458,6 +470,20 @@ export function Projects({ user }: ProjectsProps) {
         : task
     )
     setTasks(updatedTasks)
+    
+    // Generate notification for file upload
+    const task = (tasks || []).find(t => t.id === taskId)
+    if (task) {
+      addNotification({
+        type: 'file',
+        title: 'Files Uploaded',
+        message: `${files.length} file(s) uploaded to "${task.title}"`,
+        read: false,
+        userId: user.id,
+        actionData: { taskId: taskId }
+      })
+    }
+    
     setShowFileUpload(null)
     setFileDropTask(null)
     toast.success(`${files.length} file(s) uploaded successfully`)

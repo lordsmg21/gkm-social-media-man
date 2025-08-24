@@ -35,6 +35,7 @@ import {
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
+import { useNotifications } from './NotificationCenter'
 
 interface Message {
   id: string
@@ -79,6 +80,7 @@ export function Messages({ user }: MessagesProps) {
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [showFilePreview, setShowFilePreview] = useState<Message | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { addNotification } = useNotifications()
 
   const [users] = useKV<User[]>('all-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
@@ -335,6 +337,25 @@ export function Messages({ user }: MessagesProps) {
         ? { ...conv, lastMessage: newMessage }
         : conv
     ))
+    
+    // Generate notifications for recipients
+    const conversation = conversations.find(c => c.id === selectedConversation)
+    if (conversation) {
+      const recipients = conversation.participants.filter(id => id !== user.id)
+      recipients.forEach(recipientId => {
+        const recipient = users.find(u => u.id === recipientId)
+        if (recipient) {
+          addNotification({
+            type: 'message',
+            title: 'New Message',
+            message: `${user.name} sent you a message: "${messageInput.substring(0, 50)}${messageInput.length > 50 ? '...' : ''}"`,
+            read: false,
+            userId: recipientId,
+            actionData: { conversationId: selectedConversation }
+          })
+        }
+      })
+    }
     
     toast.success('Message sent')
   }
