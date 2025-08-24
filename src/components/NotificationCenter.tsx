@@ -16,7 +16,7 @@ interface NotificationCenterProps {
   notifications?: Notification[]
 }
 
-export default function NotificationCenter({ isOpen, onClose, notifications: initialNotifications }: NotificationCenterProps) {
+export function NotificationCenter({ isOpen, onClose, notifications: initialNotifications }: NotificationCenterProps) {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications || [
     {
       id: '1',
