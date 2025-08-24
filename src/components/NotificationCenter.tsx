@@ -1,23 +1,21 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import {
+  Sheet,
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger
+  SheetTriggeronents/ui/sheet'
 } from '@/components/ui/sheet'
 import {
-  X,
-  MessageSquare,
 import { Us
+  MessageSquare,
+  userId
   FileText,
   userId
 
-  us
+  usnst [notification
 
-  const [notification
-  // Generate sample notifica
     if (notifications.length === 0) {
         {
 
@@ -27,13 +25,6 @@ import { Us
           id: '
           title: 
           timesta
-          userI
-        {
- 
-
-          read: true,
-        }
- 
 
   const unreadCount = notifications.filter(n => !n.read).length
   const getIcon = (type: Notification['type']) => {
@@ -45,6 +36,15 @@ import { Us
       def
     }
 
+    setNotifications(currentNotifications =
+        n.id === notificationId ? { ...n, read: true } : n
+    )
+
+    setNotifications(curr
+    )
+
+    setNotifications(cur
+    )
     setNotifications(currentNotifications =
         n.id === notificationId ? { ...n, read: true } : n
     )
@@ -72,15 +72,6 @@ import { Us
        
             <SheetTitle>Notificaties</Sheet
      
-              </Button>
-
-        <ScrollArea className="h-[calc(100vh-120px)] mt-6">
-
-                !notification.read ? 'border-primar
-                <Ca
-                    <
-                    </div>
-                  
                           <h4 className={`text-sm font-medium ${
                       
                           </h4>
