@@ -1,38 +1,34 @@
 import { useState } from 'react'
-import {
+  Sheet,
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetTitle,
+import { Card
 } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import {
+  FileTe
   MessageSquare,
-  FileText,
   Users,
-  Clock,
-  X,
-  Bell,
+  X
+import { useKV } from '@github
   CheckCircle,
-  Calendar
+  type:
 } from 'lucide-react'
-import { useKV } from '@github/spark/hooks'
-import { toast } from 'sonner'
-
+  read: booom '@github/spark/hooks'
+  MessageSquare,onner'
+  FileText,
 interface Notification {
-  id: string
-  type: 'message' | 'task' | 'file' | 'calendar' | 'team'
-  title: string
+  Clock,
+  X
+} from 'lucide-react'
   description: string
   timestamp: Date
   read: boolean
   userId?: string
 }
-
+  title: string
 interface NotificationCenterProps {
-  isOpen: boolean
+  timestamp: Date
   onClose: () => void
 }
 
