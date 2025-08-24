@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from 'react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
+import { 
   X, 
   Upload, 
   Image, 
   FileText, 
   Archive, 
   CheckCircle, 
-  X, 
   Video,
   Loader2
 } from 'lucide-react'
