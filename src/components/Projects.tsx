@@ -88,7 +88,9 @@ export function Projects({ user }: ProjectsProps) {
   const [showFloatingChat, setShowFloatingChat] = useState(false)
   const [showTaskSuggestions, setShowTaskSuggestions] = useState(false)
   const [taskSuggestions, setTaskSuggestions] = useState<Task[]>([])
+  const [userSuggestions, setUserSuggestions] = useState<User[]>([])
   const [mentionStartIndex, setMentionStartIndex] = useState(-1)
+  const [mentionType, setMentionType] = useState<'task' | 'user' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const adminColumns = [
@@ -236,24 +238,32 @@ export function Projects({ user }: ProjectsProps) {
       id: 'chat-1',
       channel: 'general',
       senderId: '2',
-      content: 'Heeft iemand al feedback gehad op @task_1 ?',
-      timestamp: new Date().toISOString(),
+      content: 'Heeft iemand al feedback gehad op @stories project? @Alex_van_der_Berg kun jij even kijken?',
+      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
       type: 'text'
     },
     {
       id: 'chat-2',
       channel: 'direct',
       senderId: '1',
-      content: '@task_2 project is nu in review fase',
-      timestamp: new Date().toISOString(),
+      content: '@ads project is nu in review fase, @Sarah_de_Jong kun jij even de laatste details checken?',
+      timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
       type: 'text'
     },
     {
       id: 'chat-3',
       channel: 'general',
       senderId: '3',
-      content: 'Kunnen we @task_4 gebruiken als voorbeeld voor toekomstige campaigns?',
-      timestamp: new Date().toISOString(),
+      content: 'Perfect! @launch campaign liep super goed. Kunnen we dit als template gebruiken? @Lisa_Bakker',
+      timestamp: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
+      type: 'text'
+    },
+    {
+      id: 'chat-4',
+      channel: 'direct',
+      senderId: '4',
+      content: '@holiday campaign is klaar voor scheduling. @Mike_Visser wanneer kunnen we live gaan?',
+      timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
       type: 'text'
     }
   ])
@@ -545,6 +555,7 @@ export function Projects({ user }: ProjectsProps) {
     setChatMessage('')
     setShowTaskSuggestions(false)
     setMentionStartIndex(-1)
+    setMentionType(null)
     toast.success('Message sent')
   }
 
@@ -563,22 +574,45 @@ export function Projects({ user }: ProjectsProps) {
       // Check if we're in the middle of an @ mention (no spaces after @)
       if (!textAfterAt.includes(' ') && textAfterAt.length >= 0) {
         const searchTerm = textAfterAt.toLowerCase()
-        const filteredTasks = (tasks || []).filter(task => 
-          task.title.toLowerCase().includes(searchTerm) ||
-          task.client.toLowerCase().includes(searchTerm) ||
-          task.id.toLowerCase().includes(searchTerm)
+        
+        // Search tasks by tags and other properties
+        const filteredTasks = (tasks || []).filter(task => {
+          // Search by tags first (primary method)
+          const tagMatches = task.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+          // Also search by title and client as backup
+          const titleMatches = task.title.toLowerCase().includes(searchTerm)
+          const clientMatches = task.client.toLowerCase().includes(searchTerm)
+          
+          return tagMatches || titleMatches || clientMatches
+        }).slice(0, 5)
+        
+        // Search team members
+        const filteredUsers = users.filter(user => 
+          user.name.toLowerCase().includes(searchTerm) ||
+          user.email.toLowerCase().includes(searchTerm)
         ).slice(0, 5)
         
-        setTaskSuggestions(filteredTasks)
-        setShowTaskSuggestions(true)
-        setMentionStartIndex(lastAtIndex)
+        if (filteredTasks.length > 0 || filteredUsers.length > 0) {
+          setTaskSuggestions(filteredTasks)
+          setUserSuggestions(filteredUsers)
+          setShowTaskSuggestions(true)
+          setMentionStartIndex(lastAtIndex)
+          // Determine mention type based on what has more results
+          setMentionType(filteredTasks.length >= filteredUsers.length ? 'task' : 'user')
+        } else {
+          setShowTaskSuggestions(false)
+          setMentionStartIndex(-1)
+          setMentionType(null)
+        }
       } else {
         setShowTaskSuggestions(false)
         setMentionStartIndex(-1)
+        setMentionType(null)
       }
     } else {
       setShowTaskSuggestions(false)
       setMentionStartIndex(-1)
+      setMentionType(null)
     }
   }
 
@@ -593,12 +627,33 @@ export function Projects({ user }: ProjectsProps) {
     const beforeMention = chatMessage.slice(0, mentionStartIndex)
     const afterMention = chatMessage.slice(endOfMention)
     
-    // Create a cleaner tag format using task ID and title
-    const taskMention = `@task_${task.id}`
+    // Use the first tag as the mention identifier, or fallback to task title
+    const taskTag = task.tags.length > 0 ? task.tags[0] : task.title.toLowerCase().replace(/\s+/g, '_')
+    const taskMention = `@${taskTag}`
     
     setChatMessage(`${beforeMention}${taskMention} ${afterMention}`)
     setShowTaskSuggestions(false)
     setMentionStartIndex(-1)
+    setMentionType(null)
+  }
+
+  const handleUserMention = (user: User) => {
+    if (mentionStartIndex === -1) return
+    
+    // Find the end of the current mention text
+    const textAfterAt = chatMessage.slice(mentionStartIndex + 1)
+    const spaceIndex = textAfterAt.indexOf(' ')
+    const endOfMention = spaceIndex === -1 ? chatMessage.length : mentionStartIndex + 1 + spaceIndex
+    
+    const beforeMention = chatMessage.slice(0, mentionStartIndex)
+    const afterMention = chatMessage.slice(endOfMention)
+    
+    const userMention = `@${user.name.replace(/\s+/g, '_')}`
+    
+    setChatMessage(`${beforeMention}${userMention} ${afterMention}`)
+    setShowTaskSuggestions(false)
+    setMentionStartIndex(-1)
+    setMentionType(null)
   }
 
   const renderMessageWithMentions = (content: string) => {
@@ -607,36 +662,59 @@ export function Projects({ user }: ProjectsProps) {
     
     return parts.map((part, index) => {
       if (part.startsWith('@')) {
-        let mentionedTask: Task | undefined
+        const mentionText = part.slice(1) // Remove @ symbol
         
-        // Check if it's a new format task mention (@task_id)
-        if (part.startsWith('@task_')) {
-          const taskId = part.slice(6) // Remove '@task_' prefix
-          mentionedTask = (tasks || []).find(task => task.id === taskId)
-        } else {
-          // Legacy format - match by title
-          const taskName = part.slice(1).replace(/_/g, ' ')
+        // First try to find task by tag
+        let mentionedTask = (tasks || []).find(task => 
+          task.tags.some(tag => tag.toLowerCase() === mentionText.toLowerCase())
+        )
+        
+        // If not found by tag, try by title
+        if (!mentionedTask) {
+          const taskName = mentionText.replace(/_/g, ' ')
           mentionedTask = (tasks || []).find(task => 
-            task.title.toLowerCase() === taskName.toLowerCase()
+            task.title.toLowerCase().includes(taskName.toLowerCase())
           )
         }
         
-        return (
-          <span 
-            key={index} 
-            className="task-mention cursor-pointer hover:underline"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (mentionedTask) {
-                setSelectedTask(mentionedTask)
-                setShowTaskModal(true)
-              }
-            }}
-            title={mentionedTask ? `Click to view task: ${mentionedTask.title}` : 'Task not found'}
-          >
-            {mentionedTask ? `@${mentionedTask.title}` : part}
-          </span>
+        // Check if it's a user mention
+        const mentionedUser = users.find(user => 
+          user.name.toLowerCase().replace(/\s+/g, '_') === mentionText.toLowerCase()
         )
+        
+        if (mentionedTask) {
+          return (
+            <span 
+              key={index} 
+              className="task-mention cursor-pointer hover:underline"
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedTask(mentionedTask!)
+                setShowTaskModal(true)
+                setShowFloatingChat(false) // Close chat when opening task
+              }}
+              title={`Click to view task: ${mentionedTask.title}`}
+            >
+              @{mentionText}
+            </span>
+          )
+        } else if (mentionedUser) {
+          return (
+            <span 
+              key={index} 
+              className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-md text-sm font-medium cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+              title={`Mentioned: ${mentionedUser.name} (${mentionedUser.email})`}
+            >
+              @{mentionedUser.name}
+            </span>
+          )
+        } else {
+          return (
+            <span key={index} className="text-muted-foreground">
+              {part}
+            </span>
+          )
+        }
       }
       return part
     })
@@ -986,44 +1064,83 @@ export function Projects({ user }: ProjectsProps) {
 
             {/* Message Input */}
             <div className="p-3 border-t relative">
-              {/* Task Suggestions Dropdown */}
-              {showTaskSuggestions && taskSuggestions.length > 0 && (
-                <div className="absolute bottom-full left-3 right-3 mb-2 bg-popover border rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
-                  {taskSuggestions.map((task) => (
-                    <div 
-                      key={task.id}
-                      className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
-                      onClick={() => handleTaskMention(task)}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">{task.title}</p>
-                          <p className="text-xs text-muted-foreground">{task.client}</p>
-                        </div>
+              {/* Mention Suggestions Dropdown */}
+              {showTaskSuggestions && (taskSuggestions.length > 0 || userSuggestions.length > 0) && (
+                <div className="absolute bottom-full left-3 right-3 mb-2 bg-popover border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                  {/* Task Suggestions */}
+                  {taskSuggestions.length > 0 && (
+                    <div>
+                      <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b">
+                        Tasks
                       </div>
-                      {task.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {task.tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs px-1 py-0 h-4">
-                              {tag}
-                            </Badge>
-                          ))}
-                          {task.tags.length > 3 && (
-                            <Badge variant="outline" className="text-xs px-1 py-0 h-4">
-                              +{task.tags.length - 3}
-                            </Badge>
+                      {taskSuggestions.map((task) => (
+                        <div 
+                          key={task.id}
+                          className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                          onClick={() => handleTaskMention(task)}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-foreground truncate">{task.title}</p>
+                              <p className="text-xs text-muted-foreground">{task.client}</p>
+                            </div>
+                          </div>
+                          {task.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {task.tags.slice(0, 3).map((tag) => (
+                                <Badge key={tag} variant="outline" className="text-xs px-1 py-0 h-4">
+                                  #{tag}
+                                </Badge>
+                              ))}
+                              {task.tags.length > 3 && (
+                                <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                                  +{task.tags.length - 3}
+                                </Badge>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* User Suggestions */}
+                  {userSuggestions.length > 0 && (
+                    <div>
+                      {taskSuggestions.length > 0 && <div className="border-t"></div>}
+                      <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b">
+                        Team Members
+                      </div>
+                      {userSuggestions.map((suggestedUser) => (
+                        <div 
+                          key={suggestedUser.id}
+                          className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0 flex items-center gap-3"
+                          onClick={() => handleUserMention(suggestedUser)}
+                        >
+                          <Avatar className="w-6 h-6">
+                            <AvatarImage src={suggestedUser.avatar} />
+                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                              {suggestedUser.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground">{suggestedUser.name}</p>
+                            <p className="text-xs text-muted-foreground">{suggestedUser.email}</p>
+                          </div>
+                          {suggestedUser.isOnline && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               
               <div className="flex items-center gap-2">
                 <Input
-                  placeholder={`Type @ to mention tasks, then message ${activeChannel}...`}
+                  placeholder={`Type @ to mention tasks/team members in ${activeChannel}...`}
                   value={chatMessage}
                   onChange={handleChatInputChange}
                   onKeyPress={(e) => {
@@ -1034,6 +1151,7 @@ export function Projects({ user }: ProjectsProps) {
                     if (e.key === 'Escape') {
                       setShowTaskSuggestions(false)
                       setMentionStartIndex(-1)
+                      setMentionType(null)
                     }
                   }}
                   className="flex-1 text-sm h-8"
