@@ -554,8 +554,8 @@ export function Projects({ user }: ProjectsProps) {
             <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-2 md:p-6">
-            <ScrollArea className="w-full h-full">
-              <div className="flex gap-3 md:gap-6 pb-4 min-w-max">
+            <div className="w-full h-full overflow-x-auto overflow-y-hidden">
+              <div className="flex gap-3 md:gap-6 pb-4 min-w-max" style={{ width: 'max-content' }}>
                 {columns.map((column) => {
                   const columnTasks = getTasksByStatus(column.id)
                   
@@ -629,6 +629,39 @@ export function Projects({ user }: ProjectsProps) {
                                 <p className="text-xs text-muted-foreground mb-3">
                                   {task.client}
                                 </p>
+                                
+                                {/* File previews in task cards */}
+                                {(task.files || []).length > 0 && (
+                                  <div className="grid grid-cols-2 gap-1 mb-3">
+                                    {(task.files || []).slice(0, 2).map((file) => (
+                                      <div 
+                                        key={file.id}
+                                        className="aspect-square bg-muted rounded overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setShowFilePreview(file)
+                                        }}
+                                      >
+                                        {file.type.startsWith('image/') ? (
+                                          <img 
+                                            src={file.url} 
+                                            alt={file.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center">
+                                            {getTaskFileIcon(file.type)}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {(task.files || []).length > 2 && (
+                                      <div className="aspect-square bg-muted rounded flex items-center justify-center border-2 border-dashed">
+                                        <span className="text-xs text-muted-foreground">+{(task.files || []).length - 2}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                                 
                                 {task.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-3">
@@ -722,7 +755,7 @@ export function Projects({ user }: ProjectsProps) {
                   )
                 })}
               </div>
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -908,9 +941,9 @@ export function Projects({ user }: ProjectsProps) {
                 </div>
               </div>
 
-              {/* Files Section */}
+              {/* Files Section with Preview */}
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <label className="text-sm font-medium text-muted-foreground">Files ({(selectedTask.files || []).length})</label>
                   {user.role === 'admin' && (
                     <Button 
@@ -924,9 +957,51 @@ export function Projects({ user }: ProjectsProps) {
                     </Button>
                   )}
                 </div>
+
+                {/* File Preview Grid */}
+                {(selectedTask.files || []).length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    {(selectedTask.files || []).slice(0, 4).map((file) => (
+                      <div 
+                        key={file.id} 
+                        className="relative aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer group hover:shadow-lg transition-all"
+                        onClick={() => setShowFilePreview(file)}
+                      >
+                        {file.type.startsWith('image/') ? (
+                          <img 
+                            src={file.url} 
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            {getTaskFileIcon(file.type)}
+                            <div className="mt-2 text-center">
+                              <p className="text-xs font-medium truncate px-2">{file.name}</p>
+                              <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Eye className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+                    ))}
+                    {(selectedTask.files || []).length > 4 && (
+                      <div className="aspect-square bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
+                        <div className="text-center">
+                          <Plus className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">+{(selectedTask.files || []).length - 4} more</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 {(selectedTask.files || []).length > 0 ? (
-                  <div className="mt-3 space-y-2">
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
                     {(selectedTask.files || []).map((file) => {
                       const uploader = users.find(u => u.id === file.uploadedBy)
                       return (
@@ -1008,7 +1083,7 @@ export function Projects({ user }: ProjectsProps) {
                   Close
                 </Button>
                 {user.role === 'admin' && (
-                  <Button>Edit Task</Button>
+                  <Button>Save Task</Button>
                 )}
               </div>
             </div>
