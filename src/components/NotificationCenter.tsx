@@ -1,22 +1,4 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import {
-  Bell,
-  MessageSquare,
-  CheckCircle,
-  Calendar,
-  FileText,
-  Users,
-} from 'lucide-react'
-import { toast } from 'sonner'
 
 interface Notification {
   id: string
@@ -31,53 +13,57 @@ interface Notification {
 interface NotificationCenterProps {
   isOpen: boolean
   onClose: () => void
+  notifications?: Notification[]
 }
 
-export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([
+export default function NotificationCenter({ isOpen, onClose, notifications: initialNotifications }: NotificationCenterProps) {
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications || [
     {
       id: '1',
       type: 'message',
-      title: 'New Message',
-      description: 'Sarah sent you a message about the Instagram campaign',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000),
-      read: false
+      title: 'New message from Sarah',
+      description: 'Hey! Can we schedule a meeting for tomorrow?',
+      timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+      read: false,
     },
     {
       id: '2',
       type: 'task',
-      title: 'Task Completed',
-      description: 'Facebook post design has been completed',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000),
-      read: false
+      title: 'Task completed',
+      description: 'Design review has been completed successfully.',
+      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      read: false,
     },
     {
       id: '3',
+      type: 'file',
+      title: 'File uploaded',
+      description: 'Project specifications.pdf has been uploaded to the shared folder.',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      read: true,
+    },
+    {
+      id: '4',
       type: 'calendar',
-      title: 'Upcoming Meeting',
-      description: 'Client review meeting in 30 minutes',
-      timestamp: new Date(Date.now() - 25 * 60 * 1000),
-      read: true
-    }
+      title: 'Upcoming meeting',
+      description: 'Team standup in 15 minutes',
+      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+      read: true,
+    },
   ])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
   const getIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'message':
-        return <MessageSquare className="h-4 w-4" />
-      case 'task':
-        return <CheckCircle className="h-4 w-4" />
-      case 'file':
-        return <FileText className="h-4 w-4" />
-      case 'calendar':
-        return <Calendar className="h-4 w-4" />
-      case 'team':
-        return <Users className="h-4 w-4" />
-      default:
-        return <Bell className="h-4 w-4" />
+    const iconMap = {
+      message: '💬',
+      task: '✅',
+      file: '📄',
+      calendar: '📅',
+      team: '👥',
+      other: '🔔'
     }
+    return iconMap[type] || iconMap.other
   }
 
   const getIconColor = (type: Notification['type']) => {
@@ -87,11 +73,11 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
       case 'task':
         return 'text-green-500'
       case 'file':
-        return 'text-orange-500'
-      case 'calendar':
-        return 'text-indigo-500'
-      case 'team':
         return 'text-purple-500'
+      case 'calendar':
+        return 'text-orange-500'
+      case 'team':
+        return 'text-pink-500'
       default:
         return 'text-gray-500'
     }
@@ -99,106 +85,134 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
 
   const markAsRead = (id: string) => {
     setNotifications(current =>
-      current.map(n => n.id === id ? { ...n, read: true } : n)
+      current.map(notification =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
     )
   }
 
   const markAllAsRead = () => {
     setNotifications(current =>
-      current.map(n => ({ ...n, read: true }))
+      current.map(notification => ({ ...notification, read: true }))
     )
-    toast.success('All notifications marked as read')
   }
 
   const formatTime = (timestamp: Date) => {
     const now = new Date()
     const diff = now.getTime() - timestamp.getTime()
+    const minutes = Math.floor(diff / (1000 * 60))
     const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-    if (hours < 1) {
-      const minutes = Math.floor(diff / (1000 * 60))
-      return `${minutes}m ago`
-    }
-    return `${hours}h ago`
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+    if (hours < 24) return `${hours}h ago`
+    return `${days}d ago`
   }
 
+  if (!isOpen) return null
+
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[400px] sm:w-[400px] glass-modal">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
+    <div className="fixed inset-0 z-50">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50" 
+        onClick={onClose}
+      />
+      
+      {/* Sheet */}
+      <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b bg-gray-50">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">🔔</span>
+            <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
             {unreadCount > 0 && (
-              <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full">
+              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                 {unreadCount}
               </span>
             )}
-          </SheetTitle>
-          <SheetDescription>
+            <button
+              onClick={onClose}
+              className="ml-auto p-1 rounded-md hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
             Stay updated with your team and projects
-          </SheetDescription>
-          
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-sm text-muted-foreground">
+          </p>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-500">
               {notifications.length} notifications
             </span>
             {unreadCount > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm"
+              <button 
                 onClick={markAllAsRead}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
               >
                 Mark all as read
-              </Button>
+              </button>
             )}
           </div>
-        </SheetHeader>
+        </div>
 
-        <div className="mt-6 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+        {/* Content */}
+        <div className="flex-1 p-4 space-y-3 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No notifications yet</p>
+            <div className="text-center py-12 text-gray-500">
+              <div className="text-4xl mb-4">🔔</div>
+              <p className="text-lg font-medium mb-2">No notifications yet</p>
+              <p className="text-sm">You're all caught up!</p>
             </div>
           ) : (
             notifications.map((notification) => (
-              <Card 
+              <div 
                 key={notification.id}
-                className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                  !notification.read ? 'border-primary bg-primary/5' : ''
+                className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                  !notification.read 
+                    ? 'border-blue-200 bg-blue-50 shadow-sm' 
+                    : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
                 onClick={() => markAsRead(notification.id)}
               >
                 <div className="flex gap-3">
-                  <div className={`flex-shrink-0 ${getIconColor(notification.type)}`}>
+                  <div className="flex-shrink-0 text-lg">
                     {getIcon(notification.type)}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-sm truncate">
+                    <div className="flex items-start justify-between mb-1">
+                      <h4 className={`font-medium text-sm leading-tight ${
+                        !notification.read ? 'text-gray-900' : 'text-gray-700'
+                      }`}>
                         {notification.title}
                       </h4>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
                         {formatTime(notification.timestamp)}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    <p className="text-sm text-gray-600 leading-relaxed">
                       {notification.description}
                     </p>
                     
                     {!notification.read && (
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2" />
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                        <span className="text-xs text-blue-600 font-medium">New</span>
+                      </div>
                     )}
                   </div>
                 </div>
-              </Card>
+              </div>
             ))
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </div>
   )
 }
