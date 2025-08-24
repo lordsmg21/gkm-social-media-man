@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
-import { X, Plus } from 'lucide-react'
+import { X, Plus, Upload, FileText, Image as ImageIcon, File, Trash2 } from 'lucide-react'
 import { User } from '../App'
 
 interface TaskFile {
@@ -55,6 +55,9 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     assignedTo: [currentUser.id] // Default assign to current user
   })
 
+  const [uploadedFiles, setUploadedFiles] = useState<TaskFile[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -65,6 +68,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       deadline: '',
       assignedTo: [currentUser.id]
     })
+    setUploadedFiles([])
   }
 
   const handleClose = () => {
@@ -100,7 +104,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       progress: 0,
       description: formData.description.trim() || '',
       tags: [],
-      files: []
+      files: uploadedFiles
     }
 
     onTaskCreated(newTask)
@@ -108,16 +112,86 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     handleClose()
   }
 
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return
+
+    Array.from(files).forEach((file) => {
+      // Check file size (max 200MB)
+      if (file.size > 200 * 1024 * 1024) {
+        toast.error(`File ${file.name} is too large. Maximum size is 200MB.`)
+        return
+      }
+
+      // Create file URL for preview
+      const fileUrl = URL.createObjectURL(file)
+
+      const taskFile: TaskFile = {
+        id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadedBy: currentUser.id,
+        uploadedAt: new Date().toISOString(),
+        url: fileUrl
+      }
+
+      setUploadedFiles(prev => [...prev, taskFile])
+    })
+
+    toast.success(`${files.length} file(s) uploaded successfully`)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const files = e.dataTransfer.files
+    handleFileUpload(files)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => {
+      const fileToRemove = prev.find(f => f.id === fileId)
+      if (fileToRemove?.url) {
+        URL.revokeObjectURL(fileToRemove.url)
+      }
+      return prev.filter(f => f.id !== fileId)
+    })
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <ImageIcon className="w-4 h-4" />
+    if (type === 'application/pdf') return <FileText className="w-4 h-4" />
+    return <File className="w-4 h-4" />
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl glass-modal mx-4">
+      <DialogContent className="max-w-2xl glass-modal mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-heading">
             Create New Task
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 pb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="title">Task Title *</Label>
@@ -238,7 +312,68 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          {/* File Upload Section */}
+          <div>
+            <Label>Project Files</Label>
+            <div 
+              className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                isDragging 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-muted hover:border-primary/50'
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
+              <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground mb-2">
+                Drag and drop files here, or{' '}
+                <label className="text-primary cursor-pointer hover:underline">
+                  browse files
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e.target.files)}
+                    accept="image/*,video/*,.pdf,.doc,.docx,.txt,.zip,.rar"
+                  />
+                </label>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Maximum file size: 200MB
+              </p>
+            </div>
+
+            {/* Uploaded Files List */}
+            {uploadedFiles.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <Label className="text-sm font-medium">Uploaded Files ({uploadedFiles.length})</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {uploadedFiles.map((file) => (
+                    <div key={file.id} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
+                      <div className="text-muted-foreground">
+                        {getFileIcon(file.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(file.id)}
+                        className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-background">
             <Button variant="outline" onClick={handleClose}>
               Cancel
             </Button>
