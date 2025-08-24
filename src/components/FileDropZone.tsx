@@ -71,14 +71,24 @@ export function FileDropZone({
   }
 
   const getUploadFileIcon = (file: File) => {
-    if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" 
-    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w
+    if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" />
+    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w-4 h-4 text-amber-500" />
+    if (file.type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />
+    return <File className="w-4 h-4 text-gray-500" />
   }
-  const getStatusIcon = (status: FileUpload['status']) => {
-      case 'uploading': return <Loader2 className="w-3 h-
-      case 'error': return <X className="w-3 h-3 text-red-500" />
 
+  const getStatusIcon = (status: FileUpload['status']) => {
+    switch (status) {
+      case 'uploading': 
+        return <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />
+      case 'completed': 
+        return <Check className="w-3 h-3 text-green-500" />
+      case 'error': 
+        return <X className="w-3 h-3 text-red-500" />
+      default:
+        return null
     }
+  }
   }
 
   const processFiles = async (files: FileList | null) => {
