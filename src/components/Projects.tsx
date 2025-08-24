@@ -32,6 +32,7 @@ import {
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
 import { FileDropZone } from './FileDropZone'
+import { CreateTaskModal } from './CreateTaskModal'
 
 interface TaskFile {
   id: string
@@ -74,6 +75,7 @@ interface ProjectsProps {
 export function Projects({ user }: ProjectsProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showTaskModal, setShowTaskModal] = useState(false)
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [chatMessage, setChatMessage] = useState('')
   const [activeChannel, setActiveChannel] = useState('general')
@@ -526,6 +528,11 @@ export function Projects({ user }: ProjectsProps) {
     })
   }
 
+  // Handle new task creation
+  const handleTaskCreated = (newTask: Task) => {
+    setTasks((prevTasks) => [...(prevTasks || []), newTask])
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-3rem)] space-y-6 md:space-y-6">
       {/* Header */}
@@ -539,7 +546,11 @@ export function Projects({ user }: ProjectsProps) {
         
         <div className="flex items-center gap-3">
           {user.role === 'admin' && (
-            <Button size="sm" className="gap-2">
+            <Button 
+              size="sm" 
+              className="gap-2"
+              onClick={() => setShowCreateTaskModal(true)}
+            >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Task</span>
             </Button>
@@ -732,6 +743,7 @@ export function Projects({ user }: ProjectsProps) {
                             className={`glass-card border-dashed border-2 cursor-pointer hover:bg-muted/20 transition-colors
                               ${draggedOverColumn === column.id && draggedTask ? 'border-primary bg-primary/10' : ''}
                             `}
+                            onClick={() => setShowCreateTaskModal(true)}
                           >
                             <CardContent className="p-3 md:p-4 flex items-center justify-center">
                               <div className="text-center text-muted-foreground">
@@ -1202,6 +1214,15 @@ export function Projects({ user }: ProjectsProps) {
         type="file"
         className="hidden"
         accept="image/*,.pdf,.doc,.docx,.zip,.rar"
+      />
+
+      {/* Create Task Modal */}
+      <CreateTaskModal
+        open={showCreateTaskModal}
+        onOpenChange={setShowCreateTaskModal}
+        onTaskCreated={handleTaskCreated}
+        users={users}
+        currentUser={user}
       />
     </div>
   )
