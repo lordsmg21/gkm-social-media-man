@@ -244,9 +244,9 @@ export function Projects({ user }: ProjectsProps) {
     },
     {
       id: 'chat-2',
-      channel: 'direct',
+      channel: 'direct-1-2', // Direct chat between Alex (1) and Sarah (2)
       senderId: '1',
-      content: '@ads project is nu in review fase, @Sarah_de_Jong kun jij even de laatste details checken?',
+      content: 'Hey Sarah, kun je even naar het @ads project kijken? Er zijn wat vragen van de klant.',
       timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
       type: 'text'
     },
@@ -260,10 +260,26 @@ export function Projects({ user }: ProjectsProps) {
     },
     {
       id: 'chat-4',
-      channel: 'direct',
+      channel: 'direct-1-4', // Direct chat between Alex (1) and Lisa (4)
       senderId: '4',
-      content: '@holiday campaign is klaar voor scheduling. @Mike_Visser wanneer kunnen we live gaan?',
+      content: 'Hi Alex! @holiday campaign is klaar voor scheduling. Wanneer kunnen we live gaan?',
       timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+      type: 'text'
+    },
+    {
+      id: 'chat-5',
+      channel: 'direct-1-2', // Continuation of Alex-Sarah conversation
+      senderId: '2',
+      content: 'Ja zeker! Ik kijk er nu naar. De @ads campagne ziet er goed uit, alleen de targeting moet nog aangepast.',
+      timestamp: new Date(Date.now() - 600000).toISOString(), // 10 minutes ago
+      type: 'text'
+    },
+    {
+      id: 'chat-6',
+      channel: 'direct-2-3', // Direct chat between Sarah (2) and Mike (3)
+      senderId: '3',
+      content: 'Sarah, kun je me helpen met de @strategy project? Ik loop vast op de content planning.',
+      timestamp: new Date(Date.now() - 1200000).toISOString(), // 20 minutes ago
       type: 'text'
     }
   ])
@@ -991,7 +1007,28 @@ export function Projects({ user }: ProjectsProps) {
               <div className="text-base font-semibold text-foreground flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  Team Chat
+                  {activeChannel.startsWith('direct-') ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-6 h-6 p-0"
+                        onClick={() => setActiveChannel('direct')}
+                      >
+                        <ChevronLeft className="w-3 h-3" />
+                      </Button>
+                      <span className="text-sm">
+                        {(() => {
+                          const [, user1Id, user2Id] = activeChannel.split('-')
+                          const otherUserId = user1Id === user.id ? user2Id : user1Id
+                          const otherUser = users.find(u => u.id === otherUserId)
+                          return `Direct: ${otherUser?.name || 'Unknown User'}`
+                        })()}
+                      </span>
+                    </div>
+                  ) : (
+                    'Team Chat'
+                  )}
                 </div>
                 <Button 
                   variant="ghost" 
@@ -1004,29 +1041,67 @@ export function Projects({ user }: ProjectsProps) {
               </div>
             </div>
             
-            {/* Channel Tabs */}
-            <div className="grid grid-cols-2 gap-1 p-2 border-b">
-              <Button 
-                variant={activeChannel === 'general' ? 'default' : 'outline'} 
-                size="sm" 
-                className="text-xs h-8"
-                onClick={() => setActiveChannel('general')}
-              >
-                General
-              </Button>
-              <Button 
-                variant={activeChannel === 'direct' ? 'default' : 'outline'} 
-                size="sm" 
-                className="text-xs h-8"
-                onClick={() => setActiveChannel('direct')}
-              >
-                Direct
-              </Button>
-            </div>
+            {/* Channel Tabs - Only show when not in a direct conversation */}
+            {!activeChannel.startsWith('direct-') && (
+              <div className="grid grid-cols-2 gap-1 p-2 border-b">
+                <Button 
+                  variant={activeChannel === 'general' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs h-8"
+                  onClick={() => setActiveChannel('general')}
+                >
+                  General
+                </Button>
+                <Button 
+                  variant={activeChannel === 'direct' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs h-8"
+                  onClick={() => setActiveChannel('direct')}
+                >
+                  Direct
+                </Button>
+              </div>
+            )}
 
             {/* Messages Area */}
             <ScrollArea className="flex-1 p-3">
               <div className="space-y-3">
+                {/* Show Start Chat button for Direct channel when no active conversation */}
+                {activeChannel === 'direct' && (
+                  <div className="space-y-2 mb-4">
+                    <div className="text-xs font-medium text-muted-foreground mb-2">Team Members</div>
+                    {users.filter(u => u.id !== user.id).map((teamMember) => (
+                      <div 
+                        key={teamMember.id}
+                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                        onClick={() => {
+                          // Start a chat with this team member
+                          const directChannelId = `direct-${Math.min(user.id, teamMember.id)}-${Math.max(user.id, teamMember.id)}`
+                          setActiveChannel(directChannelId)
+                        }}
+                      >
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={teamMember.avatar} />
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                            {teamMember.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium">{teamMember.name}</span>
+                            {teamMember.isOnline && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{teamMember.email}</p>
+                        </div>
+                        <MessageSquare className="w-3 h-3 text-muted-foreground" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Messages for current channel */}
                 {chatMessages
                   .filter(msg => msg.channel === activeChannel)
                   .map((message) => {
@@ -1053,114 +1128,128 @@ export function Projects({ user }: ProjectsProps) {
                       </div>
                     )
                   })}
-                {chatMessages.filter(msg => msg.channel === activeChannel).length === 0 && (
+                  
+                {/* Empty state for channels without messages */}
+                {activeChannel !== 'direct' && chatMessages.filter(msg => msg.channel === activeChannel).length === 0 && (
                   <div className="text-center text-muted-foreground py-4">
                     <MessageSquare className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-xs">No messages yet</p>
+                    {activeChannel.startsWith('direct-') ? (
+                      <>
+                        <p className="text-xs">No messages yet</p>
+                        <p className="text-xs mt-1">Say hello!</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs">No messages yet</p>
+                        <p className="text-xs mt-1">Start the conversation!</p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
             </ScrollArea>
 
             {/* Message Input */}
-            <div className="p-3 border-t relative">
-              {/* Mention Suggestions Dropdown */}
-              {showTaskSuggestions && (taskSuggestions.length > 0 || userSuggestions.length > 0) && (
-                <div className="absolute bottom-full left-3 right-3 mb-2 bg-popover border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                  {/* Task Suggestions */}
-                  {taskSuggestions.length > 0 && (
-                    <div>
-                      <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b">
-                        Tasks
+            {activeChannel !== 'direct' && (
+              <div className="p-3 border-t relative">
+                {/* Mention Suggestions Dropdown */}
+                {showTaskSuggestions && (taskSuggestions.length > 0 || userSuggestions.length > 0) && (
+                  <div className="absolute bottom-full left-3 right-3 mb-2 bg-popover border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                    {/* Task Suggestions */}
+                    {taskSuggestions.length > 0 && (
+                      <div>
+                        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b">
+                          Tasks
+                        </div>
+                        {taskSuggestions.map((task) => (
+                          <div 
+                            key={task.id}
+                            className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                            onClick={() => handleTaskMention(task)}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-foreground truncate">{task.title}</p>
+                                <p className="text-xs text-muted-foreground">{task.client}</p>
+                              </div>
+                            </div>
+                            {task.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {task.tags.slice(0, 3).map((tag) => (
+                                  <Badge key={tag} variant="outline" className="text-xs px-1 py-0 h-4">
+                                    #{tag}
+                                  </Badge>
+                                ))}
+                                {task.tags.length > 3 && (
+                                  <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                                    +{task.tags.length - 3}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {taskSuggestions.map((task) => (
-                        <div 
-                          key={task.id}
-                          className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
-                          onClick={() => handleTaskMention(task)}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
+                    )}
+                    
+                    {/* User Suggestions */}
+                    {userSuggestions.length > 0 && (
+                      <div>
+                        {taskSuggestions.length > 0 && <div className="border-t"></div>}
+                        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b">
+                          Team Members
+                        </div>
+                        {userSuggestions.map((suggestedUser) => (
+                          <div 
+                            key={suggestedUser.id}
+                            className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0 flex items-center gap-3"
+                            onClick={() => handleUserMention(suggestedUser)}
+                          >
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage src={suggestedUser.avatar} />
+                              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                                {suggestedUser.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-foreground truncate">{task.title}</p>
-                              <p className="text-xs text-muted-foreground">{task.client}</p>
+                              <p className="text-xs font-medium text-foreground">{suggestedUser.name}</p>
+                              <p className="text-xs text-muted-foreground">{suggestedUser.email}</p>
                             </div>
+                            {suggestedUser.isOnline && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            )}
                           </div>
-                          {task.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {task.tags.slice(0, 3).map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs px-1 py-0 h-4">
-                                  #{tag}
-                                </Badge>
-                              ))}
-                              {task.tags.length > 3 && (
-                                <Badge variant="outline" className="text-xs px-1 py-0 h-4">
-                                  +{task.tags.length - 3}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* User Suggestions */}
-                  {userSuggestions.length > 0 && (
-                    <div>
-                      {taskSuggestions.length > 0 && <div className="border-t"></div>}
-                      <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/50 border-b">
-                        Team Members
+                        ))}
                       </div>
-                      {userSuggestions.map((suggestedUser) => (
-                        <div 
-                          key={suggestedUser.id}
-                          className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0 flex items-center gap-3"
-                          onClick={() => handleUserMention(suggestedUser)}
-                        >
-                          <Avatar className="w-6 h-6">
-                            <AvatarImage src={suggestedUser.avatar} />
-                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                              {suggestedUser.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-foreground">{suggestedUser.name}</p>
-                            <p className="text-xs text-muted-foreground">{suggestedUser.email}</p>
-                          </div>
-                          {suggestedUser.isOnline && (
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder={`Type @ to mention tasks/team members in ${activeChannel.startsWith('direct-') ? 'direct message' : activeChannel}...`}
+                    value={chatMessage}
+                    onChange={handleChatInputChange}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleSendChatMessage()
+                      }
+                      if (e.key === 'Escape') {
+                        setShowTaskSuggestions(false)
+                        setMentionStartIndex(-1)
+                        setMentionType(null)
+                      }
+                    }}
+                    className="flex-1 text-sm h-8"
+                  />
+                  <Button size="sm" className="w-8 h-8 p-0" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
+                    <Send className="w-3 h-3" />
+                  </Button>
                 </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder={`Type @ to mention tasks/team members in ${activeChannel}...`}
-                  value={chatMessage}
-                  onChange={handleChatInputChange}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleSendChatMessage()
-                    }
-                    if (e.key === 'Escape') {
-                      setShowTaskSuggestions(false)
-                      setMentionStartIndex(-1)
-                      setMentionType(null)
-                    }
-                  }}
-                  className="flex-1 text-sm h-8"
-                />
-                <Button size="sm" className="w-8 h-8 p-0" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
-                  <Send className="w-3 h-3" />
-                </Button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
