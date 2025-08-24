@@ -26,7 +26,7 @@ import {
   Download,
   Trash2,
   Archive,
-  Mute,
+  VolumeX,
   Pin,
   FileText,
   Image as ImageIcon,
@@ -798,7 +798,7 @@ export function Messages({ user }: MessagesProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => muteConversation(selectedConversation)}>
-                          <Mute className="w-4 h-4 mr-2" />
+                          <VolumeX className="w-4 h-4 mr-2" />
                           Mute conversation
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => archiveConversation(selectedConversation)}>
