@@ -108,30 +108,22 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    return `${days}d ago`
-  }
-
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-50">
+    if (mi
+    if (hours < 24) return `${hours}h ag
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/30 notification-overlay" 
         onClick={onClose}
-      />
+    <div
       
       {/* Sheet */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-sm sm:max-w-lg notification-panel shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-border bg-muted/50">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
+          <div classNa
               <span className="text-xl">🔔</span>
-              <h2 className="text-lg font-semibold text-foreground font-heading">Notifications</h2>
+              {unreadCount > 0 && (
+                  {unreadCount}
+              )}
+            <button
               {unreadCount > 0 && (
                 <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center">
                   {unreadCount}
@@ -150,7 +142,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
           
           <p className="text-sm text-muted-foreground mb-4">
             Stay updated with your team and projects
-          </p>
+              
 
           <div className="flex justify-between items-center gap-2">
             <span className="text-sm text-muted-foreground flex-shrink-0">
@@ -160,84 +152,79 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
               <button 
                 onClick={markAllAsRead}
                 className="text-sm text-primary hover:text-primary/80 font-medium transition-colors whitespace-nowrap"
-              >
+            </d
                 Mark all as read
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 p-4 sm:p-6 space-y-3 overflow-y-auto">
-          {notifications.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <div className="text-4xl mb-4">🔔</div>
-              <p className="text-lg font-medium mb-2">No notifications yet</p>
-              <p className="text-sm">You're all caught up!</p>
-            </div>
-          ) : (
-            notifications.map((notification) => (
               <div 
-                key={notification.id}
-                className={`p-4 rounded-lg border transition-all hover:shadow-md notification-item w-full ${
-                  !notification.read 
-                    ? 'border-primary/20 bg-primary/5 shadow-sm' 
-                    : 'border-border bg-card hover:border-border/80'
-                }`}
-              >
-                <div className="flex gap-3 w-full">
-                  <div className="flex-shrink-0 text-base sm:text-lg">
-                    {getIcon(notification.type)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0 w-full max-w-full overflow-hidden">
-                    <div className="flex items-start justify-between mb-2 gap-2 w-full">
-                      <h4 className={`font-medium text-sm leading-tight break-words break-all flex-1 pr-2 ${
-                        !notification.read ? 'text-foreground' : 'text-muted-foreground'
-                      }`}>
-                        {notification.title}
-                      </h4>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
-                        {formatTime(notification.timestamp)}
-                      </span>
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-3 break-words break-all w-full max-w-full">
-                      {notification.message}
-                    </p>
-                    
+            )}
+                
                     <div className="flex items-center justify-between gap-2">
-                      {!notification.read && (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <div className="w-2 h-2 bg-primary rounded-full" />
-                          <span className="text-xs text-primary font-medium">New</span>
+!notification.read && (
+        {/* Content */}
+                          <div className="w-2 h-2 bg-primary r
                         </div>
-                      )}
                       
-                      <div className="flex gap-2 ml-auto flex-shrink-0">
                         {!notification.read && (
-                          <button
                             onClick={() => markAsRead(notification.id)}
-                            className="text-xs text-primary hover:text-primary/80 font-medium whitespace-nowrap"
                           >
-                            Mark as read
-                          </button>
-                        )}
-                        <button
-                          onClick={() => clearNotification(notification.id)}
-                          className="text-xs text-destructive hover:text-destructive/80 font-medium whitespace-nowrap"
-                        >
-                          Clear
-                        </button>
+                  
+               
+                          className="text-xs text
+                   
                       </div>
-                    </div>
                   </div>
-                </div>
               </div>
-            ))
           )}
-        </div>
       </div>
-    </div>
   )
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </div>
