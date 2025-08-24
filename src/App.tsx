@@ -32,6 +32,10 @@ function App() {
   const [activeView, setActiveView] = useState('dashboard')
 
   const renderActiveView = () => {
+    if (!currentUser) {
+      return <div className="flex items-center justify-center h-screen">Loading...</div>
+    }
+    
     switch (activeView) {
       case 'dashboard':
         return <Dashboard user={currentUser} />
@@ -53,11 +57,13 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        <Sidebar 
-          user={currentUser} 
-          activeView={activeView}
-          onViewChange={setActiveView}
-        />
+        {currentUser && (
+          <Sidebar 
+            user={currentUser} 
+            activeView={activeView}
+            onViewChange={setActiveView}
+          />
+        )}
         <main className="flex-1 p-6">
           {renderActiveView()}
         </main>

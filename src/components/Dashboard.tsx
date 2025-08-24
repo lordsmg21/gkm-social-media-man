@@ -206,6 +206,7 @@ export function Dashboard({ user }: DashboardProps) {
   }
 
   const formatNumber = (num: number) => {
+    if (!num && num !== 0) return '0'
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M'
     } else if (num >= 1000) {
@@ -215,6 +216,7 @@ export function Dashboard({ user }: DashboardProps) {
   }
 
   const formatGrowth = (growth: number) => {
+    if (!growth && growth !== 0) return '0%'
     return growth > 0 ? `+${growth}%` : `${growth}%`
   }
 
@@ -247,10 +249,10 @@ export function Dashboard({ user }: DashboardProps) {
             <DollarSign className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">€{kpiData.revenue.toLocaleString()}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData.revenueGrowth)}`}>
-              {React.createElement(getGrowthIcon(kpiData.revenueGrowth), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData.revenueGrowth)} from last month
+            <div className="text-2xl font-bold text-foreground">€{(kpiData?.revenue || 0).toLocaleString()}</div>
+            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.revenueGrowth || 0)}`}>
+              {React.createElement(getGrowthIcon(kpiData?.revenueGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+              {formatGrowth(kpiData?.revenueGrowth || 0)} from last month
             </div>
           </CardContent>
         </Card>
@@ -262,10 +264,10 @@ export function Dashboard({ user }: DashboardProps) {
             <Target className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{kpiData.projects}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData.projectsGrowth)}`}>
-              {React.createElement(getGrowthIcon(kpiData.projectsGrowth), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData.projectsGrowth)} from last month
+            <div className="text-2xl font-bold text-foreground">{kpiData?.projects || 0}</div>
+            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.projectsGrowth || 0)}`}>
+              {React.createElement(getGrowthIcon(kpiData?.projectsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+              {formatGrowth(kpiData?.projectsGrowth || 0)} from last month
             </div>
           </CardContent>
         </Card>
@@ -277,9 +279,9 @@ export function Dashboard({ user }: DashboardProps) {
             <Users className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{kpiData.teamMembers}</div>
+            <div className="text-2xl font-bold text-foreground">{kpiData?.teamMembers || 0}</div>
             <div className="text-xs text-muted-foreground">
-              {teamMembers.filter(m => m.isOnline).length} online now
+              {(teamMembers || []).filter(m => m.isOnline).length} online now
             </div>
           </CardContent>
         </Card>
@@ -291,10 +293,10 @@ export function Dashboard({ user }: DashboardProps) {
             <MessageSquare className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{formatNumber(kpiData.conversations)}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData.conversationsGrowth)}`}>
-              {React.createElement(getGrowthIcon(kpiData.conversationsGrowth), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData.conversationsGrowth)} from last month
+            <div className="text-2xl font-bold text-primary">{formatNumber(kpiData?.conversations || 0)}</div>
+            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.conversationsGrowth || 0)}`}>
+              {React.createElement(getGrowthIcon(kpiData?.conversationsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+              {formatGrowth(kpiData?.conversationsGrowth || 0)} from last month
             </div>
           </CardContent>
         </Card>
@@ -306,10 +308,10 @@ export function Dashboard({ user }: DashboardProps) {
             <Facebook className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData.facebookReach)}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData.facebookReachGrowth)}`}>
-              {React.createElement(getGrowthIcon(kpiData.facebookReachGrowth), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData.facebookReachGrowth)} from last month
+            <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.facebookReach || 0)}</div>
+            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.facebookReachGrowth || 0)}`}>
+              {React.createElement(getGrowthIcon(kpiData?.facebookReachGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+              {formatGrowth(kpiData?.facebookReachGrowth || 0)} from last month
             </div>
           </CardContent>
         </Card>
@@ -321,10 +323,10 @@ export function Dashboard({ user }: DashboardProps) {
             <Instagram className="w-4 h-4 text-pink-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{kpiData.instagramEngagement}%</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData.instagramEngagementGrowth)}`}>
-              {React.createElement(getGrowthIcon(kpiData.instagramEngagementGrowth), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData.instagramEngagementGrowth)} from last month
+            <div className="text-2xl font-bold text-foreground">{kpiData?.instagramEngagement || 0}%</div>
+            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.instagramEngagementGrowth || 0)}`}>
+              {React.createElement(getGrowthIcon(kpiData?.instagramEngagementGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+              {formatGrowth(kpiData?.instagramEngagementGrowth || 0)} from last month
             </div>
           </CardContent>
         </Card>
@@ -336,10 +338,10 @@ export function Dashboard({ user }: DashboardProps) {
             <Eye className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData.messagesReceived)}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData.messagesGrowth)}`}>
-              {React.createElement(getGrowthIcon(kpiData.messagesGrowth), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData.messagesGrowth)} from last month
+            <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.messagesReceived || 0)}</div>
+            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.messagesGrowth || 0)}`}>
+              {React.createElement(getGrowthIcon(kpiData?.messagesGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+              {formatGrowth(kpiData?.messagesGrowth || 0)} from last month
             </div>
           </CardContent>
         </Card>
@@ -351,7 +353,7 @@ export function Dashboard({ user }: DashboardProps) {
             <BarChart3 className="w-4 h-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{kpiData.growthRate}%</div>
+            <div className="text-2xl font-bold text-accent">{kpiData?.growthRate || 0}%</div>
             <div className="text-xs text-muted-foreground">
               Multi-metric calculation
             </div>
@@ -433,10 +435,10 @@ export function Dashboard({ user }: DashboardProps) {
                   <div className="flex justify-center gap-8 mt-6">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-foreground">
-                        {selectedChart === 'revenue' && `€${chartData[chartData.length - 1].revenue.toLocaleString()}`}
-                        {selectedChart === 'conversations' && chartData[chartData.length - 1].conversations}
-                        {selectedChart === 'messages' && chartData[chartData.length - 1].messagesReceived}
-                        {selectedChart === 'social' && `${chartData[chartData.length - 1].instagramEngagement}%`}
+                        {selectedChart === 'revenue' && chartData && chartData.length > 0 && `€${chartData[chartData.length - 1]?.revenue?.toLocaleString() || '0'}`}
+                        {selectedChart === 'conversations' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.conversations || 0)}
+                        {selectedChart === 'messages' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.messagesReceived || 0)}
+                        {selectedChart === 'social' && chartData && chartData.length > 0 && `${chartData[chartData.length - 1]?.instagramEngagement || 0}%`}
                       </div>
                       <div className="text-xs text-muted-foreground">Current Period</div>
                     </div>
@@ -468,19 +470,19 @@ export function Dashboard({ user }: DashboardProps) {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Messages Received</span>
-              <span className="font-semibold text-foreground">{kpiData.messagesReceived.toLocaleString()}</span>
+              <span className="font-semibold text-foreground">{(kpiData?.messagesReceived || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Started Conversations</span>
-              <span className="font-semibold text-primary">{kpiData.conversations.toLocaleString()}</span>
+              <span className="font-semibold text-primary">{(kpiData?.conversations || 0).toLocaleString()}</span>
             </div>
             <Progress 
-              value={(kpiData.conversations / kpiData.messagesReceived) * 100}
+              value={((kpiData?.conversations || 0) / (kpiData?.messagesReceived || 1)) * 100}
               className="h-2"
             />
             <div className="text-center">
               <div className="text-2xl font-bold text-accent">
-                {Math.round((kpiData.conversations / kpiData.messagesReceived) * 100)}%
+                {Math.round(((kpiData?.conversations || 0) / (kpiData?.messagesReceived || 1)) * 100)}%
               </div>
               <div className="text-xs text-muted-foreground">Conversion Rate</div>
             </div>
@@ -500,7 +502,7 @@ export function Dashboard({ user }: DashboardProps) {
                 <span className="text-sm">Facebook</span>
               </div>
               <div className="text-right">
-                <div className="font-semibold text-foreground">{formatNumber(kpiData.facebookReach)}</div>
+                <div className="font-semibold text-foreground">{formatNumber(kpiData?.facebookReach || 0)}</div>
                 <div className="text-xs text-muted-foreground">Reach</div>
               </div>
             </div>
@@ -510,7 +512,7 @@ export function Dashboard({ user }: DashboardProps) {
                 <span className="text-sm">Instagram</span>
               </div>
               <div className="text-right">
-                <div className="font-semibold text-foreground">{kpiData.instagramEngagement}%</div>
+                <div className="font-semibold text-foreground">{kpiData?.instagramEngagement || 0}%</div>
                 <div className="text-xs text-muted-foreground">Engagement</div>
               </div>
             </div>
@@ -532,7 +534,7 @@ export function Dashboard({ user }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {teamMembers.slice(0, 4).map((member) => (
+              {(teamMembers || []).slice(0, 4).map((member) => (
                 <div key={member.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="relative">
@@ -579,7 +581,7 @@ export function Dashboard({ user }: DashboardProps) {
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentProjects.map((project) => (
+            {(recentProjects || []).map((project) => (
               <div key={project.id} className="group p-4 rounded-lg hover:bg-muted/30 cursor-pointer transition-all duration-200 border border-transparent hover:border-border">
                 <div className="flex items-start gap-3">
                   <div className={`w-3 h-3 rounded-full mt-1.5 ${getStatusColor(project.status)}`}></div>
@@ -632,14 +634,14 @@ export function Dashboard({ user }: DashboardProps) {
             <div className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Budget Used</span>
-                <span className="font-medium text-foreground">€{kpiData.budgetUsed.toLocaleString()} / €{kpiData.projectBudget.toLocaleString()}</span>
+                <span className="font-medium text-foreground">€{(kpiData?.budgetUsed || 0).toLocaleString()} / €{(kpiData?.projectBudget || 0).toLocaleString()}</span>
               </div>
               <Progress 
-                value={(kpiData.budgetUsed / kpiData.projectBudget) * 100} 
+                value={((kpiData?.budgetUsed || 0) / (kpiData?.projectBudget || 1)) * 100} 
                 className="h-3"
               />
               <div className="text-xs text-muted-foreground">
-                {Math.round((kpiData.budgetUsed / kpiData.projectBudget) * 100)}% of total budget allocated
+                {Math.round(((kpiData?.budgetUsed || 0) / (kpiData?.projectBudget || 1)) * 100)}% of total budget allocated
               </div>
             </div>
 
@@ -666,7 +668,7 @@ export function Dashboard({ user }: DashboardProps) {
             <div className="bg-muted/20 p-3 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Remaining Budget</span>
-                <span className="text-lg font-bold text-accent">€{(kpiData.projectBudget - kpiData.budgetUsed).toLocaleString()}</span>
+                <span className="text-lg font-bold text-accent">€{((kpiData?.projectBudget || 0) - (kpiData?.budgetUsed || 0)).toLocaleString()}</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">Available for new projects</div>
             </div>
