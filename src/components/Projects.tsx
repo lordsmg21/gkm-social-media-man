@@ -286,31 +286,53 @@ export function Projects({ user }: ProjectsProps) {
     return userIds.map(id => users.find(u => u.id === id)).filter((user): user is User => user !== undefined)
   }
 
-  // Drag and drop handlers
+  // Drag and drop handlers with comprehensive null checks
   const handleDragStart = (e: React.DragEvent, task: Task) => {
-    setDraggedTask(task)
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
-    
-    // Add visual feedback
-    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement
-    dragImage.style.transform = 'rotate(5deg)'
-    dragImage.style.opacity = '0.8'
-    e.dataTransfer.setDragImage(dragImage, 0, 0)
-    
-    // Make original semi-transparent
-    setTimeout(() => {
-      (e.currentTarget as HTMLElement).style.opacity = '0.5'
-      ;(e.currentTarget as HTMLElement).style.transform = 'scale(0.95)'
-    }, 0)
+    try {
+      setDraggedTask(task)
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
+      
+      // Add visual feedback with extensive null checks
+      const currentElement = e.currentTarget as HTMLElement
+      if (currentElement && currentElement.style) {
+        try {
+          const dragImage = currentElement.cloneNode(true) as HTMLElement
+          if (dragImage && dragImage.style) {
+            dragImage.style.transform = 'rotate(5deg)'
+            dragImage.style.opacity = '0.8'
+            e.dataTransfer.setDragImage(dragImage, 0, 0)
+          }
+        } catch (dragImageError) {
+          console.warn('Could not create drag image:', dragImageError)
+        }
+        
+        // Make original semi-transparent with additional safety
+        setTimeout(() => {
+          if (currentElement && currentElement.style && currentElement.isConnected) {
+            currentElement.style.opacity = '0.5'
+            currentElement.style.transform = 'scale(0.95)'
+          }
+        }, 0)
+      }
+    } catch (error) {
+      console.warn('Drag start error:', error)
+    }
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
-    const element = e.currentTarget as HTMLElement
-    element.style.opacity = '1'
-    element.style.transform = 'scale(1)'
-    setDraggedTask(null)
-    setDraggedOverColumn(null)
+    try {
+      const element = e.currentTarget as HTMLElement
+      if (element && element.style && element.isConnected) {
+        element.style.opacity = '1'
+        element.style.transform = 'scale(1)'
+      }
+    } catch (error) {
+      console.warn('Drag end error:', error)
+    } finally {
+      setDraggedTask(null)
+      setDraggedOverColumn(null)
+    }
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -325,7 +347,8 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleDragLeave = (e: React.DragEvent) => {
     // Only clear if we're leaving the column container
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const relatedTarget = e.relatedTarget as Node
+    if (relatedTarget && !e.currentTarget.contains(relatedTarget)) {
       setDraggedOverColumn(null)
     }
   }
@@ -445,7 +468,8 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleTaskFileDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const relatedTarget = e.relatedTarget as Node
+    if (relatedTarget && !e.currentTarget.contains(relatedTarget)) {
       setFileDropTask(null)
     }
   }
@@ -1040,7 +1064,10 @@ export function Projects({ user }: ProjectsProps) {
                     alt={showFilePreview.name}
                     className="max-w-full max-h-[500px] object-contain"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none'
+                      const target = e.target as HTMLImageElement
+                      if (target) {
+                        target.style.display = 'none'
+                      }
                     }}
                   />
                 ) : (

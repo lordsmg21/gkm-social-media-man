@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 import { 
   User as UserIcon, 
   Bell, 
@@ -174,7 +175,7 @@ export function SettingsView({ user }: SettingsViewProps) {
 
   const testNotification = (type: string) => {
     // Simulate notification test
-    alert(`Test ${type} notification sent!`)
+    toast.success(`Test ${type} notification sent!`)
   }
 
   return (
@@ -252,20 +253,25 @@ export function SettingsView({ user }: SettingsViewProps) {
                       className="gap-2"
                       onClick={() => {
                         const input = document.createElement('input')
-                        input.type = 'file'
-                        input.accept = 'image/*'
-                        input.onchange = (e) => {
-                          const file = (e.target as HTMLInputElement).files?.[0]
-                          if (file) {
-                            const reader = new FileReader()
-                            reader.onload = (e) => {
-                              const result = e.target?.result as string
-                              updateSettings('personalInfo', 'avatar', result)
+                        if (input) {
+                          input.type = 'file'
+                          input.accept = 'image/*'
+                          input.onchange = (e) => {
+                            const target = e.target as HTMLInputElement
+                            const file = target?.files?.[0]
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onload = (readerEvent) => {
+                                const result = readerEvent.target?.result as string
+                                if (result) {
+                                  updateSettings('personalInfo', 'avatar', result)
+                                }
+                              }
+                              reader.readAsDataURL(file)
                             }
-                            reader.readAsDataURL(file)
                           }
+                          input.click()
                         }
-                        input.click()
                       }}
                     >
                       <Camera className="w-4 h-4" />

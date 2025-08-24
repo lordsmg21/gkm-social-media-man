@@ -184,7 +184,7 @@ export function FileDropZone({
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target?.files
-    if (files) {
+    if (files && files.length > 0) {
       processFiles(files)
     }
     // Clear input value to allow re-upload of same file
@@ -199,7 +199,16 @@ export function FileDropZone({
       input.type = 'file'
       input.multiple = multiple
       input.accept = acceptedTypes.join(',')
-      input.onchange = handleFileInput
+      input.onchange = (e) => {
+        const target = e.target as HTMLInputElement
+        if (target?.files) {
+          processFiles(target.files)
+        }
+        // Clear input value to allow re-upload of same file
+        if (target) {
+          target.value = ''
+        }
+      }
       input.click()
     }
   }

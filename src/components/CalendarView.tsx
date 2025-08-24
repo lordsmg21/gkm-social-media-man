@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { toast } from 'sonner'
 import { 
   Calendar as CalendarIcon, 
   Plus, 
@@ -185,7 +186,7 @@ export function CalendarView({ user }: CalendarViewProps) {
 
   const handleCreateEvent = () => {
     if (!newEvent.title.trim() || !newEvent.date || !newEvent.time) {
-      alert('Please fill in all required fields')
+      toast.error('Please fill in all required fields')
       return
     }
 
@@ -215,7 +216,7 @@ export function CalendarView({ user }: CalendarViewProps) {
       client: '',
       location: ''
     })
-    alert('Event created successfully!')
+    toast.success('Event created successfully!')
   }
 
   return (
@@ -320,7 +321,10 @@ export function CalendarView({ user }: CalendarViewProps) {
                             isCurrentMonth ? 'bg-background' : 'bg-muted/20'
                           } ${isToday ? 'ring-2 ring-primary' : ''}`}
                           onClick={() => {
-                            // Handle day click - could open create event modal with selected date
+                            // Handle day click - open create event modal with selected date
+                            const dateString = day.toISOString().split('T')[0]
+                            setNewEvent(prev => ({ ...prev, date: dateString }))
+                            setShowCreateModal(true)
                           }}
                         >
                           <div className={`text-sm font-medium mb-1 ${
