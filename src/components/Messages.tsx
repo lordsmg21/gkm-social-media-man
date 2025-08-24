@@ -369,5 +369,3 @@ export function Messages({ user }: MessagesProps) {
     </div>
   )
 }
-
-export { Messages }
