@@ -1,35 +1,35 @@
 import React, { useState, useCallback } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
-import { 
-  Upload, 
   X, 
-  FileText, 
   Image, 
-  Film, 
-  Archive,
-  File,
-  CheckCircle,
-  AlertCircle,
-  Loader2
-} from 'lucide-react'
+  Archive
+  CheckCir
+  Loa
 
-export interface FileUpload {
-  id: string
-  file: File
-  progress: number
-  status: 'pending' | 'uploading' | 'completed' | 'error'
-  preview?: string
-}
+  id: str
+  progre
+  preview?
 
-interface FileDropZoneProps {
-  onFilesUploaded: (files: FileUpload[]) => void
-  maxFileSize?: number // in bytes, default 200MB
-  acceptedTypes?: string[]
-  multiple?: boolean
+  onFilesUploa
+  acceptedType
+  classNa
+
+
+  'image/png',
+  'image/web
+  'applicati
+  'application/vnd
+  'video/mp4',
+  'video/x-msvideo
+ 
+
+
+
+  onFilesUploaded, 
+  acceptedTypes = ACCEPTED
+  className = ""
   className?: string
 }
 
@@ -62,198 +62,198 @@ export function FileDropZone({
   multiple = true,
   className = ""
 }: FileDropZoneProps) {
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [uploads, setUploads] = useState<FileUpload[]>([])
-  const [isUploading, setIsUploading] = useState(false)
-
-  const getFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return <Image className="w-6 h-6" />
-    if (file.type.startsWith('video/')) return <Film className="w-6 h-6" />
-    if (file.type.includes('pdf')) return <FileText className="w-6 h-6" />
-    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w-6 h-6" />
-    return <File className="w-6 h-6" />
-  }
-
-  const getStatusIcon = (status: FileUpload['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Upload className="w-4 h-4 text-muted-foreground" />
-      case 'uploading':
-        return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />
-      case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />
-      default:
-        return null
-    }
-  }
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  const validateFile = (file: File): string | null => {
-    if (!acceptedTypes.includes(file.type)) {
-      return `File type ${file.type} is not supported`
-    }
-    if (file.size > maxFileSize) {
-      return `File size exceeds ${formatFileSize(maxFileSize)} limit`
-    }
-    return null
-  }
-
-  const createFilePreview = async (file: File): Promise<string | undefined> => {
-    if (file.type.startsWith('image/')) {
-      return new Promise((resolve) => {
-        const reader = new FileReader()
-        reader.onload = (e) => resolve(e.target?.result as string)
-        reader.readAsDataURL(file)
-      })
-    }
-    return undefined
-  }
-
-  const processFiles = async (files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-    const newUploads: FileUpload[] = []
-
-    for (const file of fileArray) {
-      const validationError = validateFile(file)
-      if (validationError) {
-        toast.error(`${file.name}: ${validationError}`)
         continue
-      }
 
-      const preview = await createFilePreview(file)
       const upload: FileUpload = {
-        id: `${Date.now()}-${Math.random()}`,
-        file,
-        progress: 0,
+
         status: 'pending',
-        preview
       }
-      newUploads.push(upload)
     }
-
     if (newUploads.length === 0) return
-
     setUploads(prev => [...prev, ...newUploads])
-    await simulateUpload(newUploads)
   }
+  c
 
-  const simulateUpload = async (uploads: FileUpload[]) => {
-    setIsUploading(true)
-
-    for (const upload of uploads) {
       // Update status to uploading
-      setUploads(prev => 
-        prev.map(u => u.id === upload.id ? { ...u, status: 'uploading' as const } : u)
-      )
+        prev.map(u =>
 
-      // Simulate upload progress
       for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise(resolve => setTimeout(resolve, 100))
-        setUploads(prev => 
-          prev.map(u => u.id === upload.id ? { ...u, progress } : u)
+        setUploads(prev
         )
-      }
 
-      // Mark as completed
       setUploads(prev => 
-        prev.map(u => u.id === upload.id ? { ...u, status: 'completed' as const, progress: 100 } : u)
       )
-    }
 
-    setIsUploading(false)
     
-    // Call callback with completed uploads
-    const completedUploads = uploads.map(upload => ({
-      ...upload,
-      status: 'completed' as const,
-      progress: 100
-    }))
-    
-    onFilesUploaded(completedUploads)
-    
+    const completed
+     
+   
+
     // Clear uploads after a delay
-    setTimeout(() => {
       setUploads([])
-    }, 2000)
     
-    toast.success(`${uploads.length} file${uploads.length !== 1 ? 's' : ''} uploaded successfully`)
   }
-
   const removeUpload = (id: string) => {
-    setUploads(prev => prev.filter(u => u.id !== id))
   }
+  c
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(true)
   }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
+  const handleDragLeave = useCallback((e: Rea
     e.stopPropagation()
-    setIsDragOver(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
+  }, 
+  const handleDrop = useCallback((
     e.stopPropagation()
-    setIsDragOver(false)
 
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      processFiles(files)
-    }
-  }, [])
+    if (files.l
+   
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files && files.length > 0) {
       processFiles(files)
-    }
-    // Clear input value to allow re-uploading the same file
-    e.target.value = ''
+    // Clear input value to allow re-up
   }
-
   const handleClick = () => {
-    const input = document.createElement('input')
     input.type = 'file'
-    input.multiple = multiple
-    input.accept = acceptedTypes.join(',')
-    input.onchange = (e) => handleFileInput(e as any)
-    input.click()
-  }
+    inpu
+    i
 
-  return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Drop Zone */}
-      <Card 
-        className={`relative overflow-hidden transition-all duration-200 cursor-pointer border-2 border-dashed
+   
+
           ${isDragOver 
-            ? 'border-primary bg-primary/5 scale-[1.02]' 
-            : 'border-muted-foreground/20 hover:border-primary/50 hover:bg-muted/20'
-          }`}
+            : 'border-muted-foreground/
         onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
+
       >
-        <CardContent className="p-8 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className={`p-4 rounded-full transition-colors ${isDragOver ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              <Upload className="w-8 h-8" />
-            </div>
+          <div className="flex flex-col items-ce
+              <Upload classN
             
-            <div className="space-y-2">
+              <h
+       
+
+              <div className="flex flex-wrap gap-2 
+                  Max {formatFileS
+                <Badge variant="outline" clas
+             
+            </div>
+            <Button varian
+              C
+       
+      </Card>
+     
+
+            <div className="flex items-
+
+              {!isUploading && (
+                  variant="ghost" 
+   
+
+                </Button>
+            </div>
+
+                <div key={upload.id
+                    {getFileIcon(up
+                  
+                    <div className="flex items-center justify-between mb-1">
+       
+
+                            varia
+                            onClick={() => removeUpload(upload.
+                          >
+                          <
+                      </div>
+         
+       
+
+                    {uploa
+                    )}
+                  
+       
+     
+
+                    </div
+    
+            </div>
+        </Card>
+    </div>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
               <h3 className="font-semibold text-lg">
                 {isDragOver ? 'Drop files here' : 'Upload Files'}
               </h3>
