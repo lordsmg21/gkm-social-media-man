@@ -638,3 +638,5 @@ export function FileManager({ user }: FileManagerProps) {
     </div>
   )
 }
+
+export { FileManager }

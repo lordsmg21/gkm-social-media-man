@@ -289,3 +289,5 @@ export function Dashboard({ user }: DashboardProps) {
     </div>
   )
 }
+
+export { Dashboard }
