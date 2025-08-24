@@ -42,7 +42,6 @@ interface CalendarViewProps {
 
 export function CalendarView({ user }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month')
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showEventModal, setShowEventModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -275,30 +274,6 @@ export function CalendarView({ user }: CalendarViewProps) {
             Today
           </Button>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === 'month' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('month')}
-          >
-            Month
-          </Button>
-          <Button
-            variant={viewMode === 'week' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('week')}
-          >
-            Week
-          </Button>
-          <Button
-            variant={viewMode === 'day' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('day')}
-          >
-            Day
-          </Button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -306,9 +281,8 @@ export function CalendarView({ user }: CalendarViewProps) {
         <div className="lg:col-span-3">
           <Card className="glass-card">
             <CardContent className="p-6">
-              {/* Month View */}
-              {viewMode === 'month' && (
-                <div className="space-y-4">
+              {/* Month View - Always shown now */}
+              <div className="space-y-4">
                   {/* Day Headers */}
                   <div className="grid grid-cols-7 gap-2">
                     {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day) => (
@@ -378,7 +352,6 @@ export function CalendarView({ user }: CalendarViewProps) {
                     })}
                   </div>
                 </div>
-              )}
             </CardContent>
           </Card>
         </div>

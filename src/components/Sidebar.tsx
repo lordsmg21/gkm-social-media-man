@@ -11,7 +11,8 @@ import {
   Users, 
   Settings,
   Hexagon,
-  Bell
+  Bell,
+  LogOut
 } from 'lucide-react'
 import { User } from '../App'
 import { NotificationCenter, useNotifications } from './NotificationCenter'
@@ -71,8 +72,8 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
   )
 
   return (
-    <div className="w-64 bg-card/50 backdrop-blur-sm border-r border-border min-h-screen">
-      <div className="p-6">
+    <div className="w-64 bg-card/50 backdrop-blur-sm border-r border-border min-h-screen flex flex-col">
+      <div className="p-6 flex flex-col flex-1">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -135,20 +136,34 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* Notifications */}
-        <div className="mt-8">
+        {/* Notifications & Logout */}
+        <div className="mt-auto space-y-2">
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 h-11 relative"
             onClick={() => setIsNotificationOpen(true)}
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-4 h-4" />
             <span>Notifications</span>
             {unreadCount > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs flex items-center justify-center">
                 {unreadCount}
               </Badge>
             )}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 h-11 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              // Reset user session and refresh page
+              localStorage.clear()
+              sessionStorage.clear()
+              window.location.reload()
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
           </Button>
         </div>
       </div>

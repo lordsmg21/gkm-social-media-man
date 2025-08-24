@@ -1,22 +1,24 @@
 import { useState } from 'react'
+import { useKV } from '@github/spark/hooks'
 
 interface Notification {
   id: string
-  type: 'message' | 'task' | 'file' | 'calendar' | 'team' | 'other'
+  type: 'message' | 'task' | 'file' | 'calendar' | 'team' | 'deadline' | 'other'
   title: string
-  description: string
+  message: string
   timestamp: Date
   read: boolean
   userId?: string
+  actionData?: any
 }
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>([
+  const [notifications, setNotifications] = useKV<Notification[]>('notifications', [
     {
       id: '1',
       type: 'message',
       title: 'New message from Sarah',
-      description: 'Hey! Can we schedule a meeting for tomorrow?',
+      message: 'Hey! Can we schedule a meeting for tomorrow?',
       timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
       read: false,
     },
@@ -24,7 +26,7 @@ export function useNotifications() {
       id: '2',
       type: 'task',
       title: 'Task completed',
-      description: 'Design review has been completed successfully.',
+      message: 'Design review has been completed successfully.',
       timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
       read: false,
     },
@@ -32,13 +34,13 @@ export function useNotifications() {
       id: '3',
       type: 'file',
       title: 'File uploaded',
-      description: 'Project specifications.pdf has been uploaded.',
+      message: 'Project specifications.pdf has been uploaded.',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       read: true,
     }
   ])
 
-  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadCount = (notifications || []).filter(n => !n.read).length
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
@@ -46,12 +48,12 @@ export function useNotifications() {
       id: Date.now().toString(),
       timestamp: new Date(),
     }
-    setNotifications(current => [newNotification, ...current])
+    setNotifications(current => [newNotification, ...(current || [])])
   }
 
   const markAsRead = (id: string) => {
     setNotifications(current =>
-      current.map(notification =>
+      (current || []).map(notification =>
         notification.id === id ? { ...notification, read: true } : notification
       )
     )
@@ -59,16 +61,16 @@ export function useNotifications() {
 
   const markAllAsRead = () => {
     setNotifications(current =>
-      current.map(notification => ({ ...notification, read: true }))
+      (current || []).map(notification => ({ ...notification, read: true }))
     )
   }
 
   const clearNotification = (id: string) => {
-    setNotifications(current => current.filter(n => n.id !== id))
+    setNotifications(current => (current || []).filter(n => n.id !== id))
   }
 
   return {
-    notifications,
+    notifications: notifications || [],
     unreadCount,
     addNotification,
     markAsRead,
@@ -191,7 +193,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
                     </div>
                     
                     <p className="text-sm text-gray-600 leading-relaxed mb-3">
-                      {notification.description}
+                      {notification.message}
                     </p>
                     
                     <div className="flex items-center justify-between">
@@ -230,100 +232,5 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
   )
 }
 
-// Named export for the NotificationCenter component
+// Export the NotificationCenter component
 export { NotificationCenter }
-
-export default function App() {
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const { notifications, unreadCount, addNotification } = useNotifications()
-
-  const handleAddNotification = () => {
-    const types: Array<'message' | 'task' | 'file' | 'calendar' | 'team'> = ['message', 'task', 'file', 'calendar', 'team']
-    const randomType = types[Math.floor(Math.random() * types.length)]
-    
-    const sampleNotifications = {
-      message: { title: 'New message received', description: 'You have a new message from a colleague.' },
-      task: { title: 'Task reminder', description: 'Don\'t forget to complete your weekly report.' },
-      file: { title: 'File shared', description: 'A new document has been shared with you.' },
-      calendar: { title: 'Meeting reminder', description: 'Your meeting starts in 30 minutes.' },
-      team: { title: 'Team update', description: 'New team member has joined the project.' }
-    }
-    
-    addNotification({
-      type: randomType,
-      title: sampleNotifications[randomType].title,
-      description: sampleNotifications[randomType].description,
-      read: false,
-    })
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Notification System Demo</h1>
-        
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">Dashboard</h2>
-              <p className="text-gray-600">Manage your notifications and stay up to date</p>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddNotification}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Add Notification
-              </button>
-              
-              <button
-                onClick={() => setIsNotificationOpen(true)}
-                className="relative bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <span className="text-lg">🔔</span>
-                <span>Notifications</span>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">💬</span>
-                <h3 className="font-semibold text-gray-800">Messages</h3>
-              </div>
-              <p className="text-gray-600">{notifications.filter(n => n.type === 'message' && !n.read).length} unread messages</p>
-            </div>
-            
-            <div className="bg-green-50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">✅</span>
-                <h3 className="font-semibold text-gray-800">Tasks</h3>
-              </div>
-              <p className="text-gray-600">{notifications.filter(n => n.type === 'task').length} task notifications</p>
-            </div>
-            
-            <div className="bg-purple-50 p-6 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">📄</span>
-                <h3 className="font-semibold text-gray-800">Files</h3>
-              </div>
-              <p className="text-gray-600">{notifications.filter(n => n.type === 'file').length} file notifications</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <NotificationCenter 
-        isOpen={isNotificationOpen}
-        onClose={() => setIsNotificationOpen(false)}
-      />
-    </div>
-  )
-}
