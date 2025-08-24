@@ -1,15 +1,28 @@
 import React, { useState, useCallback } from 'react'
 import { Progress } from '@/components/ui/progress'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { 
   X, 
   Image, 
-  X, 
   Upload, 
-  Image, 
   FileText, 
-  file: Fil
-  status: 'pend
+  Video,
+  Archive,
+  Loader2,
+  CheckCircle
+} from 'lucide-react'
+
+interface FileUpload {
+  id: string
+  file: File
+  progress: number
+  status: 'pending' | 'uploading' | 'completed' | 'error'
+  preview?: string
 }
-export in
+
+interface FileDropZoneProps {
+  onFilesUploaded: (files: File[]) => void
   maxFileSize?: number
   acceptedTypes?: string[]
   multiple?: boolean
@@ -44,18 +57,6 @@ export function FileDropZone({
   acceptedTypes = ACCEPTED_TYPES,
   multiple = true,
   className = ""
-}: FileDropZoneProps) {
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [uploads, setUploads] = useState<FileUpload[]>([])
-  const [isUploading, setIsUploading] = useState(false)
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
 }: FileDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploads, setUploads] = useState<FileUpload[]>([])
@@ -113,6 +114,16 @@ export function FileDropZone({
         reader.readAsDataURL(file)
       }
 
+      newUploads.push(upload)
+    }
+
+    setUploads(prev => [...prev, ...newUploads])
+    setIsUploading(true)
+
+    // Start uploading
+    setUploads(prev => 
+      prev.map(u => 
+        newUploads.some(nu => nu.id === u.id) ? { ...u, status: 'uploading' as const } : u
       )
     )
 
@@ -134,10 +145,7 @@ export function FileDropZone({
     )
     
     // Return completed files to parent
-    const completedFiles = uploads
-      .filter(u => u.status === 'completed')
-      .map(u => u.file)
-    
+    const completedFiles = newUploads.map(u => u.file)
     onFilesUploaded(completedFiles)
     setIsUploading(false)
 

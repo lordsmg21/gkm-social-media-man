@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
-import { FileDropZone, type FileUpload } from './FileDropZone'
+import { FileDropZone } from './FileDropZone'
 
 interface TaskFile {
   id: string
@@ -243,12 +243,12 @@ export function Projects({ user }: ProjectsProps) {
   ])
 
   // Filter tasks based on user role
-  const visibleTasks = user.role === 'admin' ? tasks : tasks.filter(task => 
-    task.assignedTo.includes(user.id) || task.client === 'My Client' // Simplified client filtering
+  const visibleTasks = user.role === 'admin' ? (tasks || []) : (tasks || []).filter(task => 
+    task.assignedTo?.includes(user.id) || task.client === 'My Client' // Simplified client filtering
   )
 
   const getTasksByStatus = (status: string) => {
-    return visibleTasks.filter(task => task.status === status)
+    return (visibleTasks || []).filter(task => task.status === status)
   }
 
   const getPriorityColor = (priority: string) => {
@@ -282,6 +282,7 @@ export function Projects({ user }: ProjectsProps) {
   }
 
   const getAssignedUsers = (userIds: string[]) => {
+    if (!userIds || !Array.isArray(userIds)) return []
     return userIds.map(id => users.find(u => u.id === id)).filter((user): user is User => user !== undefined)
   }
 
@@ -335,14 +336,15 @@ export function Projects({ user }: ProjectsProps) {
     
     if (draggedTask && draggedTask.status !== newStatus) {
       // Update task status
-      const updatedTasks = tasks.map(task => 
+      const updatedTasks = (tasks || []).map(task => 
         task.id === draggedTask.id 
           ? { ...task, status: newStatus as Task['status'] }
           : task
       )
       setTasks(updatedTasks)
       
-      toast.success(`Task moved to ${columns.find(col => col.id === newStatus)?.title}`)
+      const columnTitle = columns.find(col => col.id === newStatus)?.title || newStatus
+      toast.success(`Task moved to ${columnTitle}`)
       
       // Auto-update progress based on status
       let newProgress = draggedTask.progress
@@ -368,25 +370,32 @@ export function Projects({ user }: ProjectsProps) {
     setShowFileUpload(taskId)
   }
 
-  const handleFilesUploaded = (uploads: FileUpload[], taskId: string) => {
-    const newFiles: TaskFile[] = uploads.map(upload => ({
+  // Fix the function signature to match what FileDropZone expects
+  const handleFilesUploaded = (files: File[], taskId: string) => {
+    if (!files || !Array.isArray(files)) {
+      toast.error('No files to upload')
+      return
+    }
+
+    const newFiles: TaskFile[] = files.map(file => ({
       id: `f${Date.now()}-${Math.random()}`,
-      name: upload.file.name,
-      size: upload.file.size,
-      type: upload.file.type,
+      name: file.name,
+      size: file.size,
+      type: file.type,
       uploadedBy: user.id,
       uploadedAt: new Date().toISOString(),
-      url: URL.createObjectURL(upload.file) // In real app, this would be the server URL
+      url: URL.createObjectURL(file) // In real app, this would be the server URL
     }))
 
-    const updatedTasks = tasks.map(task => 
+    const updatedTasks = (tasks || []).map(task => 
       task.id === taskId 
-        ? { ...task, files: [...task.files, ...newFiles] }
+        ? { ...task, files: [...(task.files || []), ...newFiles] }
         : task
     )
     setTasks(updatedTasks)
     setShowFileUpload(null)
     setFileDropTask(null)
+    toast.success(`${files.length} file(s) uploaded successfully`)
   }
 
   // Handle file drops directly on task cards
@@ -405,32 +414,21 @@ export function Projects({ user }: ProjectsProps) {
     const files = e.dataTransfer.files
     if (files.length === 0) return
 
-    // Process files directly
-    const processDirectDrop = async () => {
-      const fileArray = Array.from(files)
-      const uploads: FileUpload[] = []
-
-      for (const file of fileArray) {
-        // Check file size (max 200MB)
-        if (file.size > 200 * 1024 * 1024) {
-          toast.error(`${file.name}: File size exceeds 200MB limit`)
-          continue
-        }
-
-        uploads.push({
-          id: `${Date.now()}-${Math.random()}`,
-          file,
-          progress: 100,
-          status: 'completed'
-        })
+    // Convert FileList to File array and process
+    const fileArray = Array.from(files)
+    
+    // Filter files by size and type
+    const validFiles = fileArray.filter(file => {
+      if (file.size > 200 * 1024 * 1024) {
+        toast.error(`${file.name}: File size exceeds 200MB limit`)
+        return false
       }
+      return true
+    })
 
-      if (uploads.length > 0) {
-        handleFilesUploaded(uploads, taskId)
-      }
+    if (validFiles.length > 0) {
+      handleFilesUploaded(validFiles, taskId)
     }
-
-    processDirectDrop()
   }
 
   const handleTaskFileDragOver = (e: React.DragEvent, taskId: string) => {
@@ -453,9 +451,9 @@ export function Projects({ user }: ProjectsProps) {
   }
 
   const handleFileDelete = (taskId: string, fileId: string) => {
-    const updatedTasks = tasks.map(task => 
+    const updatedTasks = (tasks || []).map(task => 
       task.id === taskId 
-        ? { ...task, files: task.files.filter(f => f.id !== fileId) }
+        ? { ...task, files: (task.files || []).filter(f => f.id !== fileId) }
         : task
     )
     setTasks(updatedTasks)
@@ -543,7 +541,7 @@ export function Projects({ user }: ProjectsProps) {
                       
                       <div className="space-y-3 min-h-[300px] md:min-h-[400px]">
                         {columnTasks.map((task) => {
-                          const assignedUsers = getAssignedUsers(task.assignedTo)
+                          const assignedUsers = getAssignedUsers(task.assignedTo || [])
                           const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed'
                           
                           return (
@@ -618,10 +616,10 @@ export function Projects({ user }: ProjectsProps) {
                                   </div>
                                   
                                   {/* Files indicator */}
-                                  {task.files.length > 0 && (
+                                  {(task.files || []).length > 0 && (
                                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                       <Paperclip className="w-3 h-3" />
-                                      <span>{task.files.length} file{task.files.length !== 1 ? 's' : ''}</span>
+                                      <span>{(task.files || []).length} file{(task.files || []).length !== 1 ? 's' : ''}</span>
                                     </div>
                                   )}
                                   
@@ -857,7 +855,7 @@ export function Projects({ user }: ProjectsProps) {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Assigned Team</label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {getAssignedUsers(selectedTask.assignedTo).map((assignedUser) => (
+                  {getAssignedUsers(selectedTask.assignedTo || []).map((assignedUser) => (
                     <div key={assignedUser.id} className="flex items-center gap-2 bg-muted rounded-lg p-2">
                       <Avatar className="w-6 h-6">
                         <AvatarImage src={assignedUser.avatar} />
@@ -874,7 +872,7 @@ export function Projects({ user }: ProjectsProps) {
               {/* Files Section */}
               <div>
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-muted-foreground">Files ({selectedTask.files.length})</label>
+                  <label className="text-sm font-medium text-muted-foreground">Files ({(selectedTask.files || []).length})</label>
                   {user.role === 'admin' && (
                     <Button 
                       size="sm" 
@@ -888,9 +886,9 @@ export function Projects({ user }: ProjectsProps) {
                   )}
                 </div>
                 
-                {selectedTask.files.length > 0 ? (
+                {(selectedTask.files || []).length > 0 ? (
                   <div className="mt-3 space-y-2">
-                    {selectedTask.files.map((file) => {
+                    {(selectedTask.files || []).map((file) => {
                       const uploader = users.find(u => u.id === file.uploadedBy)
                       return (
                         <div key={file.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
@@ -1067,7 +1065,7 @@ export function Projects({ user }: ProjectsProps) {
               </div>
               
               <FileDropZone 
-                onFilesUploaded={(uploads) => handleFilesUploaded(uploads, showFileUpload)}
+                onFilesUploaded={(files) => handleFilesUploaded(files, showFileUpload)}
                 maxFileSize={200 * 1024 * 1024} // 200MB
               />
               
