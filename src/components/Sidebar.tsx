@@ -105,7 +105,7 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
         {/* Navigation */}
         <nav className="space-y-2">
           {visibleItems.map((item) => {
-            const Icon = item.icon
+            const IconComponent = item.icon
             const isActive = activeView === item.id
             
             return (
@@ -118,7 +118,7 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
                 )}
                 onClick={() => onViewChange(item.id)}
               >
-                <Icon className="w-4 h-4" />
+                <IconComponent className="w-4 h-4" />
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.badge && (
                   <Badge variant="destructive" className="text-xs min-w-[20px] h-5">

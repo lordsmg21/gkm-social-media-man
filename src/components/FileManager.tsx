@@ -390,7 +390,7 @@ export function FileManager({ user }: FileManagerProps) {
           : 'space-y-2'
       }>
         {filteredFiles.map((file) => {
-          const Icon = fileTypeIcons[file.type]
+          const IconComponent = fileTypeIcons[file.type]
           const isSelected = selectedFiles.includes(file.id)
           const canAccess = canUserAccessFile(file)
           const canDelete = canUserDeleteFile(file)
@@ -409,7 +409,7 @@ export function FileManager({ user }: FileManagerProps) {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className={`p-2 rounded-lg ${fileTypeColors[file.type]}`}>
-                      <Icon className="w-5 h-5" />
+                      <IconComponent className="w-5 h-5" />
                     </div>
                     <div className="flex items-center gap-1">
                       {file.isStarred && <Star className="w-3 h-3 text-yellow-500 fill-current" />}
@@ -495,7 +495,7 @@ export function FileManager({ user }: FileManagerProps) {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <div className={`p-2 rounded-lg ${fileTypeColors[file.type]} flex-shrink-0`}>
-                      <Icon className="w-4 h-4" />
+                      <IconComponent className="w-4 h-4" />
                     </div>
                     
                     <div className="flex-1 min-w-0">
@@ -553,30 +553,32 @@ export function FileManager({ user }: FileManagerProps) {
             </DialogTitle>
           </DialogHeader>
           
-          {selectedFile && (
-            <div className="space-y-4">
-              <div className="bg-muted/20 rounded-lg p-8 text-center">
-                {selectedFile.type === 'image' ? (
-                  <img 
-                    src={selectedFile.url} 
-                    alt={selectedFile.name}
-                    className="max-w-full max-h-96 mx-auto rounded-lg"
-                  />
-                ) : selectedFile.type === 'video' ? (
-                  <video 
-                    src={selectedFile.url} 
-                    controls
-                    className="max-w-full max-h-96 mx-auto rounded-lg"
-                  >
-                    Your browser does not support video playback.
-                  </video>
-                ) : (
-                  <div className="py-16">
-                    <Icon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Preview not available for this file type</p>
-                  </div>
-                )}
-              </div>
+          {selectedFile && (() => {
+            const PreviewIconComponent = fileTypeIcons[selectedFile.type]
+            return (
+              <div className="space-y-4">
+                <div className="bg-muted/20 rounded-lg p-8 text-center">
+                  {selectedFile.type === 'image' ? (
+                    <img 
+                      src={selectedFile.url} 
+                      alt={selectedFile.name}
+                      className="max-w-full max-h-96 mx-auto rounded-lg"
+                    />
+                  ) : selectedFile.type === 'video' ? (
+                    <video 
+                      src={selectedFile.url} 
+                      controls
+                      className="max-w-full max-h-96 mx-auto rounded-lg"
+                    >
+                      Your browser does not support video playback.
+                    </video>
+                  ) : (
+                    <div className="py-16">
+                      <PreviewIconComponent className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Preview not available for this file type</p>
+                    </div>
+                  )}
+                </div>
               
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -631,8 +633,8 @@ export function FileManager({ user }: FileManagerProps) {
                   )}
                 </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </DialogContent>
       </Dialog>
     </div>

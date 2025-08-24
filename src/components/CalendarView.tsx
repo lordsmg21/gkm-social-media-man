@@ -283,7 +283,7 @@ function CalendarView({ user }: CalendarViewProps) {
                           
                           <div className="space-y-1">
                             {dayEvents.slice(0, 3).map((event) => {
-                              const Icon = eventTypeIcons[event.type]
+                              const EventIconComponent = eventTypeIcons[event.type]
                               return (
                                 <div
                                   key={event.id}
@@ -295,7 +295,7 @@ function CalendarView({ user }: CalendarViewProps) {
                                   }}
                                 >
                                   <div className="flex items-center gap-1">
-                                    <Icon className="w-2 h-2" />
+                                    <EventIconComponent className="w-2 h-2" />
                                     <span className="truncate">{event.title}</span>
                                   </div>
                                 </div>
@@ -326,7 +326,7 @@ function CalendarView({ user }: CalendarViewProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {upcomingEvents.map((event) => {
-                const Icon = eventTypeIcons[event.type]
+                const EventIconComponent = eventTypeIcons[event.type]
                 return (
                   <div 
                     key={event.id}
@@ -337,7 +337,7 @@ function CalendarView({ user }: CalendarViewProps) {
                     }}
                   >
                     <div className={`p-2 rounded-lg ${eventTypeColors[event.type]}`}>
-                      <Icon className="w-4 h-4" />
+                      <EventIconComponent className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm text-foreground truncate">{event.title}</h4>
@@ -363,11 +363,11 @@ function CalendarView({ user }: CalendarViewProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {Object.entries(eventTypeColors).map(([type, colorClass]) => {
-                const Icon = eventTypeIcons[type as keyof typeof eventTypeIcons]
+                const EventIconComponent = eventTypeIcons[type as keyof typeof eventTypeIcons]
                 return (
                   <div key={type} className="flex items-center gap-3">
                     <div className={`p-1.5 rounded-lg ${colorClass}`}>
-                      <Icon className="w-3 h-3" />
+                      <EventIconComponent className="w-3 h-3" />
                     </div>
                     <span className="text-sm text-foreground capitalize">
                       {type === 'standup' ? 'Team Standup' : type}
@@ -394,8 +394,8 @@ function CalendarView({ user }: CalendarViewProps) {
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${eventTypeColors[selectedEvent.type]}`}>
                   {(() => {
-                    const Icon = eventTypeIcons[selectedEvent.type]
-                    return <Icon className="w-4 h-4" />
+                    const EventIconComponent = eventTypeIcons[selectedEvent.type]
+                    return <EventIconComponent className="w-4 h-4" />
                   })()}
                 </div>
                 <div>
