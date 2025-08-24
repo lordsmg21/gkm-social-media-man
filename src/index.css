@@ -157,7 +157,8 @@
   /* Board + Chat Layout Mobile Responsive */
   @media (max-width: 768px) {
     .board-chat-layout {
-      flex-direction: column;
+      flex-direction: column !important;
+      gap: 1rem !important;
     }
     
     .board-section {
@@ -166,21 +167,24 @@
     
     .chat-section {
       min-height: 40vh;
+      width: 100% !important;
+      max-width: 100% !important;
     }
   }
 
   /* Custom scrollbar styles */
   .overflow-x-auto::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
   }
 
   .overflow-x-auto::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
   }
 
   .overflow-x-auto::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 4px;
   }
 
   .overflow-x-auto::-webkit-scrollbar-thumb:hover {

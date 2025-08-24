@@ -244,7 +244,7 @@ export function Projects({ user }: ProjectsProps) {
     },
     {
       id: 'chat-2',
-      channel: 'projects',
+      channel: 'direct',
       senderId: '1',
       content: '@bellavista-ads is nu in review fase. Kunnen we morgen de final presentatie doen?',
       timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
@@ -260,7 +260,7 @@ export function Projects({ user }: ProjectsProps) {
     },
     {
       id: 'chat-4',
-      channel: 'projects', 
+      channel: 'direct', 
       senderId: '3',
       content: 'Great work on @techstart-launch! Client is super happy met de resultaten 🎉',
       timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
@@ -512,12 +512,6 @@ export function Projects({ user }: ProjectsProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <Image className="w-4 h-4" />
-    if (type.includes('pdf')) return <FileText className="w-4 h-4" />
-    return <Paperclip className="w-4 h-4" />
-  }
-
   const handleChatMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setChatMessage(value)
@@ -618,16 +612,20 @@ export function Projects({ user }: ProjectsProps) {
         </div>
       </div>
 
-      {/* Board Section - Takes remaining space minus chat */}
-      <div className="flex-1 board-section overflow-hidden">
-        <Card className="glass-card h-full">
-          <CardHeader className="pb-4 flex-shrink-0">
-            <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 p-2 md:p-6 overflow-hidden">
-            <div className="w-full h-full overflow-x-auto">
-              <div className="flex gap-3 md:gap-6 pb-4 h-full" style={{ minWidth: 'max-content' }}>
-                {columns.map((column) => {
+      {/* Main Content - Board + Chat Layout */}
+      <div className={`flex-1 flex ${user.role === 'admin' ? 'gap-6' : ''} overflow-hidden board-chat-layout`}>
+        
+        {/* Board Section - Takes remaining space */}
+        <div className="flex-1 board-section overflow-hidden">
+          <Card className="glass-card h-full">
+            <CardHeader className="pb-4 flex-shrink-0">
+              <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 p-2 md:p-6 overflow-hidden">
+              <div className="w-full h-full">
+                <div className="overflow-x-auto h-full">
+                  <div className="flex gap-3 md:gap-6 pb-4 h-full" style={{ minWidth: 'max-content' }}>
+                    {columns.map((column) => {
                   const columnTasks = getTasksByStatus(column.id)
                   
                   return (
@@ -707,6 +705,57 @@ export function Projects({ user }: ProjectsProps) {
                                     <Badge variant="outline" className="text-xs px-2 py-0.5 bg-accent/20 text-accent border-accent/40 font-medium">
                                       {task.mentionTag}
                                     </Badge>
+                                  </div>
+                                )}
+
+                                {/* File previews */}
+                                {(task.files || []).length > 0 && (
+                                  <div className="mb-3">
+                                    <div className="grid grid-cols-4 gap-1">
+                                      {(task.files || []).slice(0, 4).map((file) => (
+                                        <div 
+                                          key={file.id}
+                                          className="aspect-square bg-muted rounded border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setShowFilePreview(file)
+                                          }}
+                                        >
+                                          {file.type.startsWith('image/') ? (
+                                            <img 
+                                              src={file.url} 
+                                              alt={file.name}
+                                              className="w-full h-full object-cover"
+                                              onError={(e) => {
+                                                const target = e.target as HTMLImageElement
+                                                const parent = target.parentElement
+                                                if (parent) {
+                                                  target.style.display = 'none'
+                                                  // Add fallback icon manually
+                                                  const fallback = document.createElement('div')
+                                                  fallback.className = "w-full h-full flex items-center justify-center text-muted-foreground"
+                                                  fallback.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>'
+                                                  parent.appendChild(fallback)
+                                                }
+                                              }}
+                                            />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                              {file.type.includes('pdf') ? (
+                                                <FileText className="w-4 h-4" />
+                                              ) : (
+                                                <Paperclip className="w-4 h-4" />
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                    {(task.files || []).length > 4 && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        +{(task.files || []).length - 4} more files
+                                      </p>
+                                    )}
                                   </div>
                                 )}
                                 
@@ -801,71 +850,62 @@ export function Projects({ user }: ProjectsProps) {
                     </div>
                   )
                 })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Team Chat Section - Takes remaining space, responsive on mobile (Admin Only) */}
-      {user.role === 'admin' && (
-        <div className="chat-section flex-shrink-0" style={{ height: '35vh', minHeight: '300px' }}>
-          <Card className="glass-card h-full">
-            <CardHeader className="flex flex-row items-center justify-between py-3">
-              <CardTitle className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
-                Team Chat
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-1">
-                  {users.slice(0, 3).map((teamMember) => (
-                    <div key={teamMember.id} className="relative">
-                      <Avatar className="w-5 h-5 md:w-6 md:h-6 border-2 border-background">
-                        <AvatarImage src={teamMember.avatar} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                          {teamMember.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      {teamMember.isOnline && (
-                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full border border-background"></div>
-                      )}
-                    </div>
-                  ))}
                 </div>
-                <span className="text-xs md:text-sm text-muted-foreground">{users.filter(u => u.isOnline).length} online</span>
               </div>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col h-[calc(100%-4rem)] p-2 md:p-6">
-              {/* Channel Tabs */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <Button 
-                  variant={activeChannel === 'general' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => setActiveChannel('general')}
-                >
-                  <Target className="w-3 h-3 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">#</span>general
-                </Button>
-                <Button 
-                  variant={activeChannel === 'projects' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => setActiveChannel('projects')}
-                >
-                  <Users className="w-3 h-3 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">#</span>projects
-                </Button>
-                <Button 
-                  variant={activeChannel === 'urgent' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => setActiveChannel('urgent')}
-                >
-                  <AlertCircle className="w-3 h-3 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">#</span>urgent
-                </Button>
-              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Team Chat Section - Fixed width sidebar (Admin Only) */}
+        {user.role === 'admin' && (
+          <div className="chat-section flex-shrink-0 w-96 max-w-96">
+            <Card className="glass-card h-full">
+              <CardHeader className="flex flex-row items-center justify-between py-3">
+                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Team Chat
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-1">
+                    {users.slice(0, 2).map((teamMember) => (
+                      <div key={teamMember.id} className="relative">
+                        <Avatar className="w-5 h-5 border-2 border-background">
+                          <AvatarImage src={teamMember.avatar} />
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                            {teamMember.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        {teamMember.isOnline && (
+                          <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-background"></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{users.filter(u => u.isOnline).length}</span>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col h-[calc(100%-4rem)] p-4">
+                {/* Channel Tabs - Simplified to 2 channels */}
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <Button 
+                    variant={activeChannel === 'general' ? 'default' : 'outline'} 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => setActiveChannel('general')}
+                  >
+                    <Target className="w-3 h-3 mr-1" />
+                    General
+                  </Button>
+                  <Button 
+                    variant={activeChannel === 'direct' ? 'default' : 'outline'} 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => setActiveChannel('direct')}
+                  >
+                    <Users className="w-3 h-3 mr-1" />
+                    Direct
+                  </Button>
+                </div>
 
               {/* Messages Area */}
               <ScrollArea className="flex-1 mb-4">
@@ -1005,6 +1045,8 @@ export function Projects({ user }: ProjectsProps) {
         </div>
       )}
 
+      </div>
+
       {/* Task Detail Modal */}
       <Dialog open={showTaskModal} onOpenChange={setShowTaskModal}>
         <DialogContent className="max-w-2xl glass-modal mx-4">
@@ -1124,7 +1166,13 @@ export function Projects({ user }: ProjectsProps) {
                       return (
                         <div key={file.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                           <div className="flex items-center gap-2 flex-1">
-                            {getFileIcon(file.type)}
+                            {file.type.startsWith('image/') ? (
+                              <Image className="w-4 h-4" />
+                            ) : file.type.includes('pdf') ? (
+                              <FileText className="w-4 h-4" />
+                            ) : (
+                              <Paperclip className="w-4 h-4" />
+                            )}
                             <div className="flex-1">
                               <p className="text-sm font-medium">{file.name}</p>
                               <p className="text-xs text-muted-foreground">
@@ -1213,7 +1261,15 @@ export function Projects({ user }: ProjectsProps) {
         <DialogContent className="max-w-4xl glass-modal mx-4">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {showFilePreview && getFileIcon(showFilePreview.type)}
+              {showFilePreview && (
+                showFilePreview.type.startsWith('image/') ? (
+                  <Image className="w-5 h-5" />
+                ) : showFilePreview.type.includes('pdf') ? (
+                  <FileText className="w-5 h-5" />
+                ) : (
+                  <Paperclip className="w-5 h-5" />
+                )
+              )}
               {showFilePreview?.name}
             </DialogTitle>
           </DialogHeader>
@@ -1294,7 +1350,15 @@ export function Projects({ user }: ProjectsProps) {
                 ) : (
                   <div className="text-center p-8">
                     <div className="flex justify-center mb-4">
-                      {getFileIcon(showFilePreview.type)}
+                      {showFilePreview && (
+                        showFilePreview.type.startsWith('image/') ? (
+                          <Image className="w-12 h-12" />
+                        ) : showFilePreview.type.includes('pdf') ? (
+                          <FileText className="w-12 h-12" />
+                        ) : (
+                          <Paperclip className="w-12 h-12" />
+                        )
+                      )}
                     </div>
                     <p className="text-sm font-medium text-foreground mb-2">
                       {showFilePreview.name}
