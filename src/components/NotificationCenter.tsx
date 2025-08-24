@@ -1,55 +1,55 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 
-interface Notification {
-  id: string
-  type: 'message' | 'task' | 'file' | 'calendar' | 'team' | 'other'
+
   title: string
-  description: string
-  timestamp: Date
-  read: boolean
+  timestamp:
   userId?: string
-}
 
-// Custom hook for managing notifications
-export function useNotifications() {
-  const [notifications, setNotifications] = useKV<Notification[]>('notifications', [
+export function useNo
     {
-      id: '1',
-      type: 'message',
-      title: 'New message from Sarah',
-      description: 'Hey! Can we schedule a meeting for tomorrow?',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: '2',
+      type: 'me
+      description
+ 
+
       type: 'task',
-      title: 'Task completed',
-      description: 'Design review has been completed successfully.',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000),
+      description: 'Design review ha
       read: false,
-    },
   ])
-
-  const unreadCount = notifications.filter(n => !n.read).length
-
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
-    const newNotification: Notification = {
+  const unread
+  const addNotificatio
       ...notification,
-      id: Date.now().toString(),
       timestamp: new Date(),
-    }
-    setNotifications(current => [newNotification, ...current])
-  }
+    setNotifications(current => [newNotification, ...c
 
-  const markAsRead = (id: string) => {
-    setNotifications(current =>
-      current.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
+    se
+     
     )
-  }
+
+    setNotifications(current =
+    )
+
+    setNotificatio
+
+    
+
+    markAllAsRead,
+
+
+  isOpen: boolean
+}
+export function NotificationCent
+
+    c
+      task: '✅',
+   
+
+    return iconMap[type] || iconMap.ot
+
+    switch (type) {
+        return 'text-blue-500'
+       
+     
+   
 
   const markAllAsRead = () => {
     setNotifications(current =>
@@ -70,83 +70,32 @@ export function useNotifications() {
     clearNotification,
   }
 }
-
+  if (!isOpen) return null
 interface NotificationCenterProps {
   isOpen: boolean
   onClose: () => void
-}
-
-export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
-
-  const getIcon = (type: Notification['type']) => {
-    const iconMap = {
-      message: '💬',
-      task: '✅',
-      file: '📄',
-      calendar: '📅',
-      team: '👥',
-      other: '🔔'
-    }
-    return iconMap[type] || iconMap.other
-  }
-
-  const getIconColor = (type: Notification['type']) => {
-    switch (type) {
-      case 'message':
-        return 'text-blue-500'
-      case 'task':
-        return 'text-green-500'
-      case 'file':
-        return 'text-purple-500'
-      case 'calendar':
-        return 'text-orange-500'
-      case 'team':
-        return 'text-pink-500'
-      default:
-        return 'text-gray-500'
-    }
-  }
-
-  const formatTime = (timestamp: Date) => {
-    const now = new Date()
-    const diff = now.getTime() - timestamp.getTime()
-    const minutes = Math.floor(diff / (1000 * 60))
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    return `${days}d ago`
-  }
-
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
-      <div 
+  notifications?: Notification[]
+}  <div 
         className="fixed inset-0 bg-black bg-opacity-50" 
-        onClick={onClose}
-      />
-      
-      {/* Sheet */}
-      <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b bg-gray-50">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xl">🔔</span>
-            <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-            {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                {unreadCount}
-              </span>
-            )}
-            <button
-              onClick={onClose}
-              className="ml-auto p-1 rounded-md hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
-            >
+export function NotificationCenter({ isOpen, onClose, notifications: initialNotifications }: NotificationCenterProps) {
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications || [
+    {
+      id: '1',t */}
+      type: 'message',t-0 top-0 h-full w-96 bg-white shadow-2xl border-l overflow-hidden flex flex-col">
+      title: 'New message from Sarah',
+      description: 'Hey! Can we schedule a meeting for tomorrow?',
+      timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+      read: false,-xl">🔔</span>
+    },e="text-lg font-semibold text-gray-900">Notifications</h2>
+    {0 && (
+      id: '2',an className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+      type: 'task',
+      title: 'Task completed',
+      description: 'Design review has been completed successfully.',
+      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      read: false,
+    },
+    {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -162,23 +111,23 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
             </span>
             {unreadCount > 0 && (
               <button 
-                onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-              >
-                Mark all as read
-              </button>
-            )}
-          </div>
-        </div>
+  ])
 
-        {/* Content */}
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  const getIcon = (type: Notification['type']) => {
+    const iconMap = {
+      message: '💬',
+      task: '✅',
+      file: '📄',
+      calendar: '📅',
         <div className="flex-1 p-4 space-y-3 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <div className="text-4xl mb-4">🔔</div>
-              <p className="text-lg font-medium mb-2">No notifications yet</p>
-              <p className="text-sm">You're all caught up!</p>
-            </div>
+    }
+    return iconMap[type] || iconMap.other
+  }
+
+  const getIconColor = (type: Notification['type']) => {
           ) : (
             notifications.map((notification) => (
               <div 
@@ -195,35 +144,35 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                     {getIcon(notification.type)}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <h4 className={`font-medium text-sm leading-tight ${
-                        !notification.read ? 'text-gray-900' : 'text-gray-700'
-                      }`}>
-                        {notification.title}
-                      </h4>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                        {formatTime(notification.timestamp)}
-                      </span>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {notification.description}
-                    </p>
-                    
-                    {!notification.read && (
-                      <div className="flex items-center gap-2 mt-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        <span className="text-xs text-blue-600 font-medium">New</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+  const markAsRead = (id: string) => {
+    setNotifications(current =>
+      current.map(notification =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
+    )
+  }
+
+  const markAllAsRead = () => {
+    setNotifications(current =>
+      current.map(notification => ({ ...notification, read: true }))
+    )
+  }
+
+  const formatTime = (timestamp: Date) => {
+    const now = new Date()
+    const diff = now.getTime() - timestamp.getTime()
+    const minutes = Math.floor(diff / (1000 * 60))
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+    if (hours < 24) return `${hours}h ago`
+    return `${days}d ago`
+  }
+
         </div>
       </div>
     </div>
   )
-}
+}}
