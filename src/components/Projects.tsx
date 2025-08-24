@@ -483,7 +483,7 @@ export function Projects({ user }: ProjectsProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const getFileTypeIcon = (type: string) => {
+  const getTaskFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <Image className="w-4 h-4" />
     if (type.includes('pdf')) return <FileText className="w-4 h-4" />
     return <Paperclip className="w-4 h-4" />
@@ -908,7 +908,7 @@ export function Projects({ user }: ProjectsProps) {
                       return (
                         <div key={file.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                           <div className="flex items-center gap-2 flex-1">
-                            {getFileTypeIcon(file.type)}
+                            {getTaskFileIcon(file.type)}
                             <div className="flex-1">
                               <p className="text-sm font-medium">{file.name}</p>
                               <p className="text-xs text-muted-foreground">
@@ -997,7 +997,7 @@ export function Projects({ user }: ProjectsProps) {
         <DialogContent className="max-w-4xl glass-modal mx-4">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {showFilePreview && getFileTypeIcon(showFilePreview.type)}
+              {showFilePreview && getTaskFileIcon(showFilePreview.type)}
               {showFilePreview?.name}
             </DialogTitle>
           </DialogHeader>
@@ -1045,7 +1045,7 @@ export function Projects({ user }: ProjectsProps) {
                   />
                 ) : (
                   <div className="text-center p-8">
-                    {getFileTypeIcon(showFilePreview.type)}
+                    {getTaskFileIcon(showFilePreview.type)}
                     <p className="text-sm text-muted-foreground mt-2">
                       Preview not available for this file type
                     </p>

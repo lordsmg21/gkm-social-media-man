@@ -70,7 +70,7 @@ export function FileDropZone({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const getFileIcon = (file: File) => {
+  const getUploadFileIcon = (file: File) => {
     if (file.type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />
     if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" />
     if (file.type.includes('pdf') || file.type.includes('document')) return <FileText className="w-4 h-4 text-red-500" />
@@ -264,7 +264,7 @@ export function FileDropZone({
                     />
                   ) : (
                     <div className="p-2 rounded bg-muted/50">
-                      {getFileIcon(upload.file)}
+                      {getUploadFileIcon(upload.file)}
                     </div>
                   )}
                   
