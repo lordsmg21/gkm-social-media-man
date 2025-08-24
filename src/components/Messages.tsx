@@ -14,7 +14,8 @@ import {
   MoreVertical,
   Phone,
   Video,
-  Circle
+  Circle,
+  MessageSquare
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
