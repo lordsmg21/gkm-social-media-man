@@ -15,26 +15,34 @@ export function useNotifications() {
     {
       id: '1',
       type: 'message',
-      title: 'New message from Sarah',
-      message: 'Hey! Can we schedule a meeting for tomorrow?',
+      title: 'New message from Sarah Johnson regarding project timeline adjustments',
+      message: 'Hey! Can we schedule a meeting for tomorrow to discuss the project timeline adjustments and review the latest design mockups?',
       timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
       read: false,
     },
     {
       id: '2',
       type: 'task',
-      title: 'Task completed',
-      message: 'Design review has been completed successfully.',
+      title: 'Instagram Campaign Design Task has been completed successfully',
+      message: 'The Instagram campaign design review has been completed successfully and is ready for your approval before we proceed to the next phase.',
       timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
       read: false,
     },
     {
       id: '3',
       type: 'file',
-      title: 'File uploaded',
-      message: 'Project specifications.pdf has been uploaded.',
+      title: 'New file uploaded to your project folder by team member',
+      message: 'Project specifications document v2.1 final.pdf has been uploaded to your project folder and requires immediate review.',
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       read: true,
+    },
+    {
+      id: '4',
+      type: 'deadline',
+      title: 'Upcoming project deadline reminder for Facebook campaign',
+      message: 'Your Facebook ad campaign is scheduled to go live tomorrow at 9:00 AM. Please review all materials before the deadline.',
+      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+      read: false,
     }
   ])
 
@@ -117,7 +125,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
       />
       
       {/* Sheet */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md sm:w-96 notification-panel shadow-2xl overflow-hidden flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-full max-w-sm sm:max-w-lg notification-panel shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-border bg-muted/50">
           <div className="flex items-center justify-between mb-3">
@@ -160,7 +168,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+        <div className="flex-1 p-4 sm:p-6 space-y-3 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <div className="text-4xl mb-4">🔔</div>
@@ -171,30 +179,30 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
             notifications.map((notification) => (
               <div 
                 key={notification.id}
-                className={`p-3 sm:p-4 rounded-lg border transition-all hover:shadow-md notification-item ${
+                className={`p-4 rounded-lg border transition-all hover:shadow-md notification-item w-full ${
                   !notification.read 
                     ? 'border-primary/20 bg-primary/5 shadow-sm' 
                     : 'border-border bg-card hover:border-border/80'
                 }`}
               >
-                <div className="flex gap-3">
+                <div className="flex gap-3 w-full">
                   <div className="flex-shrink-0 text-base sm:text-lg">
                     {getIcon(notification.type)}
                   </div>
                   
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="flex items-start justify-between mb-2 gap-2">
-                      <h4 className={`font-medium text-sm leading-tight break-words ${
+                  <div className="flex-1 min-w-0 w-full max-w-full overflow-hidden">
+                    <div className="flex items-start justify-between mb-2 gap-2 w-full">
+                      <h4 className={`font-medium text-sm leading-tight break-words break-all flex-1 pr-2 ${
                         !notification.read ? 'text-foreground' : 'text-muted-foreground'
                       }`}>
                         {notification.title}
                       </h4>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
                         {formatTime(notification.timestamp)}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-3 break-words">
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-3 break-words break-all w-full max-w-full">
                       {notification.message}
                     </p>
                     

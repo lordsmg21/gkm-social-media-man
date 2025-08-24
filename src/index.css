@@ -225,12 +225,22 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
+    width: 100%;
   }
 
   .notification-item h4,
   .notification-item p {
     word-break: break-word;
     overflow-wrap: anywhere;
+    white-space: normal;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .notification-item .flex-1 {
+    min-width: 0;
+    flex: 1;
+    width: 100%;
   }
 
 }
