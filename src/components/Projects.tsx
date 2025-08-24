@@ -82,7 +82,11 @@ export function Projects({ user }: ProjectsProps) {
   const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null)
   const [showFileUpload, setShowFileUpload] = useState<string | null>(null)
   const [fileDropTask, setFileDropTask] = useState<string | null>(null)
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
+  const [mentionSuggestions, setMentionSuggestions] = useState<Task[]>([])
+  const [cursorPosition, setCursorPosition] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const chatInputRef = useRef<HTMLInputElement>(null)
 
   const adminColumns = [
     { id: 'to-do', title: 'To Do', color: 'bg-gray-500' },
@@ -234,16 +238,32 @@ export function Projects({ user }: ProjectsProps) {
       id: 'chat-1',
       channel: 'general',
       senderId: '2',
-      content: 'Heeft iemand al feedback gehad op @korenbloem-stories?',
-      timestamp: new Date().toISOString(),
+      content: 'Heeft iemand al feedback gehad op @korenbloem-stories? De client wacht op antwoord.',
+      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
       type: 'text'
     },
     {
       id: 'chat-2',
       channel: 'projects',
       senderId: '1',
-      content: '@bellavista-ads is nu in review fase',
-      timestamp: new Date().toISOString(),
+      content: '@bellavista-ads is nu in review fase. Kunnen we morgen de final presentatie doen?',
+      timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+      type: 'text'
+    },
+    {
+      id: 'chat-3',
+      channel: 'general',
+      senderId: '4',
+      content: 'Team, @fitness-strategy heeft een deadline update nodig. Client heeft timeline verschoven.',
+      timestamp: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
+      type: 'text'
+    },
+    {
+      id: 'chat-4',
+      channel: 'projects', 
+      senderId: '3',
+      content: 'Great work on @techstart-launch! Client is super happy met de resultaten 🎉',
+      timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
       type: 'text'
     }
   ])
@@ -498,6 +518,61 @@ export function Projects({ user }: ProjectsProps) {
     return <Paperclip className="w-4 h-4" />
   }
 
+  const handleChatMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setChatMessage(value)
+    setCursorPosition(e.target.selectionStart || 0)
+    
+    // Check if user is typing a mention
+    const atIndex = value.lastIndexOf('@', e.target.selectionStart || 0)
+    if (atIndex !== -1) {
+      const beforeAt = value.substring(0, atIndex)
+      const afterCursor = value.substring(e.target.selectionStart || 0)
+      const spaceAfterAt = afterCursor.indexOf(' ')
+      const searchTerm = value.substring(atIndex + 1, spaceAfterAt === -1 ? value.length : atIndex + 1 + spaceAfterAt)
+      
+      if (beforeAt === '' || beforeAt[beforeAt.length - 1] === ' ') {
+        // Filter tasks that match the search term
+        const filtered = (visibleTasks || []).filter(task => 
+          task.mentionTag && 
+          task.mentionTag.toLowerCase().includes(searchTerm.toLowerCase())
+        ).slice(0, 5)
+        
+        setMentionSuggestions(filtered)
+        setShowMentionSuggestions(filtered.length > 0 && searchTerm.length >= 0)
+      } else {
+        setShowMentionSuggestions(false)
+      }
+    } else {
+      setShowMentionSuggestions(false)
+    }
+  }
+
+  const handleMentionSelect = (task: Task) => {
+    if (!task.mentionTag || !chatInputRef.current) return
+    
+    const input = chatInputRef.current
+    const atIndex = chatMessage.lastIndexOf('@', cursorPosition)
+    
+    if (atIndex !== -1) {
+      const beforeAt = chatMessage.substring(0, atIndex)
+      const afterCursor = chatMessage.substring(cursorPosition)
+      const spaceAfterAt = afterCursor.indexOf(' ')
+      const remainingAfter = spaceAfterAt === -1 ? '' : afterCursor.substring(spaceAfterAt)
+      
+      const newMessage = beforeAt + task.mentionTag + ' ' + remainingAfter
+      setChatMessage(newMessage)
+      setShowMentionSuggestions(false)
+      
+      // Focus back to input
+      setTimeout(() => {
+        input.focus()
+        const newCursorPos = beforeAt.length + task.mentionTag.length + 1
+        input.setSelectionRange(newCursorPos, newCursorPos)
+      }, 0)
+    }
+  }
+
   const handleSendChatMessage = () => {
     if (!chatMessage.trim()) return
     
@@ -512,6 +587,7 @@ export function Projects({ user }: ProjectsProps) {
     
     setChatMessages(prev => [...(prev || []), newMessage])
     setChatMessage('')
+    setShowMentionSuggestions(false)
   }
 
   const formatChatTime = (timestamp: string) => {
@@ -628,7 +704,7 @@ export function Projects({ user }: ProjectsProps) {
                                 {/* Task mention tag */}
                                 {task.mentionTag && (
                                   <div className="mb-2">
-                                    <Badge variant="outline" className="text-xs px-2 py-0 bg-primary/10 text-primary border-primary/30">
+                                    <Badge variant="outline" className="text-xs px-2 py-0.5 bg-accent/20 text-accent border-accent/40 font-medium">
                                       {task.mentionTag}
                                     </Badge>
                                   </div>
@@ -860,17 +936,69 @@ export function Projects({ user }: ProjectsProps) {
               </ScrollArea>
 
               {/* Message Input */}
-              <div className="flex items-center gap-2 md:gap-3">
-                <Input
-                  placeholder={`Message #${activeChannel}...`}
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
-                  className="flex-1 text-sm"
-                />
-                <Button size="sm" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
-                  <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
-                </Button>
+              <div className="relative">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="relative flex-1">
+                    <Input
+                      ref={chatInputRef}
+                      placeholder={`Message #${activeChannel}... (Type @ to mention tasks)`}
+                      value={chatMessage}
+                      onChange={handleChatMessageChange}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !showMentionSuggestions) {
+                          handleSendChatMessage()
+                        } else if (e.key === 'Escape') {
+                          setShowMentionSuggestions(false)
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (showMentionSuggestions && ['ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)) {
+                          e.preventDefault()
+                        }
+                      }}
+                      className="flex-1 text-sm pr-10"
+                    />
+                    
+                    {/* Mention Suggestions Dropdown */}
+                    {showMentionSuggestions && mentionSuggestions.length > 0 && (
+                      <div className="absolute bottom-full mb-2 left-0 right-0 bg-popover border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                        <div className="p-2">
+                          <p className="text-xs text-muted-foreground mb-2 font-medium">Tasks to mention:</p>
+                          {mentionSuggestions.map((task) => (
+                            <button
+                              key={task.id}
+                              className="w-full flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors text-left"
+                              onClick={() => handleMentionSelect(task)}
+                            >
+                              <span className="text-lg">{getPlatformIcon(task.platform)}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                                    {task.mentionTag}
+                                  </Badge>
+                                  <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
+                                </div>
+                                <p className="text-sm font-medium truncate mt-1">{task.title}</p>
+                                <p className="text-xs text-muted-foreground">{task.client}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button size="sm" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
+                    <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
+                  </Button>
+                </div>
+                
+                {/* Mention Help Text */}
+                {chatMessage.includes('@') && !showMentionSuggestions && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    💡 Type @ followed by task name to mention projects
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -921,14 +1049,28 @@ export function Projects({ user }: ProjectsProps) {
               {/* Mention Tag */}
               {selectedTask.mentionTag && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Mention Tag</label>
+                  <label className="text-sm font-medium text-muted-foreground">Team Chat Mention</label>
                   <div className="mt-1">
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                      {selectedTask.mentionTag}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Use this tag in team chat to reference this task
-                    </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="bg-accent/20 text-accent border-accent/40 font-medium">
+                        {selectedTask.mentionTag}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedTask.mentionTag || '')
+                          toast.success('Mention tag copied to clipboard')
+                        }}
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>💬 Use this tag in team chat to reference this task</p>
+                      <p>📋 Example: "Can we review {selectedTask.mentionTag} today?"</p>
+                    </div>
                   </div>
                 </div>
               )}
