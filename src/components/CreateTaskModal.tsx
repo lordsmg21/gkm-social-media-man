@@ -57,6 +57,8 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
 
   const [uploadedFiles, setUploadedFiles] = useState<TaskFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
 
   const resetForm = () => {
     setFormData({
@@ -69,6 +71,8 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       assignedTo: [currentUser.id]
     })
     setUploadedFiles([])
+    setTags([])
+    setTagInput('')
   }
 
   const handleClose = () => {
@@ -103,7 +107,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       deadline: formData.deadline,
       progress: 0,
       description: formData.description.trim() || '',
-      tags: [],
+      tags: tags,
       files: uploadedFiles
     }
 
@@ -182,6 +186,25 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     return <File className="w-4 h-4" />
   }
 
+  const handleTagAdd = () => {
+    const newTag = tagInput.trim().toLowerCase()
+    if (newTag && !tags.includes(newTag)) {
+      setTags(prev => [...prev, newTag])
+      setTagInput('')
+    }
+  }
+
+  const handleTagRemove = (tagToRemove: string) => {
+    setTags(prev => prev.filter(tag => tag !== tagToRemove))
+  }
+
+  const handleTagInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleTagAdd()
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl glass-modal mx-4 max-h-[90vh] overflow-y-auto">
@@ -257,6 +280,50 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
             />
+          </div>
+
+          <div>
+            <Label htmlFor="tags">Tags</Label>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  id="tags"
+                  placeholder="Enter a tag (e.g., stories, food, promotion)"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyPress={handleTagInputKeyPress}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleTagAdd}
+                  disabled={!tagInput.trim()}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Badge 
+                      key={tag} 
+                      variant="secondary" 
+                      className="text-xs px-2 py-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                      onClick={() => handleTagRemove(tag)}
+                    >
+                      {tag}
+                      <X className="w-3 h-3 ml-1" />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              <p className="text-xs text-muted-foreground">
+                Press Enter or click + to add tags. Click tags to remove them.
+              </p>
+            </div>
           </div>
 
           <div>

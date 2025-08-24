@@ -124,7 +124,7 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-25',
       progress: 75,
       description: 'Create engaging Instagram stories for the bakery\'s new artisan bread line',
-      tags: ['stories', 'food', 'artisan'],
+      tags: ['stories', 'food', 'artisan', 'bakery'],
       files: [
         {
           id: 'f1',
@@ -157,7 +157,7 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-22',
       progress: 90,
       description: 'Dinner promotion campaign targeting local food enthusiasts',
-      tags: ['ads', 'restaurant', 'promotion'],
+      tags: ['ads', 'restaurant', 'promotion', 'dinner'],
       files: [
         {
           id: 'f3',
@@ -181,7 +181,7 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-02-01',
       progress: 25,
       description: 'Comprehensive social media strategy for Q1 2024',
-      tags: ['strategy', 'fitness', 'planning'],
+      tags: ['strategy', 'fitness', 'planning', 'q1'],
       files: []
     },
     {
@@ -195,7 +195,7 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-15',
       progress: 100,
       description: 'Launch campaign for new SaaS product',
-      tags: ['launch', 'tech', 'saas'],
+      tags: ['launch', 'tech', 'saas', 'product'],
       files: [
         {
           id: 'f4',
@@ -219,7 +219,7 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-30',
       progress: 100,
       description: 'Valentine\'s Day fashion promotion',
-      tags: ['holiday', 'fashion', 'promotion'],
+      tags: ['holiday', 'fashion', 'promotion', 'valentines'],
       files: []
     }
   ])
@@ -236,7 +236,7 @@ export function Projects({ user }: ProjectsProps) {
       id: 'chat-1',
       channel: 'general',
       senderId: '2',
-      content: 'Heeft iemand al feedback gehad op de Korenbloem campagne?',
+      content: 'Heeft iemand al feedback gehad op @task_1 ?',
       timestamp: new Date().toISOString(),
       type: 'text'
     },
@@ -244,7 +244,15 @@ export function Projects({ user }: ProjectsProps) {
       id: 'chat-2',
       channel: 'direct',
       senderId: '1',
-      content: 'Bella Vista project is nu in review fase',
+      content: '@task_2 project is nu in review fase',
+      timestamp: new Date().toISOString(),
+      type: 'text'
+    },
+    {
+      id: 'chat-3',
+      channel: 'general',
+      senderId: '3',
+      content: 'Kunnen we @task_4 gebruiken als voorbeeld voor toekomstige campaigns?',
       timestamp: new Date().toISOString(),
       type: 'text'
     }
@@ -584,7 +592,9 @@ export function Projects({ user }: ProjectsProps) {
     
     const beforeMention = chatMessage.slice(0, mentionStartIndex)
     const afterMention = chatMessage.slice(endOfMention)
-    const taskMention = `@${task.title.replace(/\s+/g, '_')}`
+    
+    // Create a cleaner tag format using task ID and title
+    const taskMention = `@task_${task.id}`
     
     setChatMessage(`${beforeMention}${taskMention} ${afterMention}`)
     setShowTaskSuggestions(false)
@@ -597,19 +607,34 @@ export function Projects({ user }: ProjectsProps) {
     
     return parts.map((part, index) => {
       if (part.startsWith('@')) {
-        const taskName = part.slice(1).replace(/_/g, ' ')
-        const mentionedTask = (tasks || []).find(task => 
-          task.title.toLowerCase() === taskName.toLowerCase()
-        )
+        let mentionedTask: Task | undefined
+        
+        // Check if it's a new format task mention (@task_id)
+        if (part.startsWith('@task_')) {
+          const taskId = part.slice(6) // Remove '@task_' prefix
+          mentionedTask = (tasks || []).find(task => task.id === taskId)
+        } else {
+          // Legacy format - match by title
+          const taskName = part.slice(1).replace(/_/g, ' ')
+          mentionedTask = (tasks || []).find(task => 
+            task.title.toLowerCase() === taskName.toLowerCase()
+          )
+        }
         
         return (
           <span 
             key={index} 
             className="task-mention cursor-pointer hover:underline"
-            onClick={() => mentionedTask && setSelectedTask(mentionedTask)}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (mentionedTask) {
+                setSelectedTask(mentionedTask)
+                setShowTaskModal(true)
+              }
+            }}
             title={mentionedTask ? `Click to view task: ${mentionedTask.title}` : 'Task not found'}
           >
-            {part}
+            {mentionedTask ? `@${mentionedTask.title}` : part}
           </span>
         )
       }
@@ -967,14 +992,30 @@ export function Projects({ user }: ProjectsProps) {
                   {taskSuggestions.map((task) => (
                     <div 
                       key={task.id}
-                      className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0 flex items-center gap-2"
+                      className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
                       onClick={() => handleTaskMention(task)}
                     >
-                      <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{task.title}</p>
-                        <p className="text-xs text-muted-foreground">{task.client}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{task.title}</p>
+                          <p className="text-xs text-muted-foreground">{task.client}</p>
+                        </div>
                       </div>
+                      {task.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {task.tags.slice(0, 3).map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-xs px-1 py-0 h-4">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {task.tags.length > 3 && (
+                            <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                              +{task.tags.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
