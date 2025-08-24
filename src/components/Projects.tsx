@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,6 +7,8 @@ import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 import { 
   Plus, 
   Calendar, 
@@ -17,10 +19,28 @@ import {
   MoreVertical,
   Clock,
   Target,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  Image,
+  Download,
+  Upload,
+  X,
+  Eye,
+  Trash2,
+  Paperclip
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
+
+interface TaskFile {
+  id: string
+  name: string
+  size: number
+  type: string
+  uploadedBy: string
+  uploadedAt: string
+  url: string // In real app, this would be a proper file URL
+}
 
 interface Task {
   id: string
@@ -34,6 +54,7 @@ interface Task {
   progress: number
   description?: string
   tags: string[]
+  files: TaskFile[]
 }
 
 interface ChatMessage {
@@ -55,6 +76,9 @@ export function Projects({ user }: ProjectsProps) {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [chatMessage, setChatMessage] = useState('')
   const [activeChannel, setActiveChannel] = useState('general')
+  const [showFilePreview, setShowFilePreview] = useState<TaskFile | null>(null)
+  const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const adminColumns = [
     { id: 'to-do', title: 'To Do', color: 'bg-gray-500' },
@@ -77,7 +101,7 @@ export function Projects({ user }: ProjectsProps) {
 
   const columns = user.role === 'admin' ? adminColumns : clientColumns
 
-  const [tasks] = useKV<Task[]>('project-tasks', [
+  const [tasks, setTasks] = useKV<Task[]>('project-tasks', [
     {
       id: '1',
       title: 'Instagram Story Campaign - Bakkerij de Korenbloem',
@@ -89,7 +113,27 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-25',
       progress: 75,
       description: 'Create engaging Instagram stories for the bakery\'s new artisan bread line',
-      tags: ['stories', 'food', 'artisan']
+      tags: ['stories', 'food', 'artisan'],
+      files: [
+        {
+          id: 'f1',
+          name: 'Brand Guidelines.pdf',
+          size: 2048576,
+          type: 'application/pdf',
+          uploadedBy: '1',
+          uploadedAt: new Date().toISOString(),
+          url: '#'
+        },
+        {
+          id: 'f2', 
+          name: 'Product Photos.zip',
+          size: 15728640,
+          type: 'application/zip',
+          uploadedBy: '2',
+          uploadedAt: new Date().toISOString(),
+          url: '#'
+        }
+      ]
     },
     {
       id: '2',
@@ -102,7 +146,18 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-22',
       progress: 90,
       description: 'Dinner promotion campaign targeting local food enthusiasts',
-      tags: ['ads', 'restaurant', 'promotion']
+      tags: ['ads', 'restaurant', 'promotion'],
+      files: [
+        {
+          id: 'f3',
+          name: 'Menu Photos.png',
+          size: 3145728,
+          type: 'image/png',
+          uploadedBy: '3',
+          uploadedAt: new Date().toISOString(),
+          url: '#'
+        }
+      ]
     },
     {
       id: '3',
@@ -115,7 +170,8 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-02-01',
       progress: 25,
       description: 'Comprehensive social media strategy for Q1 2024',
-      tags: ['strategy', 'fitness', 'planning']
+      tags: ['strategy', 'fitness', 'planning'],
+      files: []
     },
     {
       id: '4',
@@ -128,7 +184,18 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-15',
       progress: 100,
       description: 'Launch campaign for new SaaS product',
-      tags: ['launch', 'tech', 'saas']
+      tags: ['launch', 'tech', 'saas'],
+      files: [
+        {
+          id: 'f4',
+          name: 'Final Campaign Assets.zip',
+          size: 52428800,
+          type: 'application/zip',
+          uploadedBy: '2',
+          uploadedAt: new Date().toISOString(),
+          url: '#'
+        }
+      ]
     },
     {
       id: '5',
@@ -141,7 +208,8 @@ export function Projects({ user }: ProjectsProps) {
       deadline: '2024-01-30',
       progress: 100,
       description: 'Valentine\'s Day fashion promotion',
-      tags: ['holiday', 'fashion', 'promotion']
+      tags: ['holiday', 'fashion', 'promotion'],
+      files: []
     }
   ])
 
@@ -215,21 +283,126 @@ export function Projects({ user }: ProjectsProps) {
   }
 
   // Drag and drop handlers
-  const handleDragStart = (task: Task) => {
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
+    e.currentTarget.style.opacity = '0.5'
+  }
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.style.opacity = '1'
+    setDraggedTask(null)
+    setDraggedOverColumn(null)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDragEnter = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault()
+    setDraggedOverColumn(columnId)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're leaving the column container
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDraggedOverColumn(null)
+    }
   }
 
   const handleDrop = (e: React.DragEvent, newStatus: string) => {
     e.preventDefault()
+    setDraggedOverColumn(null)
+    
     if (draggedTask && draggedTask.status !== newStatus) {
-      // In a real app, this would update the task status in the database
-      console.log(`Moving task ${draggedTask.id} from ${draggedTask.status} to ${newStatus}`)
+      // Update task status
+      const updatedTasks = tasks.map(task => 
+        task.id === draggedTask.id 
+          ? { ...task, status: newStatus as Task['status'] }
+          : task
+      )
+      setTasks(updatedTasks)
+      
+      toast.success(`Task moved to ${columns.find(col => col.id === newStatus)?.title}`)
+      
+      // Auto-update progress based on status
+      let newProgress = draggedTask.progress
+      if (newStatus === 'completed') newProgress = 100
+      else if (newStatus === 'scheduled') newProgress = 100
+      else if (newStatus === 'in-progress') newProgress = Math.max(newProgress, 25)
+      else if (newStatus === 'final-design') newProgress = Math.max(newProgress, 75)
+      
+      if (newProgress !== draggedTask.progress) {
+        const progressUpdatedTasks = updatedTasks.map(task => 
+          task.id === draggedTask.id 
+            ? { ...task, progress: newProgress }
+            : task
+        )
+        setTasks(progressUpdatedTasks)
+      }
     }
     setDraggedTask(null)
+  }
+
+  // File management functions
+  const handleFileUpload = (taskId: string) => {
+    if (!fileInputRef.current) return
+    fileInputRef.current.click()
+    fileInputRef.current.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      // Check file size (max 200MB)
+      if (file.size > 200 * 1024 * 1024) {
+        toast.error('File size must be less than 200MB')
+        return
+      }
+
+      const newFile: TaskFile = {
+        id: `f${Date.now()}`,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadedBy: user.id,
+        uploadedAt: new Date().toISOString(),
+        url: URL.createObjectURL(file) // In real app, upload to server
+      }
+
+      const updatedTasks = tasks.map(task => 
+        task.id === taskId 
+          ? { ...task, files: [...task.files, newFile] }
+          : task
+      )
+      setTasks(updatedTasks)
+      toast.success(`File "${file.name}" uploaded successfully`)
+    }
+  }
+
+  const handleFileDelete = (taskId: string, fileId: string) => {
+    const updatedTasks = tasks.map(task => 
+      task.id === taskId 
+        ? { ...task, files: task.files.filter(f => f.id !== fileId) }
+        : task
+    )
+    setTasks(updatedTasks)
+    toast.success('File deleted')
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <Image className="w-4 h-4" />
+    if (type.includes('pdf')) return <FileText className="w-4 h-4" />
+    return <Paperclip className="w-4 h-4" />
   }
 
   const handleSendChatMessage = () => {
@@ -281,8 +454,10 @@ export function Projects({ user }: ProjectsProps) {
                   return (
                     <div 
                       key={column.id} 
-                      className="flex-shrink-0 w-72 md:w-80"
+                      className={`flex-shrink-0 w-72 md:w-80 ${draggedOverColumn === column.id ? 'ring-2 ring-primary ring-opacity-50 bg-primary/5 rounded-lg' : ''}`}
                       onDragOver={handleDragOver}
+                      onDragEnter={(e) => handleDragEnter(e, column.id)}
+                      onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, column.id)}
                     >
                       <div className="flex items-center gap-3 mb-4">
@@ -301,9 +476,10 @@ export function Projects({ user }: ProjectsProps) {
                           return (
                             <Card 
                               key={task.id} 
-                              className="glass-card cursor-grab hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:cursor-grabbing"
+                              className="glass-card cursor-grab hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:cursor-grabbing group"
                               draggable={user.role === 'admin'}
-                              onDragStart={() => handleDragStart(task)}
+                              onDragStart={(e) => handleDragStart(e, task)}
+                              onDragEnd={handleDragEnd}
                               onClick={() => {
                                 setSelectedTask(task)
                                 setShowTaskModal(true)
@@ -352,6 +528,14 @@ export function Projects({ user }: ProjectsProps) {
                                     <Progress value={task.progress} className="h-1" />
                                   </div>
                                   
+                                  {/* Files indicator */}
+                                  {task.files.length > 0 && (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                      <Paperclip className="w-3 h-3" />
+                                      <span>{task.files.length} file{task.files.length !== 1 ? 's' : ''}</span>
+                                    </div>
+                                  )}
+                                  
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1 text-xs">
                                       <Clock className="w-3 h-3" />
@@ -385,7 +569,9 @@ export function Projects({ user }: ProjectsProps) {
                         
                         {/* Add Task Button */}
                         {user.role === 'admin' && (
-                          <Card className="glass-card border-dashed border-2 cursor-pointer hover:bg-muted/20 transition-colors">
+                          <Card 
+                            className={`glass-card border-dashed border-2 cursor-pointer hover:bg-muted/20 transition-colors ${draggedOverColumn === column.id ? 'border-primary bg-primary/10' : ''}`}
+                          >
                             <CardContent className="p-3 md:p-4 flex items-center justify-center">
                               <div className="text-center text-muted-foreground">
                                 <Plus className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-2" />
@@ -584,6 +770,94 @@ export function Projects({ user }: ProjectsProps) {
                   ))}
                 </div>
               </div>
+
+              {/* Files Section */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-muted-foreground">Files ({selectedTask.files.length})</label>
+                  {user.role === 'admin' && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="gap-2"
+                      onClick={() => handleFileUpload(selectedTask.id)}
+                    >
+                      <Upload className="w-3 h-3" />
+                      Upload
+                    </Button>
+                  )}
+                </div>
+                
+                {selectedTask.files.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {selectedTask.files.map((file) => {
+                      const uploader = users.find(u => u.id === file.uploadedBy)
+                      return (
+                        <div key={file.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                          <div className="flex items-center gap-2 flex-1">
+                            {getFileIcon(file.type)}
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{file.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatFileSize(file.size)} • Uploaded by {uploader?.name} • {new Date(file.uploadedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="w-8 h-8 p-0"
+                              onClick={() => setShowFilePreview(file)}
+                            >
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost" 
+                              className="w-8 h-8 p-0"
+                              onClick={() => {
+                                const link = document.createElement('a')
+                                link.href = file.url
+                                link.download = file.name
+                                link.click()
+                              }}
+                            >
+                              <Download className="w-3 h-3" />
+                            </Button>
+                            {user.role === 'admin' && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="w-8 h-8 p-0 text-destructive"
+                                onClick={() => handleFileDelete(selectedTask.id, file.id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-3 p-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No files uploaded yet</p>
+                    {user.role === 'admin' && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="mt-2 gap-2"
+                        onClick={() => handleFileUpload(selectedTask.id)}
+                      >
+                        <Upload className="w-3 h-3" />
+                        Upload first file
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
               
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={() => setShowTaskModal(false)}>
@@ -597,6 +871,82 @@ export function Projects({ user }: ProjectsProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* File Preview Modal */}
+      <Dialog open={!!showFilePreview} onOpenChange={() => setShowFilePreview(null)}>
+        <DialogContent className="max-w-4xl glass-modal mx-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {showFilePreview && getFileIcon(showFilePreview.type)}
+              {showFilePreview?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {showFilePreview && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="text-sm font-medium">File Information</p>
+                  <p className="text-xs text-muted-foreground">
+                    Size: {formatFileSize(showFilePreview.size)} • Type: {showFilePreview.type}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Uploaded: {new Date(showFilePreview.uploadedAt).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => {
+                      const link = document.createElement('a')
+                      link.href = showFilePreview.url
+                      link.download = showFilePreview.name
+                      link.click()
+                    }}
+                  >
+                    <Download className="w-3 h-3" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+
+              {/* File Preview Content */}
+              <div className="flex items-center justify-center min-h-[300px] bg-muted rounded-lg">
+                {showFilePreview.type.startsWith('image/') ? (
+                  <img 
+                    src={showFilePreview.url} 
+                    alt={showFilePreview.name}
+                    className="max-w-full max-h-[500px] object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                ) : (
+                  <div className="text-center p-8">
+                    {getFileIcon(showFilePreview.type)}
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Preview not available for this file type
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Click download to view the file
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept="image/*,.pdf,.doc,.docx,.zip,.rar"
+      />
     </div>
   )
 }
