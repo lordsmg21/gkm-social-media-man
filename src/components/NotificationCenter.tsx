@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useKV } from '@github/spark/hooks'
 
 interface Notification {
   id: string
@@ -10,20 +11,15 @@ interface Notification {
   userId?: string
 }
 
-interface NotificationCenterProps {
-  isOpen: boolean
-  onClose: () => void
-  notifications?: Notification[]
-}
-
-export function NotificationCenter({ isOpen, onClose, notifications: initialNotifications }: NotificationCenterProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications || [
+// Custom hook for managing notifications
+export function useNotifications() {
+  const [notifications, setNotifications] = useKV<Notification[]>('notifications', [
     {
       id: '1',
       type: 'message',
       title: 'New message from Sarah',
       description: 'Hey! Can we schedule a meeting for tomorrow?',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+      timestamp: new Date(Date.now() - 5 * 60 * 1000),
       read: false,
     },
     {
@@ -31,28 +27,57 @@ export function NotificationCenter({ isOpen, onClose, notifications: initialNoti
       type: 'task',
       title: 'Task completed',
       description: 'Design review has been completed successfully.',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      timestamp: new Date(Date.now() - 30 * 60 * 1000),
       read: false,
-    },
-    {
-      id: '3',
-      type: 'file',
-      title: 'File uploaded',
-      description: 'Project specifications.pdf has been uploaded to the shared folder.',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      read: true,
-    },
-    {
-      id: '4',
-      type: 'calendar',
-      title: 'Upcoming meeting',
-      description: 'Team standup in 15 minutes',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-      read: true,
     },
   ])
 
   const unreadCount = notifications.filter(n => !n.read).length
+
+  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: Date.now().toString(),
+      timestamp: new Date(),
+    }
+    setNotifications(current => [newNotification, ...current])
+  }
+
+  const markAsRead = (id: string) => {
+    setNotifications(current =>
+      current.map(notification =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
+    )
+  }
+
+  const markAllAsRead = () => {
+    setNotifications(current =>
+      current.map(notification => ({ ...notification, read: true }))
+    )
+  }
+
+  const clearNotification = (id: string) => {
+    setNotifications(current => current.filter(n => n.id !== id))
+  }
+
+  return {
+    notifications,
+    unreadCount,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
+  }
+}
+
+interface NotificationCenterProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps) {
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
 
   const getIcon = (type: Notification['type']) => {
     const iconMap = {
@@ -81,20 +106,6 @@ export function NotificationCenter({ isOpen, onClose, notifications: initialNoti
       default:
         return 'text-gray-500'
     }
-  }
-
-  const markAsRead = (id: string) => {
-    setNotifications(current =>
-      current.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    )
-  }
-
-  const markAllAsRead = () => {
-    setNotifications(current =>
-      current.map(notification => ({ ...notification, read: true }))
-    )
   }
 
   const formatTime = (timestamp: Date) => {
