@@ -851,7 +851,6 @@ export function Projects({ user }: ProjectsProps) {
                   )
                 })}
                 </div>
-              </div>
             </CardContent>
           </Card>
         </div>
