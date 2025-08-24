@@ -27,7 +27,9 @@ import {
   X,
   Eye,
   Trash2,
-  Paperclip
+  Paperclip,
+  Send,
+  Minimize2
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
@@ -83,6 +85,7 @@ export function Projects({ user }: ProjectsProps) {
   const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null)
   const [showFileUpload, setShowFileUpload] = useState<string | null>(null)
   const [fileDropTask, setFileDropTask] = useState<string | null>(null)
+  const [showFloatingChat, setShowFloatingChat] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const adminColumns = [
@@ -534,7 +537,7 @@ export function Projects({ user }: ProjectsProps) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3rem)] space-y-6 md:space-y-6">
+    <div className="flex flex-col h-[calc(100vh-6rem)] space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -558,15 +561,15 @@ export function Projects({ user }: ProjectsProps) {
         </div>
       </div>
 
-      {/* Board Section - Takes 70% of screen on desktop, responsive on mobile */}
-      <div className="flex-1 board-section" style={{ minHeight: '60vh' }}>
+      {/* Board Section - Full height with proper scrolling */}
+      <div className="flex-1 min-h-0">
         <Card className="glass-card h-full">
           <CardHeader className="pb-4">
             <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-2 md:p-6">
-            <div className="w-full h-full overflow-x-auto overflow-y-hidden">
-              <div className="flex gap-3 md:gap-6 pb-4 min-w-max" style={{ width: 'max-content' }}>
+            <div className="h-full overflow-auto">
+              <div className="flex gap-3 md:gap-6 pb-4 min-w-max">
                 {columns.map((column) => {
                   const columnTasks = getTasksByStatus(column.id)
                   
@@ -581,7 +584,7 @@ export function Projects({ user }: ProjectsProps) {
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, column.id)}
                     >
-                      <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-3 mb-4 sticky top-0 bg-card/90 backdrop-blur py-2 z-10">
                         <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
                         <h3 className="font-heading font-semibold text-foreground text-sm md:text-base">{column.title}</h3>
                         <Badge variant="secondary" className="text-xs">
@@ -589,7 +592,7 @@ export function Projects({ user }: ProjectsProps) {
                         </Badge>
                       </div>
                       
-                      <div className="space-y-3 min-h-[300px] md:min-h-[400px]">
+                      <div className="space-y-3">
                         {columnTasks.map((task) => {
                           const assignedUsers = getAssignedUsers(task.assignedTo || [])
                           const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed'
@@ -772,120 +775,113 @@ export function Projects({ user }: ProjectsProps) {
         </Card>
       </div>
 
-      {/* Team Chat Section - Takes 30% of screen on desktop, responsive on mobile (Admin Only) */}
+      {/* Floating Chat Button (Admin Only) */}
       {user.role === 'admin' && (
-        <div className="chat-section" style={{ minHeight: '30vh' }}>
-          <Card className="glass-card h-full">
-            <CardHeader className="flex flex-row items-center justify-between py-3">
-              <CardTitle className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
-                Team Chat
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-1">
-                  {users.slice(0, 3).map((teamMember) => (
-                    <div key={teamMember.id} className="relative">
-                      <Avatar className="w-5 h-5 md:w-6 md:h-6 border-2 border-background">
-                        <AvatarImage src={teamMember.avatar} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                          {teamMember.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      {teamMember.isOnline && (
-                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full border border-background"></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <span className="text-xs md:text-sm text-muted-foreground">{users.filter(u => u.isOnline).length} online</span>
-              </div>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col h-[calc(100%-4rem)] p-2 md:p-6">
-              {/* Channel Tabs */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <Button 
-                  variant={activeChannel === 'general' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => setActiveChannel('general')}
-                >
-                  <Target className="w-3 h-3 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">#</span>general
-                </Button>
-                <Button 
-                  variant={activeChannel === 'projects' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => setActiveChannel('projects')}
-                >
-                  <Users className="w-3 h-3 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">#</span>projects
-                </Button>
-                <Button 
-                  variant={activeChannel === 'urgent' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => setActiveChannel('urgent')}
-                >
-                  <AlertCircle className="w-3 h-3 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">#</span>urgent
-                </Button>
-              </div>
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button
+            className="rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-200"
+            onClick={() => setShowFloatingChat(!showFloatingChat)}
+          >
+            {showFloatingChat ? <X className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
+          </Button>
+        </div>
+      )}
 
-              {/* Messages Area */}
-              <ScrollArea className="flex-1 mb-4">
-                <div className="space-y-3 p-2">
-                  {chatMessages
-                    .filter(msg => msg.channel === activeChannel)
-                    .map((message) => {
-                      const sender = users.find(u => u.id === message.senderId)
-                      return (
-                        <div key={message.id} className="flex items-start gap-2 md:gap-3">
-                          <Avatar className="w-6 h-6 md:w-8 md:h-8">
-                            <AvatarImage src={sender?.avatar} />
-                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                              {sender?.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-xs md:text-sm text-foreground">{sender?.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {formatChatTime(message.timestamp)}
-                              </span>
-                            </div>
-                            <p className="text-xs md:text-sm text-foreground">{message.content}</p>
+      {/* Floating Chat Modal */}
+      <Dialog open={showFloatingChat} onOpenChange={setShowFloatingChat}>
+        <DialogContent className="floating-chat-modal glass-modal p-0">
+          <div className="flex flex-col h-full">
+            <DialogHeader className="p-4 border-b">
+              <DialogTitle className="text-base font-semibold text-foreground flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Team Chat
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-6 h-6 p-0"
+                  onClick={() => setShowFloatingChat(false)}
+                >
+                  <Minimize2 className="w-3 h-3" />
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
+            
+            {/* Channel Tabs */}
+            <div className="grid grid-cols-2 gap-1 p-2 border-b">
+              <Button 
+                variant={activeChannel === 'general' ? 'default' : 'outline'} 
+                size="sm" 
+                className="text-xs h-8"
+                onClick={() => setActiveChannel('general')}
+              >
+                General
+              </Button>
+              <Button 
+                variant={activeChannel === 'direct' ? 'default' : 'outline'} 
+                size="sm" 
+                className="text-xs h-8"
+                onClick={() => setActiveChannel('direct')}
+              >
+                Direct
+              </Button>
+            </div>
+
+            {/* Messages Area */}
+            <ScrollArea className="flex-1 p-3">
+              <div className="space-y-3">
+                {chatMessages
+                  .filter(msg => msg.channel === activeChannel)
+                  .map((message) => {
+                    const sender = users.find(u => u.id === message.senderId)
+                    return (
+                      <div key={message.id} className="flex items-start gap-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={sender?.avatar} />
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                            {sender?.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-xs text-foreground truncate">{sender?.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatChatTime(message.timestamp)}
+                            </span>
                           </div>
+                          <p className="text-xs text-foreground">{message.content}</p>
                         </div>
-                      )
-                    })}
-                  {chatMessages.filter(msg => msg.channel === activeChannel).length === 0 && (
-                    <div className="text-center text-muted-foreground py-8">
-                      <MessageSquare className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-2" />
-                      <p className="text-xs md:text-sm">No messages in #{activeChannel} yet</p>
-                      <p className="text-xs">Start the conversation!</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+                      </div>
+                    )
+                  })}
+                {chatMessages.filter(msg => msg.channel === activeChannel).length === 0 && (
+                  <div className="text-center text-muted-foreground py-4">
+                    <MessageSquare className="w-8 h-8 mx-auto mb-2" />
+                    <p className="text-xs">No messages yet</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
 
-              {/* Message Input */}
-              <div className="flex items-center gap-2 md:gap-3">
+            {/* Message Input */}
+            <div className="p-3 border-t">
+              <div className="flex items-center gap-2">
                 <Input
-                  placeholder={`Message #${activeChannel}...`}
+                  placeholder={`Message ${activeChannel}...`}
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
-                  className="flex-1 text-sm"
+                  className="flex-1 text-sm h-8"
                 />
-                <Button size="sm" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
-                  <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
+                <Button size="sm" className="w-8 h-8 p-0" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
+                  <Send className="w-3 h-3" />
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Task Detail Modal */}
       <Dialog open={showTaskModal} onOpenChange={setShowTaskModal}>
