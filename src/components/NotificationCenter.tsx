@@ -77,7 +77,7 @@ export function useNotifications() {
   }
 }
 
-function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotifications()
 
   const getIcon = (type: Notification['type']) => {
@@ -229,6 +229,9 @@ function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     </div>
   )
 }
+
+// Named export for the NotificationCenter component
+export { NotificationCenter }
 
 export default function App() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)

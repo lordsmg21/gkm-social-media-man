@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -13,7 +14,7 @@ import {
   Bell
 } from 'lucide-react'
 import { User } from '../App'
-import { NotificationCenter } from './NotificationCenter'
+import { NotificationCenter, useNotifications } from './NotificationCenter'
 
 interface SidebarProps {
   user: User
@@ -22,6 +23,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const { unreadCount } = useNotifications()
+  
   const menuItems = [
     {
       id: 'dashboard',
@@ -133,9 +137,26 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
 
         {/* Notifications */}
         <div className="mt-8">
-          <NotificationCenter user={user} />
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 h-11 relative"
+            onClick={() => setIsNotificationOpen(true)}
+          >
+            <Bell className="w-5 h-5" />
+            <span>Notifications</span>
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs flex items-center justify-center">
+                {unreadCount}
+              </Badge>
+            )}
+          </Button>
         </div>
       </div>
+      
+      <NotificationCenter 
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+      />
     </div>
   )
 }
