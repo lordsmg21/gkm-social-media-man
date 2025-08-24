@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
+  SheetC
   Sheet,
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
   SheetTrigger 
-} from '@/components/ui/sheet'
+  SheetHeader, 
+  Users,
+  X,
+} from 'lucide-react'
 import { 
-  Bell,
-  MessageCircle,
-  FileText,
-  Calendar,
+
+  id: string
+  title: st
+  timestamp
   Users,
   CheckCircle,
   X,
@@ -30,74 +30,74 @@ export interface Notification {
   message: string
   timestamp: Date
   read: boolean
-  userId: string
-  actionData?: { taskId?: string; messageId?: string }
-}
-
-interface NotificationCenterProps {
-  user: User
-}
-
-export function NotificationCenter({ user }: NotificationCenterProps) {
-  const [notifications, setNotifications] = useKV<Notification[]>('notifications', [])
-
-  // Initialize with sample notifications if empty
-  useEffect(() => {
-    if (notifications.length === 0) {
-      const sampleNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'message',
-          title: 'Nieuw Bericht',
-          message: 'Je hebt een nieuw bericht ontvangen van Sarah Chen',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-          read: false,
-          userId: user.id,
-          actionData: { messageId: 'msg-1' }
+          userId
         },
-        {
-          id: '2',
-          type: 'task',
-          title: 'Nieuwe Taak Toegewezen',
-          message: 'Task "Instagram campagne Q1" is aan je toegewezen',
-          timestamp: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
-          read: false,
-          userId: user.id,
-          actionData: { taskId: 'task-1' }
-        },
-        {
-          id: '3',
-          type: 'deadline',
-          title: 'Deadline Naderend',
-          message: 'Facebook advertentie moet morgen worden goedgekeurd',
-          timestamp: new Date(Date.now() - 120 * 60 * 1000), // 2 hours ago
-          read: true,
-          userId: user.id,
-          actionData: { taskId: 'task-2' }
-        }
-      ]
-      setNotifications(sampleNotifications)
-    }
+ 
+
+          timestamp: new Date(Date.
+          us
+ 
+
   }, [notifications.length, user.id, setNotifications])
-
   const unreadCount = notifications.filter(n => !n.read).length
 
-  const getIcon = (type: Notification['type']) => {
-    switch (type) {
       case 'message':
-        return <MessageCircle className="w-4 h-4 text-blue-500" />
       case 'task':
-        return <FileText className="w-4 h-4 text-green-500" />
       case 'deadline':
-        return <Calendar className="w-4 h-4 text-red-500" />
       case 'file':
-        return <FileText className="w-4 h-4 text-purple-500" />
-      case 'team':
+      cas
+      default:
+    }
+
+    setNotifications(currentNotifications =>
+        n.id === notificationId ? { ...n, read: true } : n
+    )
+
+    setNotifications(currentNotifications =>
+    )
+
+    setNotificatio
+    )
+
+    const now = new Date()
+    const minutes = Math.floor(diff / (1000 * 60))
+    const days = Math.
+    if (minutes < 60) {
+    } else if (hours < 24) {
+    } else
+    }
+
+    <Sheet>
+        <Button variant="ghost" size=
+          {unreadCount > 0 && (
+              {unreadCount}
+          )}
+      </SheetTrigger>
+        <SheetHeader>
+         
+       
+              </Button>
+     
+        <ScrollArea className="h-[calc(100vh-120px)] mt
+
+                !notification.read ? 'border-primary/20 bg-prim
+
+                    <div className="flex-shrink-0 m
+                   
+                     
+                          <h4 className={`text-sm font-medium ${
+                  
+                          </h4>
+                      
+                          <p className="text-xs text-muted-f
+                  
+                        <div className="flex items-center gap-1
+                  
         return <Users className="w-4 h-4 text-indigo-500" />
       default:
         return <Bell className="w-4 h-4 text-gray-500" />
     }
-  }
+   
 
   const markAsRead = (notificationId: string) => {
     setNotifications(currentNotifications =>
@@ -105,26 +105,26 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
         n.id === notificationId ? { ...n, read: true } : n
       )
     )
-  }
+   
 
   const markAllAsRead = () => {
     setNotifications(currentNotifications =>
       currentNotifications.map(n => ({ ...n, read: true }))
     )
-  }
+  c
 
   const deleteNotification = (notificationId: string) => {
     setNotifications(currentNotifications =>
       currentNotifications.filter(n => n.id !== notificationId)
-    )
+    /
   }
 
   const formatTime = (date: Date) => {
-    const now = new Date()
+
     const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / (1000 * 60))
+
     const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
 
     if (minutes < 60) {
       return `${minutes}m geleden`
@@ -132,21 +132,21 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
       return `${hours}h geleden`
     } else {
       return `${days}d geleden`
-    }
+
   }
 
   return (
-    <Sheet>
+
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
+
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {unreadCount}
+
             </span>
-          )}
+
         </Button>
-      </SheetTrigger>
+
       <SheetContent className="w-[400px] sm:w-[540px]">
         <SheetHeader>
           <div className="flex items-center justify-between">
@@ -154,13 +154,13 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
             {unreadCount > 0 && (
               <Button variant="ghost" size="sm" onClick={markAllAsRead}>
                 Alles markeren als gelezen
-              </Button>
+
             )}
-          </div>
+
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-120px)] mt-6">
           <div className="space-y-4">
-            {notifications.map((notification) => (
+
               <Card key={notification.id} className={`${
                 !notification.read ? 'border-primary/20 bg-primary/5' : ''
               }`}>
@@ -174,12 +174,12 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
                         <div className="flex-1">
                           <h4 className={`text-sm font-medium ${
                             !notification.read ? 'text-foreground' : 'text-muted-foreground'
-                          }`}>
+
                             {notification.title}
                           </h4>
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {notification.message}
-                          </p>
+
+
                           <p className="text-xs text-muted-foreground mt-2">
                             {formatTime(notification.timestamp)}
                           </p>
@@ -188,27 +188,27 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
                           {!notification.read && (
                             <Button
                               variant="ghost"
-                              size="icon"
+
                               className="w-6 h-6"
                               onClick={() => markAsRead(notification.id)}
                             >
-                              <CheckCircle className="w-3 h-3" />
+
                             </Button>
                           )}
                           <Button
-                            variant="ghost"
+
                             size="icon"
                             className="w-6 h-6"
                             onClick={() => deleteNotification(notification.id)}
-                          >
+
                             <X className="w-3 h-3" />
                           </Button>
                         </div>
-                      </div>
+
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+
             ))}
             {notifications.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
@@ -216,11 +216,11 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
                 <p>Geen notificaties</p>
               </div>
             )}
-          </div>
+
         </ScrollArea>
-      </SheetContent>
+
     </Sheet>
-  )
+
 }
 
 export function useNotifications() {
@@ -234,11 +234,11 @@ export function useNotifications() {
     }
     setNotifications(currentNotifications => [newNotification, ...currentNotifications])
     
-    // Show toast notification
+
     toast(notification.title, {
-      description: notification.message
+
     })
-  }
+
 
   return { notifications, addNotification }
 }
