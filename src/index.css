@@ -206,24 +206,5 @@
     background: rgba(var(--primary), 0.2);
   }
 
-  /* Floating chat modal positioning */
-  .floating-chat-modal {
-    position: fixed !important;
-    bottom: 100px !important;
-    right: 24px !important;
-    top: auto !important;
-    left: auto !important;
-    transform: none !important;
-    margin: 0 !important;
-    max-width: 320px !important;
-    width: 320px !important;
-    height: 400px !important;
-  }
 
-  @media (max-width: 640px) {
-    .floating-chat-modal {
-      right: 16px !important;
-      width: 280px !important;
-    }
-  }
 }

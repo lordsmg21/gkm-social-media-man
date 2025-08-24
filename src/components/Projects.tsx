@@ -537,9 +537,9 @@ export function Projects({ user }: ProjectsProps) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] space-y-6">
+    <div className="flex flex-col h-[calc(100vh-6rem)] bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Board View</h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -563,20 +563,20 @@ export function Projects({ user }: ProjectsProps) {
 
       {/* Board Section - Full height with proper scrolling */}
       <div className="flex-1 min-h-0">
-        <Card className="glass-card h-full">
-          <CardHeader className="pb-4">
+        <Card className="glass-card h-full bg-background">
+          <CardHeader className="pb-4 bg-background">
             <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] p-2 md:p-6">
-            <div className="h-full overflow-auto">
-              <div className="flex gap-3 md:gap-6 pb-4 min-w-max">
+          <CardContent className="h-[calc(100%-4rem)] p-0 bg-background">
+            <div className="h-full overflow-x-auto overflow-y-hidden p-4">
+              <div className="flex gap-4 pb-4 min-w-max h-full">
                 {columns.map((column) => {
                   const columnTasks = getTasksByStatus(column.id)
                   
                   return (
                     <div 
                       key={column.id} 
-                      className={`flex-shrink-0 w-72 md:w-80 transition-all duration-200
+                      className={`flex-shrink-0 w-80 flex flex-col transition-all duration-200
                         ${draggedOverColumn === column.id ? 'drag-over' : ''}
                       `}
                       onDragOver={handleDragOver}
@@ -584,7 +584,7 @@ export function Projects({ user }: ProjectsProps) {
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, column.id)}
                     >
-                      <div className="flex items-center gap-3 mb-4 sticky top-0 bg-card/90 backdrop-blur py-2 z-10">
+                      <div className="flex items-center gap-3 mb-4 sticky top-0 bg-background/95 backdrop-blur py-2 z-10">
                         <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
                         <h3 className="font-heading font-semibold text-foreground text-sm md:text-base">{column.title}</h3>
                         <Badge variant="secondary" className="text-xs">
@@ -592,7 +592,7 @@ export function Projects({ user }: ProjectsProps) {
                         </Badge>
                       </div>
                       
-                      <div className="space-y-3">
+                      <div className="flex-1 overflow-y-auto space-y-3 pr-2" style={{ maxHeight: 'calc(100vh - 14rem)' }}>
                         {columnTasks.map((task) => {
                           const assignedUsers = getAssignedUsers(task.assignedTo || [])
                           const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed'
@@ -788,11 +788,11 @@ export function Projects({ user }: ProjectsProps) {
       )}
 
       {/* Floating Chat Modal */}
-      <Dialog open={showFloatingChat} onOpenChange={setShowFloatingChat}>
-        <DialogContent className="floating-chat-modal glass-modal p-0">
+      {showFloatingChat && (
+        <div className="fixed top-1/2 right-6 -translate-y-1/2 w-80 h-[500px] glass-modal rounded-lg shadow-2xl border z-50">
           <div className="flex flex-col h-full">
-            <DialogHeader className="p-4 border-b">
-              <DialogTitle className="text-base font-semibold text-foreground flex items-center justify-between">
+            <div className="p-4 border-b">
+              <div className="text-base font-semibold text-foreground flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
                   Team Chat
@@ -803,10 +803,10 @@ export function Projects({ user }: ProjectsProps) {
                   className="w-6 h-6 p-0"
                   onClick={() => setShowFloatingChat(false)}
                 >
-                  <Minimize2 className="w-3 h-3" />
+                  <X className="w-3 h-3" />
                 </Button>
-              </DialogTitle>
-            </DialogHeader>
+              </div>
+            </div>
             
             {/* Channel Tabs */}
             <div className="grid grid-cols-2 gap-1 p-2 border-b">
@@ -880,8 +880,8 @@ export function Projects({ user }: ProjectsProps) {
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Task Detail Modal */}
       <Dialog open={showTaskModal} onOpenChange={setShowTaskModal}>
