@@ -193,17 +193,21 @@
 
   /* Task mention styling */
   .task-mention {
-    background: rgba(var(--primary), 0.1);
-    color: var(--primary);
-    padding: 2px 4px;
-    border-radius: 4px;
+    background: var(--accent);
+    color: var(--accent-foreground);
+    padding: 2px 6px;
+    border-radius: 6px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
+    display: inline-block;
   }
 
   .task-mention:hover {
-    background: rgba(var(--primary), 0.2);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
 

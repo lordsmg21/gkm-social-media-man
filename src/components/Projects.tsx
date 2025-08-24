@@ -86,6 +86,9 @@ export function Projects({ user }: ProjectsProps) {
   const [showFileUpload, setShowFileUpload] = useState<string | null>(null)
   const [fileDropTask, setFileDropTask] = useState<string | null>(null)
   const [showFloatingChat, setShowFloatingChat] = useState(false)
+  const [showTaskSuggestions, setShowTaskSuggestions] = useState(false)
+  const [taskSuggestions, setTaskSuggestions] = useState<Task[]>([])
+  const [mentionStartIndex, setMentionStartIndex] = useState(-1)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const adminColumns = [
@@ -228,7 +231,7 @@ export function Projects({ user }: ProjectsProps) {
     { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true }
   ])
 
-  const [chatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
+  const [chatMessages, setChatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
     {
       id: 'chat-1',
       channel: 'general',
@@ -239,7 +242,7 @@ export function Projects({ user }: ProjectsProps) {
     },
     {
       id: 'chat-2',
-      channel: 'projects',
+      channel: 'direct',
       senderId: '1',
       content: 'Bella Vista project is nu in review fase',
       timestamp: new Date().toISOString(),
@@ -520,8 +523,98 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleSendChatMessage = () => {
     if (!chatMessage.trim()) return
-    // In a real app, this would send the message to the server
+    
+    const newMessage: ChatMessage = {
+      id: `msg-${Date.now()}-${Math.random()}`,
+      channel: activeChannel,
+      senderId: user.id,
+      content: chatMessage,
+      timestamp: new Date().toISOString(),
+      type: 'text'
+    }
+    
+    setChatMessages(prev => [...(prev || []), newMessage])
     setChatMessage('')
+    setShowTaskSuggestions(false)
+    setMentionStartIndex(-1)
+    toast.success('Message sent')
+  }
+
+  const handleChatInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setChatMessage(value)
+    
+    // Handle @ mentions
+    const cursorPosition = e.target.selectionStart || 0
+    const textBeforeCursor = value.slice(0, cursorPosition)
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@')
+    
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1)
+      
+      // Check if we're in the middle of an @ mention (no spaces after @)
+      if (!textAfterAt.includes(' ') && textAfterAt.length >= 0) {
+        const searchTerm = textAfterAt.toLowerCase()
+        const filteredTasks = (tasks || []).filter(task => 
+          task.title.toLowerCase().includes(searchTerm) ||
+          task.client.toLowerCase().includes(searchTerm) ||
+          task.id.toLowerCase().includes(searchTerm)
+        ).slice(0, 5)
+        
+        setTaskSuggestions(filteredTasks)
+        setShowTaskSuggestions(true)
+        setMentionStartIndex(lastAtIndex)
+      } else {
+        setShowTaskSuggestions(false)
+        setMentionStartIndex(-1)
+      }
+    } else {
+      setShowTaskSuggestions(false)
+      setMentionStartIndex(-1)
+    }
+  }
+
+  const handleTaskMention = (task: Task) => {
+    if (mentionStartIndex === -1) return
+    
+    // Find the end of the current mention text
+    const textAfterAt = chatMessage.slice(mentionStartIndex + 1)
+    const spaceIndex = textAfterAt.indexOf(' ')
+    const endOfMention = spaceIndex === -1 ? chatMessage.length : mentionStartIndex + 1 + spaceIndex
+    
+    const beforeMention = chatMessage.slice(0, mentionStartIndex)
+    const afterMention = chatMessage.slice(endOfMention)
+    const taskMention = `@${task.title.replace(/\s+/g, '_')}`
+    
+    setChatMessage(`${beforeMention}${taskMention} ${afterMention}`)
+    setShowTaskSuggestions(false)
+    setMentionStartIndex(-1)
+  }
+
+  const renderMessageWithMentions = (content: string) => {
+    // Split by @ mentions and render them with special styling
+    const parts = content.split(/(@[^\s]+)/g)
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('@')) {
+        const taskName = part.slice(1).replace(/_/g, ' ')
+        const mentionedTask = (tasks || []).find(task => 
+          task.title.toLowerCase() === taskName.toLowerCase()
+        )
+        
+        return (
+          <span 
+            key={index} 
+            className="task-mention cursor-pointer hover:underline"
+            onClick={() => mentionedTask && setSelectedTask(mentionedTask)}
+            title={mentionedTask ? `Click to view task: ${mentionedTask.title}` : 'Task not found'}
+          >
+            {part}
+          </span>
+        )
+      }
+      return part
+    })
   }
 
   const formatChatTime = (timestamp: string) => {
@@ -850,7 +943,9 @@ export function Projects({ user }: ProjectsProps) {
                               {formatChatTime(message.timestamp)}
                             </span>
                           </div>
-                          <p className="text-xs text-foreground">{message.content}</p>
+                          <p className="text-xs text-foreground">
+                            {renderMessageWithMentions(message.content)}
+                          </p>
                         </div>
                       </div>
                     )
@@ -865,13 +960,41 @@ export function Projects({ user }: ProjectsProps) {
             </ScrollArea>
 
             {/* Message Input */}
-            <div className="p-3 border-t">
+            <div className="p-3 border-t relative">
+              {/* Task Suggestions Dropdown */}
+              {showTaskSuggestions && taskSuggestions.length > 0 && (
+                <div className="absolute bottom-full left-3 right-3 mb-2 bg-popover border rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
+                  {taskSuggestions.map((task) => (
+                    <div 
+                      key={task.id}
+                      className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0 flex items-center gap-2"
+                      onClick={() => handleTaskMention(task)}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{task.title}</p>
+                        <p className="text-xs text-muted-foreground">{task.client}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               <div className="flex items-center gap-2">
                 <Input
-                  placeholder={`Message ${activeChannel}...`}
+                  placeholder={`Type @ to mention tasks, then message ${activeChannel}...`}
                   value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
+                  onChange={handleChatInputChange}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSendChatMessage()
+                    }
+                    if (e.key === 'Escape') {
+                      setShowTaskSuggestions(false)
+                      setMentionStartIndex(-1)
+                    }
+                  }}
                   className="flex-1 text-sm h-8"
                 />
                 <Button size="sm" className="w-8 h-8 p-0" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
