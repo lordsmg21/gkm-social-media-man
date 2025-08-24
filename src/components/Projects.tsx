@@ -474,5 +474,3 @@ export function Projects({ user }: ProjectsProps) {
     </div>
   )
 }
-
-export { Projects }
