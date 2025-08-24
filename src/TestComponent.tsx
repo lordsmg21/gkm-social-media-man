@@ -1,15 +1,10 @@
 import React from 'react'
 
 export function TestComponent() {
-  const testData = {
-    <div clas
-   
-  
-}
-
-
-
-
-
-
+  return (
+    <div className="p-4">
+      <h2 className="text-lg font-semibold">Test Component</h2>
+      <p>This is a test component.</p>
+    </div>
+  )
 }

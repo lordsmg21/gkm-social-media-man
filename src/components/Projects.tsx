@@ -293,22 +293,31 @@ export function Projects({ user }: ProjectsProps) {
     e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
     
     // Add visual feedback
-    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement
-    dragImage.style.transform = 'rotate(5deg)'
-    dragImage.style.opacity = '0.8'
-    e.dataTransfer.setDragImage(dragImage, 0, 0)
-    
-    // Make original semi-transparent
-    setTimeout(() => {
-      (e.currentTarget as HTMLElement).style.opacity = '0.5'
-      ;(e.currentTarget as HTMLElement).style.transform = 'scale(0.95)'
-    }, 0)
+    const element = e.currentTarget as HTMLElement
+    if (element) {
+      const dragImage = element.cloneNode(true) as HTMLElement
+      if (dragImage && dragImage.style) {
+        dragImage.style.transform = 'rotate(5deg)'
+        dragImage.style.opacity = '0.8'
+        e.dataTransfer.setDragImage(dragImage, 0, 0)
+      }
+      
+      // Make original semi-transparent
+      setTimeout(() => {
+        if (element && element.style) {
+          element.style.opacity = '0.5'
+          element.style.transform = 'scale(0.95)'
+        }
+      }, 0)
+    }
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
     const element = e.currentTarget as HTMLElement
-    element.style.opacity = '1'
-    element.style.transform = 'scale(1)'
+    if (element && element.style) {
+      element.style.opacity = '1'
+      element.style.transform = 'scale(1)'
+    }
     setDraggedTask(null)
     setDraggedOverColumn(null)
   }
@@ -325,7 +334,10 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleDragLeave = (e: React.DragEvent) => {
     // Only clear if we're leaving the column container
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const currentTarget = e.currentTarget
+    const relatedTarget = e.relatedTarget as Node
+    
+    if (currentTarget && (!relatedTarget || !currentTarget.contains(relatedTarget))) {
       setDraggedOverColumn(null)
     }
   }
@@ -445,7 +457,10 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleTaskFileDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const currentTarget = e.currentTarget
+    const relatedTarget = e.relatedTarget as Node
+    
+    if (currentTarget && (!relatedTarget || !currentTarget.contains(relatedTarget))) {
       setFileDropTask(null)
     }
   }
