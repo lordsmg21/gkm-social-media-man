@@ -208,6 +208,22 @@ export function Messages({ user }: MessagesProps) {
     }
   ])
 
+  // Helper functions - moved above to fix initialization order
+  const getConversationMessages = (conversationId: string) => {
+    return messages.filter(msg => msg.conversationId === conversationId)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+  }
+
+  const getOtherParticipant = (conversation: Conversation) => {
+    const otherParticipantId = conversation.participants.find(p => p !== user.id)
+    return users.find(u => u.id === otherParticipantId)
+  }
+
+  const getLastMessage = (conversation: Conversation) => {
+    const convMessages = getConversationMessages(conversation.id)
+    return convMessages[convMessages.length - 1]
+  }
+
   // Filter conversations based on user role and sort by recent activity
   const visibleConversations = conversations
     .filter(conv => {
@@ -237,21 +253,6 @@ export function Messages({ user }: MessagesProps) {
       
       return new Date(bLastMessage.timestamp).getTime() - new Date(aLastMessage.timestamp).getTime()
     })
-
-  const getConversationMessages = (conversationId: string) => {
-    return messages.filter(msg => msg.conversationId === conversationId)
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-  }
-
-  const getOtherParticipant = (conversation: Conversation) => {
-    const otherParticipantId = conversation.participants.find(p => p !== user.id)
-    return users.find(u => u.id === otherParticipantId)
-  }
-
-  const getLastMessage = (conversation: Conversation) => {
-    const convMessages = getConversationMessages(conversation.id)
-    return convMessages[convMessages.length - 1]
-  }
 
   const createGroupChat = () => {
     if (!newGroupName.trim() || selectedMembers.length === 0) {
