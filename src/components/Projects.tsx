@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
+import { FileDropZone, type FileUpload } from './FileDropZone'
 
 interface TaskFile {
   id: string
@@ -78,6 +79,8 @@ export function Projects({ user }: ProjectsProps) {
   const [activeChannel, setActiveChannel] = useState('general')
   const [showFilePreview, setShowFilePreview] = useState<TaskFile | null>(null)
   const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null)
+  const [showFileUpload, setShowFileUpload] = useState<string | null>(null)
+  const [fileDropTask, setFileDropTask] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const adminColumns = [
@@ -287,11 +290,24 @@ export function Projects({ user }: ProjectsProps) {
     setDraggedTask(task)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
-    e.currentTarget.style.opacity = '0.5'
+    
+    // Add visual feedback
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement
+    dragImage.style.transform = 'rotate(5deg)'
+    dragImage.style.opacity = '0.8'
+    e.dataTransfer.setDragImage(dragImage, 0, 0)
+    
+    // Make original semi-transparent
+    setTimeout(() => {
+      (e.currentTarget as HTMLElement).style.opacity = '0.5'
+      ;(e.currentTarget as HTMLElement).style.transform = 'scale(0.95)'
+    }, 0)
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
-    e.currentTarget.style.opacity = '1'
+    const element = e.currentTarget as HTMLElement
+    element.style.opacity = '1'
+    element.style.transform = 'scale(1)'
     setDraggedTask(null)
     setDraggedOverColumn(null)
   }
@@ -349,35 +365,90 @@ export function Projects({ user }: ProjectsProps) {
 
   // File management functions
   const handleFileUpload = (taskId: string) => {
-    if (!fileInputRef.current) return
-    fileInputRef.current.click()
-    fileInputRef.current.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
+    setShowFileUpload(taskId)
+  }
 
-      // Check file size (max 200MB)
-      if (file.size > 200 * 1024 * 1024) {
-        toast.error('File size must be less than 200MB')
-        return
+  const handleFilesUploaded = (uploads: FileUpload[], taskId: string) => {
+    const newFiles: TaskFile[] = uploads.map(upload => ({
+      id: `f${Date.now()}-${Math.random()}`,
+      name: upload.file.name,
+      size: upload.file.size,
+      type: upload.file.type,
+      uploadedBy: user.id,
+      uploadedAt: new Date().toISOString(),
+      url: URL.createObjectURL(upload.file) // In real app, this would be the server URL
+    }))
+
+    const updatedTasks = tasks.map(task => 
+      task.id === taskId 
+        ? { ...task, files: [...task.files, ...newFiles] }
+        : task
+    )
+    setTasks(updatedTasks)
+    setShowFileUpload(null)
+    setFileDropTask(null)
+  }
+
+  // Handle file drops directly on task cards
+  const handleTaskFileDrop = (e: React.DragEvent, taskId: string) => {
+    // Only handle file drops, not task drags
+    if (draggedTask || !e.dataTransfer.types.includes('Files')) {
+      return
+    }
+    
+    e.preventDefault()
+    e.stopPropagation()
+    setFileDropTask(null)
+
+    if (user.role !== 'admin') return
+
+    const files = e.dataTransfer.files
+    if (files.length === 0) return
+
+    // Process files directly
+    const processDirectDrop = async () => {
+      const fileArray = Array.from(files)
+      const uploads: FileUpload[] = []
+
+      for (const file of fileArray) {
+        // Check file size (max 200MB)
+        if (file.size > 200 * 1024 * 1024) {
+          toast.error(`${file.name}: File size exceeds 200MB limit`)
+          continue
+        }
+
+        uploads.push({
+          id: `${Date.now()}-${Math.random()}`,
+          file,
+          progress: 100,
+          status: 'completed'
+        })
       }
 
-      const newFile: TaskFile = {
-        id: `f${Date.now()}`,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        uploadedBy: user.id,
-        uploadedAt: new Date().toISOString(),
-        url: URL.createObjectURL(file) // In real app, upload to server
+      if (uploads.length > 0) {
+        handleFilesUploaded(uploads, taskId)
       }
+    }
 
-      const updatedTasks = tasks.map(task => 
-        task.id === taskId 
-          ? { ...task, files: [...task.files, newFile] }
-          : task
-      )
-      setTasks(updatedTasks)
-      toast.success(`File "${file.name}" uploaded successfully`)
+    processDirectDrop()
+  }
+
+  const handleTaskFileDragOver = (e: React.DragEvent, taskId: string) => {
+    // Only handle file drops, not task drags
+    if (draggedTask || !e.dataTransfer.types.includes('Files')) {
+      return
+    }
+    
+    e.preventDefault()
+    if (user.role === 'admin') {
+      setFileDropTask(taskId)
+    }
+  }
+
+  const handleTaskFileDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setFileDropTask(null)
     }
   }
 
@@ -454,7 +525,9 @@ export function Projects({ user }: ProjectsProps) {
                   return (
                     <div 
                       key={column.id} 
-                      className={`flex-shrink-0 w-72 md:w-80 ${draggedOverColumn === column.id ? 'ring-2 ring-primary ring-opacity-50 bg-primary/5 rounded-lg' : ''}`}
+                      className={`flex-shrink-0 w-72 md:w-80 transition-all duration-200
+                        ${draggedOverColumn === column.id ? 'drag-over' : ''}
+                      `}
                       onDragOver={handleDragOver}
                       onDragEnter={(e) => handleDragEnter(e, column.id)}
                       onDragLeave={handleDragLeave}
@@ -476,16 +549,32 @@ export function Projects({ user }: ProjectsProps) {
                           return (
                             <Card 
                               key={task.id} 
-                              className="glass-card cursor-grab hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:cursor-grabbing group"
+                              className={`relative glass-card task-card-draggable hover:shadow-md transition-all duration-200 group
+                                ${draggedTask?.id === task.id ? 'dragging' : ''}
+                                ${fileDropTask === task.id ? 'ring-2 ring-primary ring-opacity-50 bg-primary/5' : ''}
+                              `}
                               draggable={user.role === 'admin'}
                               onDragStart={(e) => handleDragStart(e, task)}
                               onDragEnd={handleDragEnd}
+                              onDragOver={(e) => handleTaskFileDragOver(e, task.id)}
+                              onDragLeave={handleTaskFileDragLeave}
+                              onDrop={(e) => handleTaskFileDrop(e, task.id)}
                               onClick={() => {
                                 setSelectedTask(task)
                                 setShowTaskModal(true)
                               }}
                             >
                               <CardContent className="p-3 md:p-4">
+                                {/* File drop overlay */}
+                                {fileDropTask === task.id && user.role === 'admin' && (
+                                  <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-lg flex items-center justify-center z-10">
+                                    <div className="text-center">
+                                      <Upload className="w-6 h-6 mx-auto mb-1 text-primary" />
+                                      <p className="text-xs text-primary font-medium">Drop files here</p>
+                                    </div>
+                                  </div>
+                                )}
+                                
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex items-center gap-2">
                                     <span className="text-lg">{getPlatformIcon(task.platform)}</span>
@@ -570,12 +659,23 @@ export function Projects({ user }: ProjectsProps) {
                         {/* Add Task Button */}
                         {user.role === 'admin' && (
                           <Card 
-                            className={`glass-card border-dashed border-2 cursor-pointer hover:bg-muted/20 transition-colors ${draggedOverColumn === column.id ? 'border-primary bg-primary/10' : ''}`}
+                            className={`glass-card border-dashed border-2 cursor-pointer hover:bg-muted/20 transition-colors
+                              ${draggedOverColumn === column.id && draggedTask ? 'border-primary bg-primary/10' : ''}
+                            `}
                           >
                             <CardContent className="p-3 md:p-4 flex items-center justify-center">
                               <div className="text-center text-muted-foreground">
-                                <Plus className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-2" />
-                                <p className="text-xs md:text-sm">Add Task</p>
+                                {draggedOverColumn === column.id && draggedTask ? (
+                                  <>
+                                    <div className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-2 border-2 border-dashed border-primary rounded animate-pulse" />
+                                    <p className="text-xs md:text-sm text-primary">Drop task here</p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-2" />
+                                    <p className="text-xs md:text-sm">Add Task</p>
+                                  </>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -841,19 +941,26 @@ export function Projects({ user }: ProjectsProps) {
                     })}
                   </div>
                 ) : (
-                  <div className="mt-3 p-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-center">
-                    <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">No files uploaded yet</p>
-                    {user.role === 'admin' && (
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="mt-2 gap-2"
-                        onClick={() => handleFileUpload(selectedTask.id)}
-                      >
-                        <Upload className="w-3 h-3" />
-                        Upload first file
-                      </Button>
+                  <div className="mt-3">
+                    {user.role === 'admin' ? (
+                      <div className="p-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-center">
+                        <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-3">No files uploaded yet</p>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="gap-2"
+                          onClick={() => handleFileUpload(selectedTask.id)}
+                        >
+                          <Upload className="w-3 h-3" />
+                          Upload files
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="p-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-center">
+                        <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No files uploaded yet</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -934,6 +1041,40 @@ export function Projects({ user }: ProjectsProps) {
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* File Upload Modal */}
+      <Dialog open={!!showFileUpload} onOpenChange={() => setShowFileUpload(null)}>
+        <DialogContent className="max-w-2xl glass-modal mx-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Upload Files
+            </DialogTitle>
+          </DialogHeader>
+          
+          {showFileUpload && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-medium text-sm mb-1">Uploading to:</h4>
+                <p className="text-sm text-muted-foreground">
+                  {tasks.find(t => t.id === showFileUpload)?.title}
+                </p>
+              </div>
+              
+              <FileDropZone 
+                onFilesUploaded={(uploads) => handleFilesUploaded(uploads, showFileUpload)}
+                maxFileSize={200 * 1024 * 1024} // 200MB
+              />
+              
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setShowFileUpload(null)}>
+                  Cancel
+                </Button>
               </div>
             </div>
           )}

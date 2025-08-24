@@ -116,6 +116,44 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
 
+  /* Drag and Drop Enhancements */
+  .dragging {
+    opacity: 0.5;
+    transform: scale(0.95) rotate(3deg);
+    z-index: 1000;
+  }
+
+  .drag-over {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px dashed var(--primary);
+    transform: scale(1.02);
+  }
+
+  .task-card-draggable {
+    cursor: grab;
+    transition: all 0.2s ease;
+  }
+
+  .task-card-draggable:active {
+    cursor: grabbing;
+  }
+
+  .task-card-draggable:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  /* File Drop Zone */
+  .file-drop-zone {
+    transition: all 0.2s ease;
+  }
+
+  .file-drop-zone.drag-over {
+    background: rgba(var(--primary), 0.05);
+    border-color: var(--primary);
+    transform: scale(1.02);
+  }
+
   /* Board + Chat Layout Mobile Responsive */
   @media (max-width: 768px) {
     .board-chat-layout {
