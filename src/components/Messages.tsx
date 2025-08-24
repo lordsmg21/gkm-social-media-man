@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { 
   Search, 
   Plus, 
@@ -21,7 +22,15 @@ import {
   Users,
   Settings,
   UserPlus,
-  Hash
+  Hash,
+  Download,
+  Trash2,
+  Archive,
+  Mute,
+  Pin,
+  FileText,
+  Image as ImageIcon,
+  Eye
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
@@ -38,6 +47,8 @@ interface Message {
   type: 'text' | 'file'
   fileUrl?: string
   fileName?: string
+  fileSize?: number
+  fileType?: string
 }
 
 interface Conversation {
@@ -66,6 +77,8 @@ export function Messages({ user }: MessagesProps) {
   const [newGroupDescription, setNewGroupDescription] = useState('')
   const [selectedMembers, setSelectedMembers] = useState<string[]>([])
   const [showGroupSettings, setShowGroupSettings] = useState(false)
+  const [showFilePreview, setShowFilePreview] = useState<Message | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [users] = useKV<User[]>('all-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
@@ -116,7 +129,7 @@ export function Messages({ user }: MessagesProps) {
     }
   ])
 
-  const [messages] = useKV<Message[]>('messages', [
+  const [messages, setMessages] = useKV<Message[]>('messages', [
     {
       id: 'msg-1',
       senderId: '3',
@@ -179,26 +192,51 @@ export function Messages({ user }: MessagesProps) {
       timestamp: '2024-01-20T16:10:00Z',
       read: true,
       type: 'text'
+    },
+    {
+      id: 'msg-8',
+      senderId: '1',
+      conversationId: 'conv-1',
+      content: 'design-mockup.png',
+      timestamp: '2024-01-20T16:15:00Z',
+      read: true,
+      type: 'file',
+      fileName: 'design-mockup.png',
+      fileSize: 2048576,
+      fileType: 'image/png',
+      fileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
     }
   ])
 
-  // Filter conversations based on user role
-  const visibleConversations = conversations.filter(conv => {
-    if (conv.type === 'group') {
-      // Group chats are only visible to admin users
-      return user.role === 'admin' && conv.participants.includes(user.id)
-    } else {
-      // Direct messages
-      if (user.role === 'admin') {
-        return conv.participants.includes(user.id)
+  // Filter conversations based on user role and sort by recent activity
+  const visibleConversations = conversations
+    .filter(conv => {
+      if (conv.type === 'group') {
+        // Group chats are only visible to admin users
+        return user.role === 'admin' && conv.participants.includes(user.id)
       } else {
-        // Clients can only see conversations with admins
-        const otherParticipant = conv.participants.find(p => p !== user.id)
-        const otherUser = users.find(u => u.id === otherParticipant)
-        return conv.participants.includes(user.id) && otherUser?.role === 'admin'
+        // Direct messages
+        if (user.role === 'admin') {
+          return conv.participants.includes(user.id)
+        } else {
+          // Clients can only see conversations with admins
+          const otherParticipant = conv.participants.find(p => p !== user.id)
+          const otherUser = users.find(u => u.id === otherParticipant)
+          return conv.participants.includes(user.id) && otherUser?.role === 'admin'
+        }
       }
-    }
-  })
+    })
+    .sort((a, b) => {
+      // Sort by most recent message
+      const aLastMessage = getLastMessage(a)
+      const bLastMessage = getLastMessage(b)
+      
+      if (!aLastMessage && !bLastMessage) return 0
+      if (!aLastMessage) return 1
+      if (!bLastMessage) return -1
+      
+      return new Date(bLastMessage.timestamp).getTime() - new Date(aLastMessage.timestamp).getTime()
+    })
 
   const getConversationMessages = (conversationId: string) => {
     return messages.filter(msg => msg.conversationId === conversationId)
@@ -277,8 +315,111 @@ export function Messages({ user }: MessagesProps) {
   const handleSendMessage = () => {
     if (!messageInput.trim() || !selectedConversation) return
     
-    // In a real app, this would send the message to the server
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      senderId: user.id,
+      conversationId: selectedConversation,
+      content: messageInput,
+      timestamp: new Date().toISOString(),
+      read: true,
+      type: 'text'
+    }
+    
+    setMessages(prev => [...prev, newMessage])
     setMessageInput('')
+    
+    // Update conversation last message timestamp
+    setConversations(prev => prev.map(conv => 
+      conv.id === selectedConversation 
+        ? { ...conv, lastMessage: newMessage }
+        : conv
+    ))
+    
+    toast.success('Message sent')
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files || files.length === 0 || !selectedConversation) return
+
+    Array.from(files).forEach(file => {
+      if (file.size > 200 * 1024 * 1024) {
+        toast.error(`File ${file.name} is too large (max 200MB)`)
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const newMessage: Message = {
+          id: `msg-${Date.now()}-${Math.random()}`,
+          senderId: user.id,
+          conversationId: selectedConversation,
+          content: file.name,
+          timestamp: new Date().toISOString(),
+          read: true,
+          type: 'file',
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          fileUrl: e.target?.result as string
+        }
+        
+        setMessages(prev => [...prev, newMessage])
+        
+        // Update conversation last message
+        setConversations(prev => prev.map(conv => 
+          conv.id === selectedConversation 
+            ? { ...conv, lastMessage: newMessage }
+            : conv
+        ))
+        
+        toast.success(`File ${file.name} uploaded`)
+      }
+      reader.readAsDataURL(file)
+    })
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const isImageFile = (fileType: string) => {
+    return fileType.startsWith('image/')
+  }
+
+  const downloadFile = (message: Message) => {
+    if (message.fileUrl && message.fileName) {
+      const link = document.createElement('a')
+      link.href = message.fileUrl
+      link.download = message.fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success('File downloaded')
+    }
+  }
+
+  const deleteMessage = (messageId: string) => {
+    setMessages(prev => prev.filter(msg => msg.id !== messageId))
+    toast.success('Message deleted')
+  }
+
+  const muteConversation = (conversationId: string) => {
+    toast.success('Conversation muted')
+  }
+
+  const archiveConversation = (conversationId: string) => {
+    setSelectedConversation(null)
+    toast.success('Conversation archived')
   }
 
   const handleNewConversation = (targetUserId: string) => {
@@ -510,7 +651,7 @@ export function Messages({ user }: MessagesProps) {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 mr-2">
+                          <h4 className="font-medium text-sm text-foreground truncate flex-1 mr-2">
                             {conversationTitle}
                           </h4>
                           {lastMessage && (
@@ -521,7 +662,7 @@ export function Messages({ user }: MessagesProps) {
                         </div>
                         
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs text-muted-foreground min-w-0 flex-1 mr-2 break-words line-clamp-2">
+                          <p className="text-xs text-muted-foreground truncate flex-1 mr-2">
                             {lastMessage ? (
                               conversation.type === 'group' 
                                 ? `${users.find(u => u.id === lastMessage.senderId)?.name}: ${lastMessage.content}`
@@ -649,9 +790,32 @@ export function Messages({ user }: MessagesProps) {
                         </DialogContent>
                       </Dialog>
                     )}
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => muteConversation(selectedConversation)}>
+                          <Mute className="w-4 h-4 mr-2" />
+                          Mute conversation
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => archiveConversation(selectedConversation)}>
+                          <Archive className="w-4 h-4 mr-2" />
+                          Archive conversation
+                        </DropdownMenuItem>
+                        {selectedConv.type === 'group' && user.id === selectedConv.createdBy && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete group
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardHeader>
@@ -678,14 +842,77 @@ export function Messages({ user }: MessagesProps) {
                               ? 'bg-primary text-primary-foreground' 
                               : 'bg-muted text-foreground'
                           }`}>
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                            {message.type === 'file' ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  {message.fileType && isImageFile(message.fileType) ? (
+                                    <ImageIcon className="w-4 h-4" />
+                                  ) : (
+                                    <FileText className="w-4 h-4" />
+                                  )}
+                                  <span className="text-sm font-medium break-all">{message.fileName}</span>
+                                </div>
+                                {message.fileSize && (
+                                  <p className="text-xs opacity-75">{formatFileSize(message.fileSize)}</p>
+                                )}
+                                {message.fileType && isImageFile(message.fileType) && message.fileUrl && (
+                                  <div className="mt-2">
+                                    <img 
+                                      src={message.fileUrl} 
+                                      alt={message.fileName}
+                                      className="max-w-full max-h-40 rounded cursor-pointer"
+                                      onClick={() => setShowFilePreview(message)}
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex gap-2 mt-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant={isOwn ? "secondary" : "outline"} 
+                                    onClick={() => downloadFile(message)}
+                                    className="text-xs"
+                                  >
+                                    <Download className="w-3 h-3 mr-1" />
+                                    Download
+                                  </Button>
+                                  {message.fileType && isImageFile(message.fileType) && (
+                                    <Button 
+                                      size="sm" 
+                                      variant={isOwn ? "secondary" : "outline"}
+                                      onClick={() => setShowFilePreview(message)}
+                                      className="text-xs"
+                                    >
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      View
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 mt-1 px-3">
                             <span className="text-xs text-muted-foreground">
                               {formatTime(message.timestamp)}
                             </span>
                             {isOwn && (
-                              <Circle className={`w-2 h-2 ${message.read ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                              <>
+                                <Circle className={`w-2 h-2 ${message.read ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="p-1 h-auto">
+                                      <MoreVertical className="w-3 h-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => deleteMessage(message.id)} className="text-destructive">
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete message
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </>
                             )}
                           </div>
                         </div>
@@ -698,7 +925,19 @@ export function Messages({ user }: MessagesProps) {
               {/* Message Input */}
               <div className="p-4 border-t border-border">
                 <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.txt,.rtf,.xls,.xlsx,.csv,.zip,.rar,.7z"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Paperclip className="w-4 h-4" />
                   </Button>
                   <Input
@@ -728,6 +967,56 @@ export function Messages({ user }: MessagesProps) {
           </Card>
         )}
       </div>
+      
+      {/* File Preview Modal */}
+      <Dialog open={!!showFilePreview} onOpenChange={() => setShowFilePreview(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              {showFilePreview?.fileName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto">
+            {showFilePreview && showFilePreview.fileUrl && (
+              <div className="space-y-4">
+                {showFilePreview.fileType && isImageFile(showFilePreview.fileType) ? (
+                  <img 
+                    src={showFilePreview.fileUrl} 
+                    alt={showFilePreview.fileName}
+                    className="max-w-full max-h-[70vh] object-contain mx-auto"
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">
+                      Cannot preview this file type
+                    </p>
+                    <Button onClick={() => downloadFile(showFilePreview)}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download File
+                    </Button>
+                  </div>
+                )}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{showFilePreview.fileName}</p>
+                    {showFilePreview.fileSize && (
+                      <p className="text-sm text-muted-foreground">
+                        {formatFileSize(showFilePreview.fileSize)}
+                      </p>
+                    )}
+                  </div>
+                  <Button onClick={() => downloadFile(showFilePreview)}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
