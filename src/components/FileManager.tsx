@@ -633,6 +633,7 @@ export function FileManager({ user }: FileManagerProps) {
                   )}
                 </div>
               </div>
+            </div>
             )
           })()}
         </DialogContent>
