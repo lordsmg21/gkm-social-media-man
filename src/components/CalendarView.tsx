@@ -25,8 +25,8 @@ interface CalendarEvent {
   id: string
   title: string
   description?: string
-  start: Date
-  end: Date
+  start: Date | string
+  end: Date | string
   type: 'deadline' | 'meeting' | 'publication' | 'campaign' | 'standup'
   client?: string
   attendees?: string[]
@@ -95,7 +95,8 @@ export function CalendarView({ user }: CalendarViewProps) {
     }
   ])
 
-  const [upcomingEvents] = useKV('upcoming-events', events.slice(0, 3))
+  // Filter upcoming events dynamically
+  const upcomingEvents = events.slice(0, 3)
 
   const eventTypeColors = {
     deadline: 'bg-red-500 text-white',
@@ -151,17 +152,20 @@ export function CalendarView({ user }: CalendarViewProps) {
     setCurrentDate(newDate)
   }
 
-  const formatEventTime = (start: Date, end: Date) => {
-    const startTime = start.toLocaleTimeString('nl-NL', { 
+  const formatEventTime = (start: Date | string, end: Date | string) => {
+    const startDate = new Date(start)
+    const endDate = new Date(end)
+    
+    const startTime = startDate.toLocaleTimeString('nl-NL', { 
       hour: '2-digit', 
       minute: '2-digit' 
     })
-    const endTime = end.toLocaleTimeString('nl-NL', { 
+    const endTime = endDate.toLocaleTimeString('nl-NL', { 
       hour: '2-digit', 
       minute: '2-digit' 
     })
     
-    if (start.getTime() === end.getTime()) {
+    if (startDate.getTime() === endDate.getTime()) {
       return startTime
     }
     return `${startTime} - ${endTime}`
@@ -342,7 +346,7 @@ export function CalendarView({ user }: CalendarViewProps) {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-sm text-foreground truncate">{event.title}</h4>
                       <p className="text-xs text-muted-foreground">
-                        {event.start.toLocaleDateString('nl-NL')} • {formatEventTime(event.start, event.end)}
+                        {new Date(event.start).toLocaleDateString('nl-NL')} • {formatEventTime(event.start, event.end)}
                       </p>
                       {event.client && (
                         <Badge variant="outline" className="text-xs mt-1">
@@ -411,7 +415,7 @@ export function CalendarView({ user }: CalendarViewProps) {
                   <div className="flex items-center gap-2 mt-1">
                     <Clock className="w-4 h-4 text-muted-foreground" />
                     <span>
-                      {selectedEvent.start.toLocaleDateString('nl-NL')} • {formatEventTime(selectedEvent.start, selectedEvent.end)}
+                      {new Date(selectedEvent.start).toLocaleDateString('nl-NL')} • {formatEventTime(selectedEvent.start, selectedEvent.end)}
                     </span>
                   </div>
                 </div>

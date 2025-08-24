@@ -2,10 +2,9 @@ import React from 'react'
 
 export function TestComponent() {
   const testData = {
-  return (
-      <h1 classN
-   
-
+    value: 42
+  }
+  
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold">Test Component</h1>
