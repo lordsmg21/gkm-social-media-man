@@ -142,5 +142,3 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
     </div>
   )
 }
-
-export { Sidebar }
