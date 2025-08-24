@@ -71,19 +71,13 @@ export function FileDropZone({
   }
 
   const getUploadFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />
-    if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" />
-    if (file.type.includes('pdf') || file.type.includes('document')) return <FileText className="w-4 h-4 text-red-500" />
-    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w-4 h-4 text-orange-500" />
-    return <FileText className="w-4 h-4 text-gray-500" />
+    if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" 
+    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w
   }
-
   const getStatusIcon = (status: FileUpload['status']) => {
-    switch (status) {
-      case 'uploading': return <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
-      case 'completed': return <CheckCircle className="w-3 h-3 text-green-500" />
+      case 'uploading': return <Loader2 className="w-3 h-
       case 'error': return <X className="w-3 h-3 text-red-500" />
-      default: return null
+
     }
   }
 
@@ -189,61 +183,34 @@ export function FileDropZone({
     }
     // Clear input value to allow re-upload of same file
     if (e.target) {
-      e.target.value = ''
     }
-  }
 
-  const handleClick = () => {
-    const input = document.createElement('input')
-    if (input) {
-      input.type = 'file'
-      input.multiple = multiple
+    const input = documen
+     
       input.accept = acceptedTypes.join(',')
-      input.onchange = (e) => {
-        const target = e.target as HTMLInputElement
-        if (target?.files) {
-          processFiles(target.files)
-        }
-        // Clear input value to allow re-upload of same file
-        if (target) {
+        const targe
+          processFiles(ta
+     
           target.value = ''
         }
       }
-      input.click()
     }
-  }
 
-  return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Drop Zone */}
+    <div className={`spac
       <Card 
-        className={`
-          glass-card file-drop-zone cursor-pointer transition-all duration-200 min-h-[200px] flex items-center justify-center
-          ${isDragOver 
-            ? 'border-primary bg-primary/5 drag-over' 
-            : 'border-muted-foreground/25 hover:border-primary/50'
+          glass-card file-drop-zone cursor-p
+            ? 'border-primary b
           }
-        `}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDragOver={handleDr
         onDrop={handleDrop}
-        onClick={handleClick}
       >
-        <CardContent className="p-8">
-          <div className="flex flex-col items-center justify-center text-center space-y-4">
-            <div className="p-4 rounded-full bg-primary/10">
-              <Upload className="w-8 h-8 text-primary" />
-            </div>
+          <div className="flex flex-col items-center justify
+              <Upload
             
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">
-                Drop files here or click to browse
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Maximum file size: {formatFileSize(maxFileSize)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Supported: Images, Videos, Documents, Archives
+         
+       
+                Max
+     
               </p>
             </div>
 
