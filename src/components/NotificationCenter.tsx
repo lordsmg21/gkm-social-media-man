@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Separator } from '@/components/ui/separator'
+import { Sheet, SheetContent, SheetHeader, Shee
 import {
-  Bell,
   MessageSquare,
-  Calendar,
+  FileText,
+import {
+  Trash
+import { User } 
+import { to
   FileText,
   Users,
   CheckCircle,
@@ -24,41 +24,41 @@ export interface Notification {
   title: string
   message: string
   timestamp: Date
-  read: boolean
-  userId: string
-  actionData?: any
-}
-
-interface NotificationCenterProps {
-  user: User
-}
-
-export function NotificationCenter({ user }: NotificationCenterProps) {
-  const [notifications, setNotifications] = useKV<Notification[]>('notifications', [])
-  const [isOpen, setIsOpen] = useState(false)
-
-  // Initialize with sample notifications if empty
-  useEffect(() => {
-    if (notifications.length === 0) {
-      const sampleNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'message',
-          title: 'Nieuw bericht',
-          message: 'Je hebt een nieuw bericht ontvangen van Sarah Johnson',
-          timestamp: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
-          read: false,
-          userId: user.id,
-          actionData: { conversationId: 'conv-1' }
         },
+          id: '2
+          title: '
+ 
+
+        },
+          id
+ 
+
+          userId: user.id
         {
-          id: '2',
-          type: 'task',
-          title: 'Task voltooid',
-          message: 'Instagram Story Design is voltooid en wacht op goedkeuring',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-          read: false,
-          userId: user.id,
+          type: 'file',
+
+          read: true,
+        },
+          id: '5',
+          title: 'Team Update',
+        {
+          userId: 
+      ]
+    }
+
+
+    switch (type) {
+        return <MessageSqu
+        return <CheckCircle className="w-4 h-4 tex
+        },
+        r
+        return <Us
+        return <Bell cl
+  }
+  const markAsRead = (notificationId: string) => {
+      currentNotifications.map(n =>
+      )
+  }
           actionData: { taskId: 'task-1' }
         },
         {
@@ -110,7 +110,7 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
       default:
         return <Bell className="w-4 h-4 text-gray-500" />
     }
-  }
+   
 
   const markAsRead = (notificationId: string) => {
     setNotifications(currentNotifications =>
@@ -118,26 +118,26 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
         n.id === notificationId ? { ...n, read: true } : n
       )
     )
-  }
+   
 
   const markAllAsRead = () => {
     setNotifications(currentNotifications =>
       currentNotifications.map(n => ({ ...n, read: true }))
     )
-  }
+   
 
   const deleteNotification = (notificationId: string) => {
     setNotifications(currentNotifications =>
       currentNotifications.filter(n => n.id !== notificationId)
-    )
+    t
   }
 
   const formatTime = (date: Date) => {
-    const now = new Date()
+
     const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / (1000 * 60))
+
     const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
 
     if (minutes < 60) {
       return `${minutes}m geleden`
@@ -145,21 +145,21 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
       return `${hours}h geleden`
     } else {
       return `${days}d geleden`
-    }
+
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
+
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
+
             </span>
-          )}
+
         </Button>
-      </SheetTrigger>
+
       <SheetContent className="w-[400px] sm:w-[540px]">
         <SheetHeader>
           <div className="flex items-center justify-between">
@@ -167,13 +167,13 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
             {unreadCount > 0 && (
               <Button variant="ghost" size="sm" onClick={markAllAsRead}>
                 Alles markeren als gelezen
-              </Button>
+
             )}
-          </div>
+
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-120px)] mt-6">
           <div className="space-y-4">
-            {notifications.map((notification) => (
+
               <Card key={notification.id} className={`${
                 !notification.read ? 'border-primary/20 bg-primary/5' : ''
               }`}>
@@ -187,12 +187,12 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
                         <div className="flex-1">
                           <h4 className={`text-sm font-medium ${
                             !notification.read ? 'text-foreground' : 'text-muted-foreground'
-                          }`}>
+
                             {notification.title}
                           </h4>
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {notification.message}
-                          </p>
+
+
                           <p className="text-xs text-muted-foreground mt-2">
                             {formatTime(notification.timestamp)}
                           </p>
@@ -201,27 +201,27 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
                           {!notification.read && (
                             <Button
                               variant="ghost"
-                              size="icon"
+
                               className="w-6 h-6"
                               onClick={() => markAsRead(notification.id)}
                             >
-                              <CheckCircle className="w-3 h-3" />
+
                             </Button>
                           )}
                           <Button
-                            variant="ghost"
+
                             size="icon"
                             className="w-6 h-6"
                             onClick={() => deleteNotification(notification.id)}
-                          >
+
                             <X className="w-3 h-3" />
                           </Button>
                         </div>
-                      </div>
+
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+
             ))}
             {notifications.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
@@ -229,11 +229,11 @@ export function NotificationCenter({ user }: NotificationCenterProps) {
                 <p>Geen notificaties</p>
               </div>
             )}
-          </div>
+
         </ScrollArea>
-      </SheetContent>
+
     </Sheet>
-  )
+
 }
 
 export function useNotifications() {
@@ -247,11 +247,11 @@ export function useNotifications() {
     }
     setNotifications(currentNotifications => [newNotification, ...currentNotifications])
     
-    // Show toast notification
+
     toast(notification.title, {
-      description: notification.message
+
     })
-  }
+
 
   return { notifications, addNotification }
 }
