@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react'
-import { Progress } from '@/components/ui/progress'
+import { Card, CardContent } from '@/components/ui/
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  X, 
-  Image, 
-  Upload, 
+  FileTex
+  Arc
+  CheckCi
+} from 'lu
   FileText, 
   Video,
   Archive,
@@ -14,39 +14,39 @@ import {
   File
 } from 'lucide-react'
 
-interface FileUpload {
-  id: string
-  file: File
-  progress: number
-  status: 'pending' | 'uploading' | 'completed' | 'error'
-  preview?: string
-}
-
-interface FileDropZoneProps {
-  onFilesUploaded: (files: File[]) => void
-  maxFileSize?: number
-  acceptedTypes?: string[]
-  multiple?: boolean
-  className?: string
-}
-
-const ACCEPTED_TYPES = [
-  'image/jpeg',
-  'image/jpg', 
-  'image/png',
-  'image/gif',
-  'image/webp',
+const ACCEPTED_TYPES =
+  'image/jpg
+  'image/gif
   'image/svg+xml',
-  'application/pdf',
   'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
-  'video/mp4',
-  'video/quicktime',
-  'video/x-msvideo',
-  'application/zip',
-  'application/x-rar-compressed',
+ 
+
   'application/vnd.ms-excel',
+]
+const MAX_FILE_SIZE = 
+export function FileDropZo
+  maxFileSize = MAX_
+  multiple = true,
+}
+
+
+    if (bytes =
+    const sizes
+    return par
+
+    if (file.ty
+    if (file.type 
+    return <File cla
+
+    switch (status) {
+        return 
+        return
+        return <X cl
+        return null
+  }
+  const processFiles = async (fil
+    
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ]
 
@@ -72,45 +72,45 @@ export function FileDropZone({
   }
 
   const getUploadFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />
+        u.status === 'uploading' ? { ...u, status: 'completed' as const } : u
     if (file.type.startsWith('video/')) return <Video className="w-4 h-4 text-purple-500" />
-    if (file.type === 'application/pdf') return <FileText className="w-4 h-4 text-red-500" />
-    if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w-4 h-4 text-orange-500" />
+    // Return completed files to parent
+    onFilesUploaded(completedFiles)
     return <File className="w-4 h-4 text-gray-500" />
-  }
+   
 
-  const getStatusIcon = (status: FileUpload['status']) => {
-    switch (status) {
-      case 'uploading':
-        return <Loader2 className="w-3 h-3 text-blue-500 animate-spin" />
-      case 'completed':
-        return <CheckCircle className="w-3 h-3 text-green-500" />
-      case 'error':
+
+    setUploads(prev =
+
+    e.preventDefault()
+    setIsDragOver(true)
+
+    e.preventDefaul
         return <X className="w-3 h-3 text-red-500" />
-      default:
+
         return null
-    }
+    s
   }
 
-  const processFiles = async (files: FileList | File[]) => {
+  }, [])
     if (!files) return
     
     const newUploads: FileUpload[] = []
-    const fileArray = Array.from(files)
+      const target = e.target as HTMLIn
     
-    for (const file of fileArray) {
-      if (!acceptedTypes.includes(file.type)) continue
-      if (file.size > maxFileSize) continue
-      
-      const upload: FileUpload = {
-        id: Math.random().toString(36).substr(2, 9),
-        file,
-        progress: 0,
-        status: 'pending'
       }
+    input.click()
 
-      // Create preview for images
-      if (file.type.startsWith('image/')) {
+    <d
+        className={`glass-card fil
+        }`}
+        file,
+        onClick={han
+        <CardContent clas
+       
+
+            <div className="text-c
+              <p className="text-sm text-mu
         const reader = new FileReader()
         reader.onload = (e) => {
           setUploads(prev => prev.map(u => 
@@ -166,64 +166,64 @@ export function FileDropZone({
   }
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+
+
     setIsDragOver(true)
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDragOver(false)
-  }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(false)
-    
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      processFiles(files)
+
+
+
+
+
+
+
+
+
+
     }
-  }, [])
 
-  const handleFileInput = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.multiple = multiple
-    input.accept = acceptedTypes.join(',')
-    input.onchange = (e) => {
-      const target = e.target as HTMLInputElement
-      if (target.files && target.files.length > 0) {
-        processFiles(target.files)
-        target.value = ''
+
+
+
+
+
+
+
+
+
+
+
       }
     }
-    input.click()
-  }
 
-  return (
-    <div className={`space-y-4 ${className}`}>
+
+
+
+
       <Card 
-        className={`glass-card file-drop-zone cursor-pointer transition-all ${
-          isDragOver ? 'border-primary bg-primary/5' : ''
-        }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+
+
+
+
+
         onDrop={handleDrop}
-        onClick={handleFileInput}
+
       >
-        <CardContent className="p-8">
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="p-4 rounded-full bg-muted/50">
-              <Upload className="w-8 h-8 text-muted-foreground" />
-            </div>
+
+
+
+
+
             
-            <div className="text-center">
-              <h3 className="font-semibold text-foreground">Drop files here or click to browse</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Max file size: {formatFileSize(maxFileSize)}
+
+
+
+
               </p>
             </div>
 
