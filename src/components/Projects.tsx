@@ -56,7 +56,6 @@ interface Task {
   description?: string
   tags: string[]
   files: TaskFile[]
-  mentionTag?: string // Unique @tag for mentioning in chat
 }
 
 interface ChatMessage {
@@ -82,11 +81,7 @@ export function Projects({ user }: ProjectsProps) {
   const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null)
   const [showFileUpload, setShowFileUpload] = useState<string | null>(null)
   const [fileDropTask, setFileDropTask] = useState<string | null>(null)
-  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
-  const [mentionSuggestions, setMentionSuggestions] = useState<Task[]>([])
-  const [cursorPosition, setCursorPosition] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const chatInputRef = useRef<HTMLInputElement>(null)
 
   const adminColumns = [
     { id: 'to-do', title: 'To Do', color: 'bg-gray-500' },
@@ -122,7 +117,6 @@ export function Projects({ user }: ProjectsProps) {
       progress: 75,
       description: 'Create engaging Instagram stories for the bakery\'s new artisan bread line',
       tags: ['stories', 'food', 'artisan'],
-      mentionTag: '@korenbloem-stories',
       files: [
         {
           id: 'f1',
@@ -156,7 +150,6 @@ export function Projects({ user }: ProjectsProps) {
       progress: 90,
       description: 'Dinner promotion campaign targeting local food enthusiasts',
       tags: ['ads', 'restaurant', 'promotion'],
-      mentionTag: '@bellavista-ads',
       files: [
         {
           id: 'f3',
@@ -181,7 +174,6 @@ export function Projects({ user }: ProjectsProps) {
       progress: 25,
       description: 'Comprehensive social media strategy for Q1 2024',
       tags: ['strategy', 'fitness', 'planning'],
-      mentionTag: '@fitness-strategy',
       files: []
     },
     {
@@ -196,7 +188,6 @@ export function Projects({ user }: ProjectsProps) {
       progress: 100,
       description: 'Launch campaign for new SaaS product',
       tags: ['launch', 'tech', 'saas'],
-      mentionTag: '@techstart-launch',
       files: [
         {
           id: 'f4',
@@ -221,7 +212,6 @@ export function Projects({ user }: ProjectsProps) {
       progress: 100,
       description: 'Valentine\'s Day fashion promotion',
       tags: ['holiday', 'fashion', 'promotion'],
-      mentionTag: '@fashion-valentine',
       files: []
     }
   ])
@@ -233,37 +223,21 @@ export function Projects({ user }: ProjectsProps) {
     { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true }
   ])
 
-  const [chatMessages, setChatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
+  const [chatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
     {
       id: 'chat-1',
       channel: 'general',
       senderId: '2',
-      content: 'Heeft iemand al feedback gehad op @korenbloem-stories? De client wacht op antwoord.',
-      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      content: 'Heeft iemand al feedback gehad op de Korenbloem campagne?',
+      timestamp: new Date().toISOString(),
       type: 'text'
     },
     {
       id: 'chat-2',
-      channel: 'direct',
+      channel: 'projects',
       senderId: '1',
-      content: '@bellavista-ads is nu in review fase. Kunnen we morgen de final presentatie doen?',
-      timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
-      type: 'text'
-    },
-    {
-      id: 'chat-3',
-      channel: 'general',
-      senderId: '4',
-      content: 'Team, @fitness-strategy heeft een deadline update nodig. Client heeft timeline verschoven.',
-      timestamp: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
-      type: 'text'
-    },
-    {
-      id: 'chat-4',
-      channel: 'direct', 
-      senderId: '3',
-      content: 'Great work on @techstart-launch! Client is super happy met de resultaten 🎉',
-      timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+      content: 'Bella Vista project is nu in review fase',
+      timestamp: new Date().toISOString(),
       type: 'text'
     }
   ])
@@ -319,31 +293,22 @@ export function Projects({ user }: ProjectsProps) {
     e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
     
     // Add visual feedback
-    const element = e.currentTarget as HTMLElement
-    if (element) {
-      const dragImage = element.cloneNode(true) as HTMLElement
-      if (dragImage && dragImage.style) {
-        dragImage.style.transform = 'rotate(5deg)'
-        dragImage.style.opacity = '0.8'
-        e.dataTransfer.setDragImage(dragImage, 0, 0)
-      }
-      
-      // Make original semi-transparent
-      setTimeout(() => {
-        if (element && element.style) {
-          element.style.opacity = '0.5'
-          element.style.transform = 'scale(0.95)'
-        }
-      }, 0)
-    }
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement
+    dragImage.style.transform = 'rotate(5deg)'
+    dragImage.style.opacity = '0.8'
+    e.dataTransfer.setDragImage(dragImage, 0, 0)
+    
+    // Make original semi-transparent
+    setTimeout(() => {
+      (e.currentTarget as HTMLElement).style.opacity = '0.5'
+      ;(e.currentTarget as HTMLElement).style.transform = 'scale(0.95)'
+    }, 0)
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
     const element = e.currentTarget as HTMLElement
-    if (element && element.style) {
-      element.style.opacity = '1'
-      element.style.transform = 'scale(1)'
-    }
+    element.style.opacity = '1'
+    element.style.transform = 'scale(1)'
     setDraggedTask(null)
     setDraggedOverColumn(null)
   }
@@ -360,10 +325,7 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleDragLeave = (e: React.DragEvent) => {
     // Only clear if we're leaving the column container
-    const currentTarget = e.currentTarget
-    const relatedTarget = e.relatedTarget as Node
-    
-    if (currentTarget && (!relatedTarget || !currentTarget.contains(relatedTarget))) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setDraggedOverColumn(null)
     }
   }
@@ -410,13 +372,13 @@ export function Projects({ user }: ProjectsProps) {
 
   // Fix the function signature to match what FileDropZone expects
   const handleFilesUploaded = (files: File[], taskId: string) => {
-    if (!files || !Array.isArray(files) || files.length === 0) {
+    if (!files || !Array.isArray(files)) {
       toast.error('No files to upload')
       return
     }
 
     const newFiles: TaskFile[] = files.map(file => ({
-      id: `f${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `f${Date.now()}-${Math.random()}`,
       name: file.name,
       size: file.size,
       type: file.type,
@@ -425,15 +387,12 @@ export function Projects({ user }: ProjectsProps) {
       url: URL.createObjectURL(file) // In real app, this would be the server URL
     }))
 
-    setTasks((prevTasks) => {
-      const updatedTasks = (prevTasks || []).map(task => 
-        task.id === taskId 
-          ? { ...task, files: [...(task.files || []), ...newFiles] }
-          : task
-      )
-      return updatedTasks
-    })
-    
+    const updatedTasks = (tasks || []).map(task => 
+      task.id === taskId 
+        ? { ...task, files: [...(task.files || []), ...newFiles] }
+        : task
+    )
+    setTasks(updatedTasks)
     setShowFileUpload(null)
     setFileDropTask(null)
     toast.success(`${files.length} file(s) uploaded successfully`)
@@ -486,15 +445,27 @@ export function Projects({ user }: ProjectsProps) {
 
   const handleTaskFileDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
-    const currentTarget = e.currentTarget
-    const relatedTarget = e.relatedTarget as Node
-    
-    if (currentTarget && (!relatedTarget || !currentTarget.contains(relatedTarget))) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setFileDropTask(null)
     }
   }
 
+  // Cleanup function for URL objects
+  const cleanupFileURL = (url: string) => {
+    if (url && url.startsWith('blob:')) {
+      URL.revokeObjectURL(url)
+    }
+  }
+
   const handleFileDelete = (taskId: string, fileId: string) => {
+    // Find the file first to cleanup URL
+    const task = (tasks || []).find(t => t.id === taskId)
+    const file = (task?.files || []).find(f => f.id === fileId)
+    
+    if (file) {
+      cleanupFileURL(file.url)
+    }
+    
     const updatedTasks = (tasks || []).map(task => 
       task.id === taskId 
         ? { ...task, files: (task.files || []).filter(f => f.id !== fileId) }
@@ -512,76 +483,22 @@ export function Projects({ user }: ProjectsProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const handleChatMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setChatMessage(value)
-    setCursorPosition(e.target.selectionStart || 0)
-    
-    // Check if user is typing a mention
-    const atIndex = value.lastIndexOf('@', e.target.selectionStart || 0)
-    if (atIndex !== -1) {
-      const beforeAt = value.substring(0, atIndex)
-      const afterCursor = value.substring(e.target.selectionStart || 0)
-      const spaceAfterAt = afterCursor.indexOf(' ')
-      const searchTerm = value.substring(atIndex + 1, spaceAfterAt === -1 ? value.length : atIndex + 1 + spaceAfterAt)
-      
-      if (beforeAt === '' || beforeAt[beforeAt.length - 1] === ' ') {
-        // Filter tasks that match the search term
-        const filtered = (visibleTasks || []).filter(task => 
-          task.mentionTag && 
-          task.mentionTag.toLowerCase().includes(searchTerm.toLowerCase())
-        ).slice(0, 5)
-        
-        setMentionSuggestions(filtered)
-        setShowMentionSuggestions(filtered.length > 0 && searchTerm.length >= 0)
-      } else {
-        setShowMentionSuggestions(false)
-      }
-    } else {
-      setShowMentionSuggestions(false)
-    }
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <Image className="w-4 h-4" />
+    if (type.includes('pdf')) return <FileText className="w-4 h-4" />
+    return <Paperclip className="w-4 h-4" />
   }
 
-  const handleMentionSelect = (task: Task) => {
-    if (!task.mentionTag || !chatInputRef.current) return
-    
-    const input = chatInputRef.current
-    const atIndex = chatMessage.lastIndexOf('@', cursorPosition)
-    
-    if (atIndex !== -1) {
-      const beforeAt = chatMessage.substring(0, atIndex)
-      const afterCursor = chatMessage.substring(cursorPosition)
-      const spaceAfterAt = afterCursor.indexOf(' ')
-      const remainingAfter = spaceAfterAt === -1 ? '' : afterCursor.substring(spaceAfterAt)
-      
-      const newMessage = beforeAt + task.mentionTag + ' ' + remainingAfter
-      setChatMessage(newMessage)
-      setShowMentionSuggestions(false)
-      
-      // Focus back to input
-      setTimeout(() => {
-        input.focus()
-        const newCursorPos = beforeAt.length + task.mentionTag.length + 1
-        input.setSelectionRange(newCursorPos, newCursorPos)
-      }, 0)
-    }
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <Image className="w-4 h-4" />
+    if (type.includes('pdf')) return <FileText className="w-4 h-4" />
+    return <Paperclip className="w-4 h-4" />
   }
 
   const handleSendChatMessage = () => {
     if (!chatMessage.trim()) return
-    
-    const newMessage: ChatMessage = {
-      id: `chat-${Date.now()}`,
-      channel: activeChannel,
-      senderId: user.id,
-      content: chatMessage.trim(),
-      timestamp: new Date().toISOString(),
-      type: 'text'
-    }
-    
-    setChatMessages(prev => [...(prev || []), newMessage])
+    // In a real app, this would send the message to the server
     setChatMessage('')
-    setShowMentionSuggestions(false)
   }
 
   const formatChatTime = (timestamp: string) => {
@@ -594,7 +511,7 @@ export function Projects({ user }: ProjectsProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-3rem)] space-y-6 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-shrink-0">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Board View</h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -612,20 +529,16 @@ export function Projects({ user }: ProjectsProps) {
         </div>
       </div>
 
-      {/* Main Content - Board + Chat Layout */}
-      <div className={`flex-1 flex ${user.role === 'admin' ? 'gap-6' : ''} overflow-hidden board-chat-layout`}>
-        
-        {/* Board Section - Takes remaining space */}
-        <div className="flex-1 board-section overflow-hidden">
-          <Card className="glass-card h-full">
-            <CardHeader className="pb-4 flex-shrink-0">
-              <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 p-2 md:p-6 overflow-hidden">
-              <div className="w-full h-full">
-                <div className="overflow-x-auto h-full">
-                  <div className="flex gap-3 md:gap-6 pb-4 h-full" style={{ minWidth: 'max-content' }}>
-                    {columns.map((column) => {
+      {/* Board Section - Takes 70% of screen on desktop, responsive on mobile */}
+      <div className="flex-1 board-section" style={{ minHeight: '60vh' }}>
+        <Card className="glass-card h-full">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[calc(100%-4rem)] p-2 md:p-6">
+            <ScrollArea className="w-full h-full">
+              <div className="flex gap-3 md:gap-6 pb-4 min-w-max">
+                {columns.map((column) => {
                   const columnTasks = getTasksByStatus(column.id)
                   
                   return (
@@ -698,66 +611,6 @@ export function Projects({ user }: ProjectsProps) {
                                 <p className="text-xs text-muted-foreground mb-3">
                                   {task.client}
                                 </p>
-                                
-                                {/* Task mention tag */}
-                                {task.mentionTag && (
-                                  <div className="mb-2">
-                                    <Badge variant="outline" className="text-xs px-2 py-0.5 bg-accent/20 text-accent border-accent/40 font-medium">
-                                      {task.mentionTag}
-                                    </Badge>
-                                  </div>
-                                )}
-
-                                {/* File previews */}
-                                {(task.files || []).length > 0 && (
-                                  <div className="mb-3">
-                                    <div className="grid grid-cols-4 gap-1">
-                                      {(task.files || []).slice(0, 4).map((file) => (
-                                        <div 
-                                          key={file.id}
-                                          className="aspect-square bg-muted rounded border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            setShowFilePreview(file)
-                                          }}
-                                        >
-                                          {file.type.startsWith('image/') ? (
-                                            <img 
-                                              src={file.url} 
-                                              alt={file.name}
-                                              className="w-full h-full object-cover"
-                                              onError={(e) => {
-                                                const target = e.target as HTMLImageElement
-                                                const parent = target.parentElement
-                                                if (parent) {
-                                                  target.style.display = 'none'
-                                                  // Add fallback icon manually
-                                                  const fallback = document.createElement('div')
-                                                  fallback.className = "w-full h-full flex items-center justify-center text-muted-foreground"
-                                                  fallback.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>'
-                                                  parent.appendChild(fallback)
-                                                }
-                                              }}
-                                            />
-                                          ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                              {file.type.includes('pdf') ? (
-                                                <FileText className="w-4 h-4" />
-                                              ) : (
-                                                <Paperclip className="w-4 h-4" />
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                    {(task.files || []).length > 4 && (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        +{(task.files || []).length - 4} more files
-                                      </p>
-                                    )}
-                                  </div>
-                                )}
                                 
                                 {task.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-3">
@@ -850,63 +703,71 @@ export function Projects({ user }: ProjectsProps) {
                     </div>
                   )
                 })}
-                </div>
               </div>
-            </div>
-            </CardContent>
-          </Card>
-        </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Team Chat Section - Fixed width sidebar (Admin Only) */}
-        {user.role === 'admin' && (
-          <div className="chat-section flex-shrink-0 w-96 max-w-96">
-            <Card className="glass-card h-full">
-              <CardHeader className="flex flex-row items-center justify-between py-3">
-                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Team Chat
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <div className="flex -space-x-1">
-                    {users.slice(0, 2).map((teamMember) => (
-                      <div key={teamMember.id} className="relative">
-                        <Avatar className="w-5 h-5 border-2 border-background">
-                          <AvatarImage src={teamMember.avatar} />
-                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                            {teamMember.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        {teamMember.isOnline && (
-                          <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-background"></div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <span className="text-xs text-muted-foreground">{users.filter(u => u.isOnline).length}</span>
+      {/* Team Chat Section - Takes 30% of screen on desktop, responsive on mobile (Admin Only) */}
+      {user.role === 'admin' && (
+        <div className="chat-section" style={{ minHeight: '30vh' }}>
+          <Card className="glass-card h-full">
+            <CardHeader className="flex flex-row items-center justify-between py-3">
+              <CardTitle className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+                Team Chat
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-1">
+                  {users.slice(0, 3).map((teamMember) => (
+                    <div key={teamMember.id} className="relative">
+                      <Avatar className="w-5 h-5 md:w-6 md:h-6 border-2 border-background">
+                        <AvatarImage src={teamMember.avatar} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {teamMember.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      {teamMember.isOnline && (
+                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full border border-background"></div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col h-[calc(100%-4rem)] p-4">
-                {/* Channel Tabs - Simplified to 2 channels */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <Button 
-                    variant={activeChannel === 'general' ? 'default' : 'outline'} 
-                    size="sm" 
-                    className="text-xs"
-                    onClick={() => setActiveChannel('general')}
-                  >
-                    <Target className="w-3 h-3 mr-1" />
-                    General
-                  </Button>
-                  <Button 
-                    variant={activeChannel === 'direct' ? 'default' : 'outline'} 
-                    size="sm" 
-                    className="text-xs"
-                    onClick={() => setActiveChannel('direct')}
-                  >
-                    <Users className="w-3 h-3 mr-1" />
-                    Direct
-                  </Button>
-                </div>
+                <span className="text-xs md:text-sm text-muted-foreground">{users.filter(u => u.isOnline).length} online</span>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col h-[calc(100%-4rem)] p-2 md:p-6">
+              {/* Channel Tabs */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <Button 
+                  variant={activeChannel === 'general' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setActiveChannel('general')}
+                >
+                  <Target className="w-3 h-3 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">#</span>general
+                </Button>
+                <Button 
+                  variant={activeChannel === 'projects' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setActiveChannel('projects')}
+                >
+                  <Users className="w-3 h-3 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">#</span>projects
+                </Button>
+                <Button 
+                  variant={activeChannel === 'urgent' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setActiveChannel('urgent')}
+                >
+                  <AlertCircle className="w-3 h-3 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">#</span>urgent
+                </Button>
+              </div>
 
               {/* Messages Area */}
               <ScrollArea className="flex-1 mb-4">
@@ -915,35 +776,6 @@ export function Projects({ user }: ProjectsProps) {
                     .filter(msg => msg.channel === activeChannel)
                     .map((message) => {
                       const sender = users.find(u => u.id === message.senderId)
-                      
-                      // Parse task mentions in message content
-                      const parseTaskMentions = (content: string) => {
-                        const mentionRegex = /(@[\w-]+)/g
-                        const parts = content.split(mentionRegex)
-                        
-                        return parts.map((part, index) => {
-                          if (part.match(mentionRegex)) {
-                            // Find matching task
-                            const mentionedTask = (tasks || []).find(task => task.mentionTag === part)
-                            if (mentionedTask) {
-                              return (
-                                <span 
-                                  key={index} 
-                                  className="bg-primary/20 text-primary px-1 py-0.5 rounded text-xs font-medium cursor-pointer hover:bg-primary/30 transition-colors"
-                                  onClick={() => {
-                                    setSelectedTask(mentionedTask)
-                                    setShowTaskModal(true)
-                                  }}
-                                >
-                                  {part}
-                                </span>
-                              )
-                            }
-                          }
-                          return part
-                        })
-                      }
-                      
                       return (
                         <div key={message.id} className="flex items-start gap-2 md:gap-3">
                           <Avatar className="w-6 h-6 md:w-8 md:h-8">
@@ -959,9 +791,7 @@ export function Projects({ user }: ProjectsProps) {
                                 {formatChatTime(message.timestamp)}
                               </span>
                             </div>
-                            <p className="text-xs md:text-sm text-foreground">
-                              {parseTaskMentions(message.content)}
-                            </p>
+                            <p className="text-xs md:text-sm text-foreground">{message.content}</p>
                           </div>
                         </div>
                       )
@@ -977,76 +807,22 @@ export function Projects({ user }: ProjectsProps) {
               </ScrollArea>
 
               {/* Message Input */}
-              <div className="relative">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="relative flex-1">
-                    <Input
-                      ref={chatInputRef}
-                      placeholder={`Message #${activeChannel}... (Type @ to mention tasks)`}
-                      value={chatMessage}
-                      onChange={handleChatMessageChange}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && !showMentionSuggestions) {
-                          handleSendChatMessage()
-                        } else if (e.key === 'Escape') {
-                          setShowMentionSuggestions(false)
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (showMentionSuggestions && ['ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)) {
-                          e.preventDefault()
-                        }
-                      }}
-                      className="flex-1 text-sm pr-10"
-                    />
-                    
-                    {/* Mention Suggestions Dropdown */}
-                    {showMentionSuggestions && mentionSuggestions.length > 0 && (
-                      <div className="absolute bottom-full mb-2 left-0 right-0 bg-popover border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
-                        <div className="p-2">
-                          <p className="text-xs text-muted-foreground mb-2 font-medium">Tasks to mention:</p>
-                          {mentionSuggestions.map((task) => (
-                            <button
-                              key={task.id}
-                              className="w-full flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors text-left"
-                              onClick={() => handleMentionSelect(task)}
-                            >
-                              <span className="text-lg">{getPlatformIcon(task.platform)}</span>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
-                                    {task.mentionTag}
-                                  </Badge>
-                                  <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
-                                </div>
-                                <p className="text-sm font-medium truncate mt-1">{task.title}</p>
-                                <p className="text-xs text-muted-foreground">{task.client}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <Button size="sm" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
-                    <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
-                  </Button>
-                </div>
-                
-                {/* Mention Help Text */}
-                {chatMessage.includes('@') && !showMentionSuggestions && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    💡 Type @ followed by task name to mention projects
-                  </p>
-                )}
+              <div className="flex items-center gap-2 md:gap-3">
+                <Input
+                  placeholder={`Message #${activeChannel}...`}
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
+                  className="flex-1 text-sm"
+                />
+                <Button size="sm" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
+                  <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
-
-      </div>
 
       {/* Task Detail Modal */}
       <Dialog open={showTaskModal} onOpenChange={setShowTaskModal}>
@@ -1088,35 +864,6 @@ export function Projects({ user }: ProjectsProps) {
                 <label className="text-sm font-medium text-muted-foreground">Description</label>
                 <p className="mt-1 text-sm">{selectedTask.description}</p>
               </div>
-
-              {/* Mention Tag */}
-              {selectedTask.mentionTag && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Team Chat Mention</label>
-                  <div className="mt-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="bg-accent/20 text-accent border-accent/40 font-medium">
-                        {selectedTask.mentionTag}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => {
-                          navigator.clipboard.writeText(selectedTask.mentionTag || '')
-                          toast.success('Mention tag copied to clipboard')
-                        }}
-                      >
-                        Copy
-                      </Button>
-                    </div>
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      <p>💬 Use this tag in team chat to reference this task</p>
-                      <p>📋 Example: "Can we review {selectedTask.mentionTag} today?"</p>
-                    </div>
-                  </div>
-                </div>
-              )}
               
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Progress</label>
@@ -1167,13 +914,7 @@ export function Projects({ user }: ProjectsProps) {
                       return (
                         <div key={file.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                           <div className="flex items-center gap-2 flex-1">
-                            {file.type.startsWith('image/') ? (
-                              <Image className="w-4 h-4" />
-                            ) : file.type.includes('pdf') ? (
-                              <FileText className="w-4 h-4" />
-                            ) : (
-                              <Paperclip className="w-4 h-4" />
-                            )}
+                            {getFileIcon(file.type)}
                             <div className="flex-1">
                               <p className="text-sm font-medium">{file.name}</p>
                               <p className="text-xs text-muted-foreground">
@@ -1262,15 +1003,7 @@ export function Projects({ user }: ProjectsProps) {
         <DialogContent className="max-w-4xl glass-modal mx-4">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {showFilePreview && (
-                showFilePreview.type.startsWith('image/') ? (
-                  <Image className="w-5 h-5" />
-                ) : showFilePreview.type.includes('pdf') ? (
-                  <FileText className="w-5 h-5" />
-                ) : (
-                  <Paperclip className="w-5 h-5" />
-                )
-              )}
+              {showFilePreview && getFileIcon(showFilePreview.type)}
               {showFilePreview?.name}
             </DialogTitle>
           </DialogHeader>
@@ -1308,79 +1041,23 @@ export function Projects({ user }: ProjectsProps) {
               {/* File Preview Content */}
               <div className="flex items-center justify-center min-h-[300px] bg-muted rounded-lg">
                 {showFilePreview.type.startsWith('image/') ? (
-                  <div className="w-full h-full max-h-[500px] flex items-center justify-center">
-                    <img 
-                      src={showFilePreview.url} 
-                      alt={showFilePreview.name}
-                      className="max-w-full max-h-full object-contain rounded"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.style.display = 'none'
-                        const fallback = target.nextElementSibling as HTMLElement
-                        if (fallback) fallback.style.display = 'block'
-                      }}
-                    />
-                    <div className="hidden text-center p-8">
-                      <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Image preview not available
-                      </p>
-                    </div>
-                  </div>
-                ) : showFilePreview.type === 'application/pdf' ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-8">
-                    <FileText className="w-12 h-12 mb-4 text-red-500" />
-                    <p className="text-sm font-medium text-foreground mb-2">PDF Document</p>
-                    <p className="text-xs text-muted-foreground mb-4 text-center">
-                      PDF preview requires download to view
-                    </p>
-                    <Button
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => {
-                        const link = document.createElement('a')
-                        link.href = showFilePreview.url
-                        link.download = showFilePreview.name
-                        link.click()
-                      }}
-                    >
-                      <Download className="w-3 h-3" />
-                      Download PDF
-                    </Button>
-                  </div>
+                  <img 
+                    src={showFilePreview.url} 
+                    alt={showFilePreview.name}
+                    className="max-w-full max-h-[500px] object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
                 ) : (
                   <div className="text-center p-8">
-                    <div className="flex justify-center mb-4">
-                      {showFilePreview && (
-                        showFilePreview.type.startsWith('image/') ? (
-                          <Image className="w-12 h-12" />
-                        ) : showFilePreview.type.includes('pdf') ? (
-                          <FileText className="w-12 h-12" />
-                        ) : (
-                          <Paperclip className="w-12 h-12" />
-                        )
-                      )}
-                    </div>
-                    <p className="text-sm font-medium text-foreground mb-2">
-                      {showFilePreview.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-4">
+                    {getFileIcon(showFilePreview.type)}
+                    <p className="text-sm text-muted-foreground mt-2">
                       Preview not available for this file type
                     </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => {
-                        const link = document.createElement('a')
-                        link.href = showFilePreview.url
-                        link.download = showFilePreview.name
-                        link.click()
-                      }}
-                    >
-                      <Download className="w-3 h-3" />
-                      Download File
-                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Click download to view the file
+                    </p>
                   </div>
                 )}
               </div>
