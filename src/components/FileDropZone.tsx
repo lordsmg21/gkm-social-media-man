@@ -1,33 +1,33 @@
 import React, { useState, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progr
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent } from '@/components/ui/card'
-import { 
-  Upload, 
-  Image,
-  Archive,
   X, 
-  FileText,
   Video,
-  CheckCircle,
-  Loader2
-} from 'lucide-react'
+  Loader
 
-interface FileUpload {
-  id: string
-  file: File
-  progress: number
-  status: 'pending' | 'uploading' | 'completed' | 'error'
-  preview?: string
+  id:
+  progress:
+  previe
+
+  onFiles
+  acceptedTypes?: str
+
+
+  'image/jpe
+  'image/png
+  'image/webp',
+  'application/pdf',
+  'application/vnd
 }
 
-interface FileDropZoneProps {
-  onFilesUploaded: (files: File[]) => void
-  maxFileSize?: number
-  acceptedTypes?: string[]
-  multiple?: boolean
-  className?: string
-}
+  'application/x-rar-compress
+  'application/vnd.openxmlformats-officedo
+
+
+  onFilesUploaded, 
+  acceptedTypes = AC
+ 
 
 const ACCEPTED_TYPES = [
   'image/jpeg',
@@ -68,7 +68,7 @@ export function FileDropZone({
     const sizes = ['Bytes', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
+   
 
   const getFileIcon = (file: File) => {
     if (file.type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />
@@ -76,15 +76,15 @@ export function FileDropZone({
     if (file.type.includes('pdf') || file.type.includes('document')) return <FileText className="w-4 h-4 text-red-500" />
     if (file.type.includes('zip') || file.type.includes('rar')) return <Archive className="w-4 h-4 text-orange-500" />
     return <FileText className="w-4 h-4 text-gray-500" />
-  }
+   
 
-  const getStatusIcon = (status: FileUpload['status']) => {
+    setUploads(prev => [...prev, ...newUploads])
     switch (status) {
       case 'uploading': return <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
       case 'completed': return <CheckCircle className="w-3 h-3 text-green-500" />
       case 'error': return <X className="w-3 h-3 text-red-500" />
       default: return null
-    }
+
   }
 
   const processFiles = async (files: FileList | null) => {
@@ -94,13 +94,13 @@ export function FileDropZone({
     
     for (const file of Array.from(files)) {
       if (file.size > maxFileSize) continue
-      if (!acceptedTypes.includes(file.type)) continue
+      )
 
       const upload: FileUpload = {
         id: `${Date.now()}-${Math.random()}`,
         file,
         progress: 0,
-        status: 'pending',
+    setIsUploading(false)
       }
 
       // Create preview for images
@@ -110,44 +110,44 @@ export function FileDropZone({
           setUploads(prev => prev.map(u => 
             u.id === upload.id ? { ...u, preview: e.target?.result as string } : u
           ))
-        }
+    setIs
         reader.readAsDataURL(file)
-      }
+  const
 
       newUploads.push(upload)
     }
 
     if (newUploads.length === 0) return
-    setUploads(prev => [...prev, ...newUploads])
-    setIsUploading(true)
+    setIsDragOver(false)
+    if (files.length > 0
 
     // Update status to uploading
     setUploads(prev => 
-      prev.map(u => 
+    const files = e.
         u.status === 'pending' ? { ...u, status: 'uploading' as const } : u
-      )
+    }
     )
 
     // Simulate progress
     for (let progress = 0; progress <= 100; progress += 10) {
       setUploads(prev => 
-        prev.map(u => 
+    input.accept = acc
           u.status === 'uploading' ? { ...u, progress } : u
-        )
+  }
       )
       await new Promise(resolve => setTimeout(resolve, 200))
     }
 
     // Mark as completed
-    setUploads(prev => 
+            ? 'border-p
       prev.map(u => 
-        u.status === 'uploading' ? { ...u, status: 'completed' as const } : u
+        `}
       )
-    )
+     
 
-    // Get completed files
+        <CardContent class
     const completedFiles = uploads
-      .filter(u => u.status === 'uploading' || u.status === 'pending')
+              <Upload className="w-8 h-8 text-primary" />
       .map(u => u.file)
     
     onFilesUploaded(completedFiles)
@@ -155,45 +155,45 @@ export function FileDropZone({
 
     // Clear uploads after a delay
     setTimeout(() => {
-      setUploads([])
+              </p>
     }, 3000)
   }
 
-  const removeUpload = (id: string) => {
+            </Button>
     setUploads(prev => prev.filter(u => u.id !== id))
-  }
+   
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+      {uploads.length > 0 && (
     e.preventDefault()
-    e.stopPropagation()
+            <div classN
     setIsDragOver(true)
-  }, [])
+        
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
+
     e.stopPropagation()
     setIsDragOver(false)
   }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
+
     e.stopPropagation()
     setIsDragOver(false)
 
-    const files = e.dataTransfer.files
+
     if (files.length > 0) {
       processFiles(files)
     }
-  }, [])
+
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
+
       processFiles(files)
     }
     // Clear input value to allow re-upload of same file
-    e.target.value = ''
-  }
+
+
 
   const handleClick = () => {
     const input = document.createElement('input')
@@ -206,17 +206,17 @@ export function FileDropZone({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Drop Zone */}
+
       <Card 
-        className={`
+
           glass-card file-drop-zone cursor-pointer transition-all duration-200 min-h-[200px] flex items-center justify-center
-          ${isDragOver 
+
             ? 'border-primary bg-primary/5 drag-over' 
             : 'border-muted-foreground/25 hover:border-primary/50'
           }
-        `}
+
         onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+
         onDrop={handleDrop}
         onClick={handleClick}
       >
@@ -227,82 +227,81 @@ export function FileDropZone({
             </div>
             
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">
-                {isDragOver ? 'Drop files here' : 'Upload Files'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Click to browse or drag and drop files here
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Max file size: {formatFileSize(maxFileSize)}
-              </p>
-            </div>
-            
-            <Button variant="outline" className="gap-2">
-              <Upload className="w-4 h-4" />
-              Choose Files
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Upload Progress */}
-      {uploads.length > 0 && (
-        <Card className="glass-card">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium">File Uploads</h4>
-              <span className="text-sm text-muted-foreground">
-                {uploads.filter(u => u.status === 'completed').length} of {uploads.length} completed
-              </span>
-            </div>
-            
-            <div className="space-y-3">
-              {uploads.map(upload => (
-                <div key={upload.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  {upload.preview ? (
-                    <img 
-                      src={upload.preview} 
-                      alt={upload.file.name}
-                      className="w-10 h-10 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="p-2 bg-background rounded">
-                      {getFileIcon(upload.file)}
-                    </div>
-                  )}
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium truncate">{upload.file.name}</p>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(upload.status)}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeUpload(upload.id)
-                          }}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatFileSize(upload.file.size)}
-                    </p>
-                    {upload.status === 'uploading' && (
-                      <Progress value={upload.progress} className="mt-1 h-1" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
