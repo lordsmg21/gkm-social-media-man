@@ -115,4 +115,19 @@
     transform: translateY(-1px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
+
+  /* Board + Chat Layout Mobile Responsive */
+  @media (max-width: 768px) {
+    .board-chat-layout {
+      flex-direction: column;
+    }
+    
+    .board-section {
+      min-height: 60vh;
+    }
+    
+    .chat-section {
+      min-height: 40vh;
+    }
+  }
 }

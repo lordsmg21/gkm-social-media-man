@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { 
   Plus, 
   Calendar, 
@@ -42,6 +43,9 @@ interface ProjectsProps {
 export function Projects({ user }: ProjectsProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showTaskModal, setShowTaskModal] = useState(false)
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null)
+  const [chatMessage, setChatMessage] = useState('')
+  const [activeChannel, setActiveChannel] = useState('general')
 
   const adminColumns = [
     { id: 'to-do', title: 'To Do', color: 'bg-gray-500' },
@@ -133,10 +137,29 @@ export function Projects({ user }: ProjectsProps) {
   ])
 
   const [users] = useKV<User[]>('all-users', [
-    { id: '1', name: 'Alex van der Berg', role: 'admin', avatar: '' },
-    { id: '2', name: 'Sarah de Jong', role: 'admin', avatar: '' },
-    { id: '3', name: 'Mike Visser', role: 'admin', avatar: '' },
-    { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '' }
+    { id: '1', name: 'Alex van der Berg', role: 'admin', avatar: '', email: 'alex@gkm.nl', isOnline: true },
+    { id: '2', name: 'Sarah de Jong', role: 'admin', avatar: '', email: 'sarah@gkm.nl', isOnline: true },
+    { id: '3', name: 'Mike Visser', role: 'admin', avatar: '', email: 'mike@gkm.nl', isOnline: false },
+    { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true }
+  ])
+
+  const [chatMessages] = useKV<any[]>('team-chat-messages', [
+    {
+      id: 'chat-1',
+      channel: 'general',
+      senderId: '2',
+      content: 'Heeft iemand al feedback gehad op de Korenbloem campagne?',
+      timestamp: new Date().toISOString(),
+      type: 'text'
+    },
+    {
+      id: 'chat-2',
+      channel: 'projects',
+      senderId: '1',
+      content: 'Bella Vista project is nu in review fase',
+      timestamp: new Date().toISOString(),
+      type: 'text'
+    }
   ])
 
   // Filter tasks based on user role
@@ -182,229 +205,323 @@ export function Projects({ user }: ProjectsProps) {
     return userIds.map(id => users.find(u => u.id === id)).filter(Boolean)
   }
 
+  // Drag and drop handlers
+  const handleDragStart = (task: Task) => {
+    setDraggedTask(task)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault()
+    if (draggedTask && draggedTask.status !== newStatus) {
+      // In a real app, this would update the task status in the database
+      console.log(`Moving task ${draggedTask.id} from ${draggedTask.status} to ${newStatus}`)
+    }
+    setDraggedTask(null)
+  }
+
+  const handleSendChatMessage = () => {
+    if (!chatMessage.trim()) return
+    // In a real app, this would send the message to the server
+    setChatMessage('')
+  }
+
+  const formatChatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('nl-NL', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-3rem)] space-y-6 md:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading font-bold text-3xl text-foreground mb-2">My Projects</h1>
-          <p className="text-muted-foreground">
-            Manage your social media projects and track progress
+          <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Board View</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Drag and drop projects between phases • {user.role === 'admin' ? 'Team collaboration view' : 'Project progress tracking'}
           </p>
         </div>
         
         <div className="flex items-center gap-3">
           {user.role === 'admin' && (
-            <>
-              <Button variant="outline" size="sm" className="gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Team Chat
-              </Button>
-              <Button size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                New Task
-              </Button>
-            </>
+            <Button size="sm" className="gap-2">
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">New Task</span>
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Project Board */}
-      <div className="relative">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex gap-6 pb-4">
-            {columns.map((column) => {
-              const columnTasks = getTasksByStatus(column.id)
-              
-              return (
-                <div key={column.id} className="flex-shrink-0 w-80">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
-                    <h3 className="font-heading font-semibold text-foreground">{column.title}</h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {columnTasks.length}
-                    </Badge>
-                  </div>
+      {/* Board Section - Takes 70% of screen on desktop, responsive on mobile */}
+      <div className="flex-1 board-section" style={{ minHeight: '60vh' }}>
+        <Card className="glass-card h-full">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base md:text-lg font-semibold text-foreground">Project Board</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[calc(100%-4rem)] p-2 md:p-6">
+            <ScrollArea className="w-full h-full">
+              <div className="flex gap-3 md:gap-6 pb-4 min-w-max">
+                {columns.map((column) => {
+                  const columnTasks = getTasksByStatus(column.id)
                   
-                  <div className="space-y-3 min-h-[400px]">
-                    {columnTasks.map((task) => {
-                      const assignedUsers = getAssignedUsers(task.assignedTo)
-                      const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed'
+                  return (
+                    <div 
+                      key={column.id} 
+                      className="flex-shrink-0 w-72 md:w-80"
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, column.id)}
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
+                        <h3 className="font-heading font-semibold text-foreground text-sm md:text-base">{column.title}</h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {columnTasks.length}
+                        </Badge>
+                      </div>
                       
-                      return (
-                        <Card 
-                          key={task.id} 
-                          className="glass-card cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
-                          onClick={() => {
-                            setSelectedTask(task)
-                            setShowTaskModal(true)
-                          }}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">{getPlatformIcon(task.platform)}</span>
-                                <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
-                              </div>
-                              <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
-                                <MoreVertical className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            
-                            <h4 className="font-medium text-sm text-foreground mb-2 line-clamp-2">
-                              {task.title}
-                            </h4>
-                            
-                            <p className="text-xs text-muted-foreground mb-3">
-                              {task.client}
-                            </p>
-                            
-                            {task.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mb-3">
-                                {task.tags.slice(0, 3).map((tag) => (
-                                  <Badge key={tag} variant="outline" className="text-xs px-2 py-0">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                                {task.tags.length > 3 && (
-                                  <Badge variant="outline" className="text-xs px-2 py-0">
-                                    +{task.tags.length - 3}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-                            
-                            <div className="space-y-3">
-                              <div>
-                                <div className="flex justify-between text-xs mb-1">
-                                  <span className="text-muted-foreground">Progress</span>
-                                  <span className="font-medium">{task.progress}%</span>
-                                </div>
-                                <Progress value={task.progress} className="h-1" />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1 text-xs">
-                                  <Clock className="w-3 h-3" />
-                                  <span className={`${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}>
-                                    {formatDeadline(task.deadline)}
-                                  </span>
-                                  {isOverdue && <AlertCircle className="w-3 h-3 text-red-500" />}
+                      <div className="space-y-3 min-h-[300px] md:min-h-[400px]">
+                        {columnTasks.map((task) => {
+                          const assignedUsers = getAssignedUsers(task.assignedTo)
+                          const isOverdue = new Date(task.deadline) < new Date() && task.status !== 'completed'
+                          
+                          return (
+                            <Card 
+                              key={task.id} 
+                              className="glass-card cursor-grab hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:cursor-grabbing"
+                              draggable={user.role === 'admin'}
+                              onDragStart={() => handleDragStart(task)}
+                              onClick={() => {
+                                setSelectedTask(task)
+                                setShowTaskModal(true)
+                              }}
+                            >
+                              <CardContent className="p-3 md:p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">{getPlatformIcon(task.platform)}</span>
+                                    <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
+                                  </div>
+                                  <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
+                                    <MoreVertical className="w-3 h-3" />
+                                  </Button>
                                 </div>
                                 
-                                <div className="flex -space-x-1">
-                                  {assignedUsers.slice(0, 3).map((assignedUser) => (
-                                    <Avatar key={assignedUser.id} className="w-6 h-6 border-2 border-background">
-                                      <AvatarImage src={assignedUser.avatar} />
-                                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                                        {assignedUser.name.split(' ').map(n => n[0]).join('')}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  ))}
-                                  {assignedUsers.length > 3 && (
-                                    <div className="w-6 h-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                                      <span className="text-xs font-medium">+{assignedUsers.length - 3}</span>
+                                <h4 className="font-medium text-xs md:text-sm text-foreground mb-2 line-clamp-2">
+                                  {task.title}
+                                </h4>
+                                
+                                <p className="text-xs text-muted-foreground mb-3">
+                                  {task.client}
+                                </p>
+                                
+                                {task.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-3">
+                                    {task.tags.slice(0, 2).map((tag) => (
+                                      <Badge key={tag} variant="outline" className="text-xs px-2 py-0">
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                    {task.tags.length > 2 && (
+                                      <Badge variant="outline" className="text-xs px-2 py-0">
+                                        +{task.tags.length - 2}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                <div className="space-y-3">
+                                  <div>
+                                    <div className="flex justify-between text-xs mb-1">
+                                      <span className="text-muted-foreground">Progress</span>
+                                      <span className="font-medium">{task.progress}%</span>
                                     </div>
-                                  )}
+                                    <Progress value={task.progress} className="h-1" />
+                                  </div>
+                                  
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1 text-xs">
+                                      <Clock className="w-3 h-3" />
+                                      <span className={`${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}>
+                                        {formatDeadline(task.deadline)}
+                                      </span>
+                                      {isOverdue && <AlertCircle className="w-3 h-3 text-red-500" />}
+                                    </div>
+                                    
+                                    <div className="flex -space-x-1">
+                                      {assignedUsers.slice(0, 2).map((assignedUser) => (
+                                        <Avatar key={assignedUser.id} className="w-5 h-5 md:w-6 md:h-6 border-2 border-background">
+                                          <AvatarImage src={assignedUser.avatar} />
+                                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                                            {assignedUser.name.split(' ').map(n => n[0]).join('')}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                      ))}
+                                      {assignedUsers.length > 2 && (
+                                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                                          <span className="text-xs font-medium">+{assignedUsers.length - 2}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
+                        
+                        {/* Add Task Button */}
+                        {user.role === 'admin' && (
+                          <Card className="glass-card border-dashed border-2 cursor-pointer hover:bg-muted/20 transition-colors">
+                            <CardContent className="p-3 md:p-4 flex items-center justify-center">
+                              <div className="text-center text-muted-foreground">
+                                <Plus className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-2" />
+                                <p className="text-xs md:text-sm">Add Task</p>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                    
-                    {/* Add Task Button */}
-                    {user.role === 'admin' && (
-                      <Card className="glass-card border-dashed border-2 cursor-pointer hover:bg-muted/20 transition-colors">
-                        <CardContent className="p-4 flex items-center justify-center">
-                          <div className="text-center text-muted-foreground">
-                            <Plus className="w-6 h-6 mx-auto mb-2" />
-                            <p className="text-sm">Add Task</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </ScrollArea>
-        
-        {/* Scroll buttons */}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Team Chat Section (Admin only) */}
-      {user.role === 'admin' && (
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              Team Chat
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-1">
-                {users.slice(0, 4).map((teamMember) => (
-                  <div key={teamMember.id} className="relative">
-                    <Avatar className="w-6 h-6 border-2 border-background">
-                      <AvatarImage src={teamMember.avatar} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {teamMember.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-background"></div>
-                  </div>
-                ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-              <span className="text-sm text-muted-foreground">{users.length} online</span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4">
-              <Button variant="outline" size="sm" className="flex-1">
-                <Target className="w-4 h-4 mr-2" />
-                #general
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1">
-                <Users className="w-4 h-4 mr-2" />
-                #projects
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1">
-                <AlertCircle className="w-4 h-4 mr-2" />
-                #urgent
-              </Button>
-            </div>
+            </ScrollArea>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Team Chat Section - Takes 30% of screen on desktop, responsive on mobile (Admin Only) */}
+      {user.role === 'admin' && (
+        <div className="chat-section" style={{ minHeight: '30vh' }}>
+          <Card className="glass-card h-full">
+            <CardHeader className="flex flex-row items-center justify-between py-3">
+              <CardTitle className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+                Team Chat
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-1">
+                  {users.slice(0, 3).map((teamMember) => (
+                    <div key={teamMember.id} className="relative">
+                      <Avatar className="w-5 h-5 md:w-6 md:h-6 border-2 border-background">
+                        <AvatarImage src={teamMember.avatar} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {teamMember.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      {teamMember.isOnline && (
+                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full border border-background"></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-xs md:text-sm text-muted-foreground">{users.filter(u => u.isOnline).length} online</span>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col h-[calc(100%-4rem)] p-2 md:p-6">
+              {/* Channel Tabs */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <Button 
+                  variant={activeChannel === 'general' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setActiveChannel('general')}
+                >
+                  <Target className="w-3 h-3 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">#</span>general
+                </Button>
+                <Button 
+                  variant={activeChannel === 'projects' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setActiveChannel('projects')}
+                >
+                  <Users className="w-3 h-3 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">#</span>projects
+                </Button>
+                <Button 
+                  variant={activeChannel === 'urgent' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => setActiveChannel('urgent')}
+                >
+                  <AlertCircle className="w-3 h-3 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">#</span>urgent
+                </Button>
+              </div>
+
+              {/* Messages Area */}
+              <ScrollArea className="flex-1 mb-4">
+                <div className="space-y-3 p-2">
+                  {chatMessages
+                    .filter(msg => msg.channel === activeChannel)
+                    .map((message) => {
+                      const sender = users.find(u => u.id === message.senderId)
+                      return (
+                        <div key={message.id} className="flex items-start gap-2 md:gap-3">
+                          <Avatar className="w-6 h-6 md:w-8 md:h-8">
+                            <AvatarImage src={sender?.avatar} />
+                            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                              {sender?.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-xs md:text-sm text-foreground">{sender?.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {formatChatTime(message.timestamp)}
+                              </span>
+                            </div>
+                            <p className="text-xs md:text-sm text-foreground">{message.content}</p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  {chatMessages.filter(msg => msg.channel === activeChannel).length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">
+                      <MessageSquare className="w-8 h-8 md:w-12 md:h-12 mx-auto mb-2" />
+                      <p className="text-xs md:text-sm">No messages in #{activeChannel} yet</p>
+                      <p className="text-xs">Start the conversation!</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              {/* Message Input */}
+              <div className="flex items-center gap-2 md:gap-3">
+                <Input
+                  placeholder={`Message #${activeChannel}...`}
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
+                  className="flex-1 text-sm"
+                />
+                <Button size="sm" onClick={handleSendChatMessage} disabled={!chatMessage.trim()}>
+                  <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Task Detail Modal */}
       <Dialog open={showTaskModal} onOpenChange={setShowTaskModal}>
-        <DialogContent className="max-w-2xl glass-modal">
+        <DialogContent className="max-w-2xl glass-modal mx-4">
           <DialogHeader>
-            <DialogTitle className="text-xl font-heading">
+            <DialogTitle className="text-lg md:text-xl font-heading">
               {selectedTask?.title}
             </DialogTitle>
           </DialogHeader>
           
           {selectedTask && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Client</label>
                   <p className="font-medium">{selectedTask.client}</p>
@@ -431,7 +548,7 @@ export function Projects({ user }: ProjectsProps) {
               
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Description</label>
-                <p className="mt-1">{selectedTask.description}</p>
+                <p className="mt-1 text-sm">{selectedTask.description}</p>
               </div>
               
               <div>
@@ -444,7 +561,7 @@ export function Projects({ user }: ProjectsProps) {
               
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Assigned Team</label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   {getAssignedUsers(selectedTask.assignedTo).map((assignedUser) => (
                     <div key={assignedUser.id} className="flex items-center gap-2 bg-muted rounded-lg p-2">
                       <Avatar className="w-6 h-6">
