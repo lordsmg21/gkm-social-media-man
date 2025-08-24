@@ -206,7 +206,13 @@ export function FileManager({ user }: FileManagerProps) {
     e.preventDefault()
     const droppedFiles = e.dataTransfer.files
     if (droppedFiles.length > 0) {
-      handleFileUpload({ target: { files: droppedFiles } } as any)
+      // Create a synthetic event object with proper typing
+      const fileEvent = {
+        target: {
+          files: droppedFiles
+        }
+      } as React.ChangeEvent<HTMLInputElement>
+      handleFileUpload(fileEvent)
     }
   }
 

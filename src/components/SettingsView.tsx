@@ -142,7 +142,7 @@ export function SettingsView({ user }: SettingsViewProps) {
   const [hasChanges, setHasChanges] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
 
-  const updateSettings = (section: keyof UserSettings, field: string, value: any) => {
+  const updateSettings = <K extends keyof UserSettings>(section: K, field: string, value: unknown) => {
     setSettings(prev => ({
       ...prev,
       [section]: {
@@ -153,13 +153,13 @@ export function SettingsView({ user }: SettingsViewProps) {
     setHasChanges(true)
   }
 
-  const updateNestedSettings = (section: keyof UserSettings, subsection: string, field: string, value: any) => {
+  const updateNestedSettings = <K extends keyof UserSettings>(section: K, subsection: string, field: string, value: unknown) => {
     setSettings(prev => ({
       ...prev,
       [section]: {
         ...prev[section],
         [subsection]: {
-          ...(prev[section] as any)[subsection],
+          ...(prev[section] as Record<string, any>)[subsection],
           [field]: value
         }
       }

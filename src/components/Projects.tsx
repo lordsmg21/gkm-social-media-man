@@ -36,6 +36,15 @@ interface Task {
   tags: string[]
 }
 
+interface ChatMessage {
+  id: string
+  channel: string
+  senderId: string
+  content: string
+  timestamp: string
+  type: 'text' | 'file' | 'system'
+}
+
 interface ProjectsProps {
   user: User
 }
@@ -143,7 +152,7 @@ export function Projects({ user }: ProjectsProps) {
     { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true }
   ])
 
-  const [chatMessages] = useKV<any[]>('team-chat-messages', [
+  const [chatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
     {
       id: 'chat-1',
       channel: 'general',
@@ -202,7 +211,7 @@ export function Projects({ user }: ProjectsProps) {
   }
 
   const getAssignedUsers = (userIds: string[]) => {
-    return userIds.map(id => users.find(u => u.id === id)).filter(Boolean)
+    return userIds.map(id => users.find(u => u.id === id)).filter((user): user is User => user !== undefined)
   }
 
   // Drag and drop handlers
