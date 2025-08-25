@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { User, Shield } from 'lucide-react'
 
 // Define UserRole and UserType locally
 type UserRole = 'admin' | 'client'
@@ -14,27 +15,6 @@ interface UserType {
 
 interface LoginViewProps {
   onLogin: (user: UserType) => void
-}
-
-// Mock Card components
-function Card({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <div className={className}>{children}</div>
-}
-
-function CardHeader({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <div className={className}>{children}</div>
-}
-
-function CardTitle({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <h2 className={className}>{children}</h2>
-}
-
-function CardDescription({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <p className={className}>{children}</p>
-}
-
-function CardContent({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <div className={className}>{children}</div>
 }
 
 export function LoginView({ onLogin }: LoginViewProps) {
@@ -83,7 +63,6 @@ export function LoginView({ onLogin }: LoginViewProps) {
       
       if (user) {
         onLogin(user)
-        alert(`Welkom terug, ${user.name}!`)
       } else {
         alert('Ongeldige inloggegevens')
       }
@@ -99,153 +78,157 @@ export function LoginView({ onLogin }: LoginViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <Card className="glass-modal shadow-2xl border-0">
-          <CardHeader className="text-center space-y-2">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl flex items-center justify-center mb-4">
-              <div className="text-white font-bold text-2xl">G</div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-50 to-slate-100 flex items-center justify-center p-8">
+      <div className="w-full max-w-lg">
+        {/* Main Login Card */}
+        <div className="glass-modal rounded-2xl shadow-2xl border border-white/20 p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+              <div className="text-white font-bold text-3xl">G</div>
             </div>
-            <CardTitle className="font-heading text-2xl text-gray-800">
-              GKM Client Portal
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Log in om toegang te krijgen tot je projecten en rapporten.
-            </CardDescription>
-          </CardHeader>
+            <h1 className="font-heading text-3xl font-bold text-gray-800 mb-2">
+              GKM Portal
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Log in om toegang te krijgen tot je projecten
+            </p>
+          </div>
 
-          <CardContent className="space-y-6">
-            {/* Login Type Toggle */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
+          {/* Login Type Toggle */}
+          <div className="mb-8">
+            <div className="grid grid-cols-2 gap-3 p-2 bg-white/30 rounded-xl backdrop-blur-sm border border-white/30">
               <button
                 type="button"
                 onClick={() => setLoginType('client')}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                   loginType === 'client' 
-                    ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md' 
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg transform scale-[1.02]' 
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-white/40'
                 }`}
               >
-                <span>👤</span>
+                <User size={18} className="flex-shrink-0" />
                 Klant
               </button>
               
               <button
                 type="button"
                 onClick={() => setLoginType('admin')}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                className={`flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                   loginType === 'admin'
-                    ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg transform scale-[1.02]'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-white/40'
                 }`}
               >
-                <span>🛡️</span>
+                <Shield size={18} className="flex-shrink-0" />
                 Admin
               </button>
             </div>
+          </div>
 
-            {/* Login Form */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  E-mail
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="je@voorbeeld.nl"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                  required
-                />
-              </div>
+          {/* Login Form */}
+          <div className="space-y-6 mb-8">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-3">
+                E-mailadres
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="je@voorbeeld.nl"
+                className="w-full px-4 py-4 bg-white/50 backdrop-blur-sm border border-white/30 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 text-gray-800 placeholder-gray-500"
+                required
+              />
+            </div>
 
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Wachtwoord
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                  required
-                />
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-3">
+                Wachtwoord
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-4 bg-white/50 backdrop-blur-sm border border-white/30 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 text-gray-800 placeholder-gray-500"
+                required
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:from-amber-500 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+            >
+              {isLoading ? 'Inloggen...' : 'Inloggen'}
+            </button>
+          </div>
+
+          {/* Demo Login Options */}
+          <div className="space-y-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300/50" />
               </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white/80 backdrop-blur-sm px-4 py-1 text-gray-600 rounded-full">
+                  Demo Accounts
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('alex@gkm.nl')
+                  setLoginType('admin')
+                }}
+                className="w-full text-left p-4 text-sm text-gray-700 hover:bg-white/40 rounded-xl border border-white/30 transition-all duration-200 backdrop-blur-sm hover:shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <Shield size={16} className="text-amber-500 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-800">Admin - Alex van der Berg</div>
+                    <div className="text-gray-600 text-xs">alex@gkm.nl</div>
+                  </div>
+                </div>
+              </button>
 
               <button
                 type="button"
-                onClick={handleLogin}
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-white py-2 px-4 rounded-md font-medium shadow-lg hover:from-amber-500 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={() => {
+                  setEmail('sarah@client.com')
+                  setLoginType('client')
+                }}
+                className="w-full text-left p-4 text-sm text-gray-700 hover:bg-white/40 rounded-xl border border-white/30 transition-all duration-200 backdrop-blur-sm hover:shadow-md"
               >
-                {isLoading ? 'Inloggen...' : 'Inloggen'}
+                <div className="flex items-center gap-3">
+                  <User size={16} className="text-blue-500 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-800">Client - Sarah Johnson</div>
+                    <div className="text-gray-600 text-xs">sarah@client.com</div>
+                  </div>
+                </div>
               </button>
             </div>
+          </div>
 
-            {/* Demo Login Options */}
-            <div className="space-y-3">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-2 text-gray-500">Demo Inloggen</span>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('alex@gkm.nl')
-                    setLoginType('admin')
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md border border-gray-200 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span>🛡️</span>
-                    <div>
-                      <div className="font-medium">Admin - Alex van der Berg</div>
-                      <div className="text-gray-500">alex@gkm.nl</div>
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('sarah@client.com')
-                    setLoginType('client')
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md border border-gray-200 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span>👤</span>
-                    <div>
-                      <div className="font-medium">Client - Sarah Johnson</div>
-                      <div className="text-gray-500">sarah@client.com</div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Create Account */}
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={handleCreateAccount}
-                className="text-sm text-gray-600 hover:text-gray-800 font-medium transition-colors"
-              >
-                Nog geen account? Maak er een aan
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Create Account */}
+          <div className="text-center mt-8">
+            <button
+              type="button"
+              onClick={handleCreateAccount}
+              className="text-gray-600 hover:text-gray-800 font-medium transition-colors duration-200"
+            >
+              Nog geen account? Maak er een aan
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
