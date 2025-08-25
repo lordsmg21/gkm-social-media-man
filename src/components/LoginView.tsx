@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { User as UserIcon, Shield } from 'lucide-react'
 import { useKV } from '@github/spark/hooks'
 import { User, UserRole } from '../App'
+import GKMLogo from '@/assets/images/gkm-logo.svg'
 
 type Props = { onLogin?: (user: User) => void }
 
@@ -68,11 +69,11 @@ export function LoginView({ onLogin }: Props) {
       {/* --- Kaart met sterk glas-effect --- */}
       <Card className="w-full max-w-md bg-white/25 backdrop-blur-2xl backdrop-saturate-150 border border-white/30 shadow-[0_8px_32px_rgba(31,38,135,0.15)]">
         <CardHeader className="text-center">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2 mx-auto">
-            <Shield className="w-5 h-5 text-yellow-500" />
+          <div className="flex justify-center mb-4">
+            <img src={GKMLogo} alt="GKM Logo" className="h-16 w-auto" />
           </div>
-          <CardTitle>GKM Portal</CardTitle>
-          <CardDescription>Log in of gebruik een demo-account.</CardDescription>
+          <CardTitle className="text-center">GKM Portal</CardTitle>
+          <CardDescription className="text-center">Log in of gebruik een demo-account.</CardDescription>
         </CardHeader>
 
         <CardContent className="text-center">

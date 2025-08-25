@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { User } from '../App'
 import { NotificationCenter, useNotifications } from './NotificationCenter'
+import GKMLogo from '@/assets/images/gkm-logo.svg'
 
 interface SidebarProps {
   user: User
@@ -83,14 +84,8 @@ export function Sidebar({ user, activeView, onViewChange, onLogout }: SidebarPro
     <div className="w-64 bg-card/50 backdrop-blur-sm border-r border-border min-h-screen flex flex-col">
       <div className="p-6 flex flex-col flex-1">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <Hexagon className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-heading font-bold text-xl text-foreground">GKM</h1>
-            <p className="text-sm text-muted-foreground">Portal</p>
-          </div>
+        <div className="flex items-center justify-center mb-8">
+          <img src={GKMLogo} alt="GKM Logo" className="h-12 w-auto" />
         </div>
 
         {/* User Profile */}
