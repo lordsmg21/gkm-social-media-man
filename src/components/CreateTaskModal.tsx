@@ -22,6 +22,19 @@ interface TaskFile {
   url: string
 }
 
+interface Project {
+  id: string
+  name: string
+  description: string
+  trajectory: 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
+  budget: number
+  clientId: string
+  clientName: string
+  createdBy: string
+  createdAt: string
+  status: 'active' | 'completed' | 'on-hold'
+}
+
 interface Task {
   id: string
   title: string
@@ -35,6 +48,7 @@ interface Task {
   description?: string
   tags: string[]
   files: TaskFile[]
+  projectId?: string
 }
 
 interface CreateTaskModalProps {
@@ -43,9 +57,11 @@ interface CreateTaskModalProps {
   onTaskCreated: (task: Task) => void
   users: User[]
   currentUser: User
+  projects?: Project[]
+  selectedProject?: string
 }
 
-export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, currentUser }: CreateTaskModalProps) {
+export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, currentUser, projects, selectedProject }: CreateTaskModalProps) {
   // Get client list from system users
   const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
@@ -68,7 +84,8 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     priority: 'medium' as 'low' | 'medium' | 'high',
     description: '',
     deadline: '',
-    assignedTo: [currentUser.id] // Default assign to current user
+    assignedTo: [currentUser.id], // Default assign to current user
+    projectId: selectedProject || ''
   })
 
   const [uploadedFiles, setUploadedFiles] = useState<TaskFile[]>([])
@@ -84,7 +101,8 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       priority: 'medium',
       description: '',
       deadline: '',
-      assignedTo: [currentUser.id]
+      assignedTo: [currentUser.id],
+      projectId: selectedProject || ''
     })
     setUploadedFiles([])
     setTags([])
@@ -124,7 +142,8 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       progress: 0,
       description: formData.description.trim() || '',
       tags: tags,
-      files: uploadedFiles
+      files: uploadedFiles,
+      projectId: formData.projectId || undefined
     }
 
     onTaskCreated(newTask)
@@ -240,6 +259,54 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               />
+            </div>
+
+            <div>
+              <Label htmlFor="project">Project</Label>
+              {projects && projects.length > 0 ? (
+                <Select 
+                  value={formData.projectId} 
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ ...prev, projectId: value }))
+                    // Auto-select client based on project
+                    const selectedProj = projects.find(p => p.id === value)
+                    if (selectedProj) {
+                      setFormData(prev => ({ ...prev, client: selectedProj.clientId }))
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a project (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full" />
+                        <div>
+                          <div className="font-medium">No Project</div>
+                          <div className="text-xs text-muted-foreground">Create as standalone task</div>
+                        </div>
+                      </div>
+                    </SelectItem>
+                    {projects.filter(p => p.status === 'active').map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full" />
+                          <div>
+                            <div className="font-medium">{project.name}</div>
+                            <div className="text-xs text-muted-foreground">{project.clientName}</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  disabled
+                  placeholder="No projects available"
+                />
+              )}
             </div>
 
             <div>

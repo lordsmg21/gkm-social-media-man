@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { 
   Plus, 
@@ -35,6 +36,7 @@ import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
 import { FileDropZone } from './FileDropZone'
 import { CreateTaskModal } from './CreateTaskModal'
+import { CreateProjectModal } from './CreateProjectModal'
 import { useNotifications } from './NotificationCenter'
 
 interface TaskFile {
@@ -60,6 +62,20 @@ interface Task {
   description?: string
   tags: string[]
   files: TaskFile[]
+  projectId?: string
+}
+
+interface Project {
+  id: string
+  name: string
+  description: string
+  trajectory: 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
+  budget: number
+  clientId: string
+  clientName: string
+  createdBy: string
+  createdAt: string
+  status: 'active' | 'completed' | 'on-hold'
 }
 
 interface ChatMessage {
@@ -79,6 +95,8 @@ export function Projects({ user }: ProjectsProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
+  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<string | 'all'>('all')
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [chatMessage, setChatMessage] = useState('')
   const [activeChannel, setActiveChannel] = useState('general')
@@ -148,7 +166,8 @@ export function Projects({ user }: ProjectsProps) {
           uploadedAt: new Date().toISOString(),
           url: '#'
         }
-      ]
+      ],
+      projectId: 'project1'
     },
     {
       id: '2',
@@ -172,7 +191,8 @@ export function Projects({ user }: ProjectsProps) {
           uploadedAt: new Date().toISOString(),
           url: '#'
         }
-      ]
+      ],
+      projectId: 'project2'
     },
     {
       id: '3',
@@ -186,7 +206,8 @@ export function Projects({ user }: ProjectsProps) {
       progress: 25,
       description: 'Comprehensive social media strategy for Q1 2024',
       tags: ['strategy', 'fitness', 'planning', 'q1'],
-      files: []
+      files: [],
+      projectId: 'project3'
     },
     {
       id: '4',
@@ -210,7 +231,8 @@ export function Projects({ user }: ProjectsProps) {
           uploadedAt: new Date().toISOString(),
           url: '#'
         }
-      ]
+      ],
+      projectId: 'project4'
     },
     {
       id: '5',
@@ -224,9 +246,88 @@ export function Projects({ user }: ProjectsProps) {
       progress: 100,
       description: 'Valentine\'s Day fashion promotion',
       tags: ['holiday', 'fashion', 'promotion', 'valentines'],
-      files: []
+      files: [],
+      projectId: 'project5'
     }
   ])
+
+  const [projects, setProjects] = useKV<Project[]>('projects', [
+    {
+      id: 'project1',
+      name: 'Bakkerij de Korenbloem - Q1 Campaign',
+      description: 'Complete social media campaign for artisan bakery including Instagram stories and Facebook posts',
+      trajectory: 'social-media',
+      budget: 5000,
+      clientId: '1',
+      clientName: 'De Korenbloem',
+      createdBy: '1',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    },
+    {
+      id: 'project2',
+      name: 'Restaurant Bella Vista - Dinner Promotion',
+      description: 'Facebook advertising campaign to promote dinner specials',
+      trajectory: 'advertising',
+      budget: 3500,
+      clientId: '2',
+      clientName: 'Bella Vista',
+      createdBy: '2',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    },
+    {
+      id: 'project3',
+      name: 'Fitness First - Social Strategy',
+      description: 'Comprehensive social media strategy development for Q1 2024',
+      trajectory: 'social-media',
+      budget: 8000,
+      clientId: '3',
+      clientName: 'Fitness First',
+      createdBy: '1',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    },
+    {
+      id: 'project4',
+      name: 'TechStart - Product Launch',
+      description: 'Multi-channel launch campaign for new SaaS product',
+      trajectory: 'full-campaign',
+      budget: 15000,
+      clientId: '4',
+      clientName: 'TechStart',
+      createdBy: '2',
+      createdAt: new Date().toISOString(),
+      status: 'completed'
+    },
+    {
+      id: 'project5',
+      name: 'Fashion Boutique - Holiday Marketing',
+      description: 'Valentine\'s Day promotion across Instagram',
+      trajectory: 'social-media',
+      budget: 2500,
+      clientId: '5',
+      clientName: 'Fashion Boutique',
+      createdBy: '2',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    }
+  ])
+
+  // Get client list from system users
+  const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
+    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin' },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client' },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin' },
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client' },
+    { id: '6', name: 'Emma de Vries', email: 'emma@boutique.nl', role: 'client' },
+    { id: '7', name: 'Tom Hendriks', email: 'tom@cafe.nl', role: 'client' },
+    { id: '8', name: 'Sophie Jansen', email: 'sophie@salon.nl', role: 'client' }
+  ])
+  
+  // Filter to get only clients
+  const availableClients = systemUsers.filter(user => user.role === 'client')
 
   const [users] = useKV<User[]>('all-users', [
     { id: '1', name: 'Alex van der Berg', role: 'admin', avatar: '', email: 'alex@gkm.nl', isOnline: true },
@@ -286,10 +387,14 @@ export function Projects({ user }: ProjectsProps) {
     }
   ])
 
-  // Filter tasks based on user role
-  const visibleTasks = user.role === 'admin' ? (tasks || []) : (tasks || []).filter(task => 
+  // Filter tasks based on user role and selected project
+  const filteredTasks = user.role === 'admin' ? (tasks || []) : (tasks || []).filter(task => 
     task.assignedTo?.includes(user.id) || task.client === 'My Client' // Simplified client filtering
   )
+
+  const visibleTasks = selectedProject === 'all' 
+    ? filteredTasks 
+    : filteredTasks.filter(task => task.projectId === selectedProject)
 
   const getTasksByStatus = (status: string) => {
     return (visibleTasks || []).filter(task => task.status === status)
@@ -774,6 +879,13 @@ export function Projects({ user }: ProjectsProps) {
     setTasks((prevTasks) => [...(prevTasks || []), newTask])
   }
 
+  // Handle new project creation
+  const handleProjectCreated = (newProject: Project) => {
+    setProjects((prevProjects) => [...(prevProjects || []), newProject])
+    setSelectedProject(newProject.id) // Automatically switch to the new project
+    toast.success(`Project "${newProject.name}" created successfully`)
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] bg-background">
       {/* Header */}
@@ -787,16 +899,82 @@ export function Projects({ user }: ProjectsProps) {
         
         <div className="flex items-center gap-3">
           {user.role === 'admin' && (
-            <Button 
-              size="sm" 
-              className="gap-2"
-              onClick={() => setShowCreateTaskModal(true)}
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">New Task</span>
-            </Button>
+            <>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="gap-2"
+                onClick={() => setShowCreateProjectModal(true)}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">New Project</span>
+              </Button>
+              <Button 
+                size="sm" 
+                className="gap-2"
+                onClick={() => setShowCreateTaskModal(true)}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">New Task</span>
+              </Button>
+            </>
           )}
         </div>
+      </div>
+
+      {/* Project Filter Section */}
+      <div className="mb-6">
+        <Card className="glass-card p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-heading font-semibold text-lg text-foreground mb-1">Projects</h3>
+              <p className="text-sm text-muted-foreground">
+                Select a project to view its tasks or view all tasks across projects
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Select value={selectedProject} onValueChange={setSelectedProject}>
+                <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full" />
+                      <div>
+                        <div className="font-medium">All Projects</div>
+                        <div className="text-xs text-muted-foreground">Show tasks from all projects</div>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  {(projects || []).map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          project.status === 'active' ? 'bg-green-500' :
+                          project.status === 'completed' ? 'bg-blue-500' : 'bg-yellow-500'
+                        }`} />
+                        <div>
+                          <div className="font-medium">{project.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {project.clientName} • ${project.budget.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {selectedProject !== 'all' && (
+                <div className="text-sm text-muted-foreground">
+                  {visibleTasks.length} task{visibleTasks.length !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Board Section - Full height with proper scrolling */}
@@ -1616,6 +1794,17 @@ export function Projects({ user }: ProjectsProps) {
         onTaskCreated={handleTaskCreated}
         users={users}
         currentUser={user}
+        projects={projects}
+        selectedProject={selectedProject === 'all' ? undefined : selectedProject}
+      />
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        open={showCreateProjectModal}
+        onOpenChange={setShowCreateProjectModal}
+        onProjectCreated={handleProjectCreated}
+        availableClients={availableClients}
+        currentUserId={user.id}
       />
     </div>
   )
