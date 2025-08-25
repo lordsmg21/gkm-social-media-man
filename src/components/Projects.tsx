@@ -37,7 +37,7 @@ import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
 import { FileDropZone } from './FileDropZone'
 import { CreateTaskModal } from './CreateTaskModal'
-import { CreateProjectModal } from './CreateProjectModal'
+import CreateProjectModal from './CreateProjectModal'
 import { useNotifications } from './NotificationCenter'
 
 interface TaskFile {
@@ -1266,5 +1266,518 @@ export function Projects({ user }: ProjectsProps) {
       </div> 
 
     </div>   
+
+      {/* Floating Chat Button */}
+      <Button
+        className="fixed bottom-6 right-6 w-12 h-12 rounded-full shadow-lg hover:shadow-xl z-50"
+        onClick={() => setShowFloatingChat(true)}
+      >
+        <MessageSquare className="w-5 h-5" />
+      </Button>
+
+      {/* Floating Chat */}
+      {showFloatingChat && (
+        <div className="fixed inset-0 bg-background/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <Card className="w-[480px] h-[600px] glass-modal shadow-2xl flex flex-col">
+            <CardHeader className="pb-3 flex-shrink-0 bg-background/50">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-heading font-semibold">Team Chat</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFloatingChat(false)}
+                  className="w-8 h-8 p-0"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Channel Selector */}
+              <div className="flex gap-2 mt-3">
+                <Button
+                  variant={activeChannel === 'general' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActiveChannel('general')}
+                  className="text-xs"
+                >
+                  General
+                </Button>
+                <Button
+                  variant={activeChannel.startsWith('direct-') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActiveChannel(`direct-${user.id}`)}
+                  className="text-xs"
+                >
+                  Direct
+                </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="flex-1 p-4 overflow-hidden">
+              {/* Chat Messages */}
+              <ScrollArea className="h-full pr-3">
+                <div className="space-y-3">
+                  {(chatMessages || [])
+                    .filter(msg => 
+                      activeChannel === 'general' ? msg.channel === 'general' : 
+                      msg.channel.includes(user.id)
+                    )
+                    .map((message) => {
+                      const sender = users.find(u => u.id === message.senderId)
+                      return (
+                        <div key={message.id} className="flex gap-3">
+                          <Avatar className="w-6 h-6">
+                            <AvatarImage src={sender?.avatar} />
+                            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                              {sender?.name?.split(' ').map(n => n[0]).join('') || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium">{sender?.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {formatChatTime(message.timestamp)}
+                              </span>
+                            </div>
+                            <div className="text-sm text-foreground">
+                              {renderMessageWithMentions(message.content)}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              </ScrollArea>
+            </CardContent>
+
+            <CardContent className="p-4 pt-0 flex-shrink-0">
+              <div className="relative">
+                <Input
+                  placeholder="Type a message... Use @ to mention tasks or team members"
+                  value={chatMessage}
+                  onChange={handleChatInputChange}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSendChatMessage()
+                    }
+                  }}
+                  className="pr-10"
+                />
+                <Button
+                  size="sm"
+                  className="absolute right-1 top-1 h-8 w-8 p-0"
+                  onClick={handleSendChatMessage}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+                
+                {/* Mention Suggestions */}
+                {showTaskSuggestions && (taskSuggestions.length > 0 || userSuggestions.length > 0) && (
+                  <div className="absolute bottom-full mb-2 w-full bg-popover border rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
+                    {mentionType === 'task' && taskSuggestions.map((task) => (
+                      <div
+                        key={task.id}
+                        className="p-2 hover:bg-muted cursor-pointer flex items-center gap-2"
+                        onClick={() => handleTaskMention(task)}
+                      >
+                        <span className="text-lg">{getPlatformIcon(task.platform)}</span>
+                        <div>
+                          <div className="text-sm font-medium">{task.tags[0] || task.title}</div>
+                          <div className="text-xs text-muted-foreground">{task.client}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {mentionType === 'user' && userSuggestions.map((suggestedUser) => (
+                      <div
+                        key={suggestedUser.id}
+                        className="p-2 hover:bg-muted cursor-pointer flex items-center gap-2"
+                        onClick={() => handleUserMention(suggestedUser)}
+                      >
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={suggestedUser.avatar} />
+                          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                            {suggestedUser.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-sm font-medium">{suggestedUser.name}</div>
+                          <div className="text-xs text-muted-foreground">{suggestedUser.email}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Task Detail Modal */}
+      <Dialog open={showTaskModal} onOpenChange={setShowTaskModal}>
+        <DialogContent className="glass-modal max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+          {selectedTask && (
+            <>
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="flex items-center gap-3">
+                  <span className="text-2xl">{getPlatformIcon(selectedTask.platform)}</span>
+                  <div>
+                    <h2 className="text-lg md:text-xl font-heading font-bold">{selectedTask.title}</h2>
+                    <p className="text-sm text-muted-foreground">{selectedTask.client}</p>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full pr-3">
+                  <div className="space-y-6">
+                    {/* File previews section */}
+                    {(selectedTask.files || []).length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-3">Files ({(selectedTask.files || []).length})</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                          {(selectedTask.files || []).map((file) => (
+                            <div 
+                              key={file.id}
+                              className="aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border"
+                              onClick={() => setShowFilePreview(file)}
+                            >
+                              {file.type.startsWith('image/') ? (
+                                <img 
+                                  src={file.url} 
+                                  alt={file.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center p-2">
+                                  {getTaskFileIcon(file.type)}
+                                  <span className="text-xs text-center mt-2 line-clamp-2">{file.name}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Task Description */}
+                    <div>
+                      <h3 className="font-semibold mb-2">Description</h3>
+                      <p className="text-muted-foreground">
+                        {selectedTask.description || 'No description provided'}
+                      </p>
+                    </div>
+
+                    {/* Task Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="font-semibold mb-3">Details</h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Status:</span>
+                            <Badge variant="secondary" className="capitalize">
+                              {selectedTask.status.replace('-', ' ')}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Priority:</span>
+                            <Badge 
+                              variant={selectedTask.priority === 'high' ? 'destructive' : 
+                                      selectedTask.priority === 'medium' ? 'default' : 'secondary'}
+                              className="capitalize"
+                            >
+                              {selectedTask.priority}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Platform:</span>
+                            <span className="capitalize">{selectedTask.platform}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Deadline:</span>
+                            <span>{new Date(selectedTask.deadline).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold mb-3">Progress</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between text-sm mb-2">
+                              <span>Completion</span>
+                              <span className="font-medium">{selectedTask.progress}%</span>
+                            </div>
+                            <Progress value={selectedTask.progress} className="h-2" />
+                          </div>
+                          
+                          <div>
+                            <span className="text-muted-foreground text-sm">Assigned to:</span>
+                            <div className="flex gap-2 mt-1">
+                              {getAssignedUsers(selectedTask.assignedTo || []).map((assignedUser) => (
+                                <div key={assignedUser.id} className="flex items-center gap-2">
+                                  <Avatar className="w-6 h-6">
+                                    <AvatarImage src={assignedUser.avatar} />
+                                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                                      {assignedUser.name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm">{assignedUser.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    {selectedTask.tags.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Tags</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedTask.tags.map((tag) => (
+                            <Badge key={tag} variant="outline">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Files List */}
+                    {(selectedTask.files || []).length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-3">Attached Files</h3>
+                        <div className="space-y-2">
+                          {(selectedTask.files || []).map((file) => (
+                            <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3">
+                                {getTaskFileIcon(file.type)}
+                                <div>
+                                  <p className="font-medium text-sm">{file.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatFileSize(file.size)} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setShowFilePreview(file)}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    // In real app, this would trigger a download
+                                    const link = document.createElement('a')
+                                    link.href = file.url
+                                    link.download = file.name
+                                    link.click()
+                                  }}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                                {user.role === 'admin' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleFileDelete(selectedTask.id, file.id)}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* File Upload */}
+                    {user.role === 'admin' && (
+                      <div>
+                        <h3 className="font-semibold mb-3">Upload Files</h3>
+                        <FileDropZone
+                          onFilesUploaded={(files) => handleFilesUploaded(files, selectedTask.id)}
+                          maxFiles={5}
+                          maxSize={200 * 1024 * 1024}
+                          accept={{
+                            'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+                            'application/pdf': ['.pdf'],
+                            'application/zip': ['.zip'],
+                            'text/*': ['.txt', '.md'],
+                            'application/msword': ['.doc'],
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+
+              <DialogFooter className="flex-shrink-0">
+                <Button variant="outline" onClick={() => setShowTaskModal(false)}>
+                  Close
+                </Button>
+                {user.role === 'admin' && (
+                  <Button onClick={() => {
+                    // In real app, this would save task changes
+                    setShowTaskModal(false)
+                    toast.success('Task updated successfully')
+                  }}>
+                    Save Task
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* File Preview Modal */}
+      <Dialog open={!!showFilePreview} onOpenChange={() => setShowFilePreview(null)}>
+        <DialogContent className="glass-modal max-w-4xl max-h-[85vh]">
+          {showFilePreview && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  {getTaskFileIcon(showFilePreview.type)}
+                  <div>
+                    <h2 className="text-lg font-heading font-bold">{showFilePreview.name}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {formatFileSize(showFilePreview.size)} • {showFilePreview.type}
+                    </p>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="flex-1 flex items-center justify-center min-h-[400px] bg-muted/20 rounded-lg">
+                {showFilePreview.type.startsWith('image/') ? (
+                  <img 
+                    src={showFilePreview.url} 
+                    alt={showFilePreview.name}
+                    className="max-w-full max-h-full object-contain rounded"
+                  />
+                ) : showFilePreview.type === 'application/pdf' ? (
+                  <iframe
+                    src={showFilePreview.url}
+                    className="w-full h-[400px] border rounded"
+                    title={showFilePreview.name}
+                  />
+                ) : (
+                  <div className="text-center">
+                    {getTaskFileIcon(showFilePreview.type)}
+                    <p className="text-muted-foreground mt-2">
+                      Preview not available for this file type
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-3"
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = showFilePreview.url
+                        link.download = showFilePreview.name
+                        link.click()
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download File
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const link = document.createElement('a')
+                    link.href = showFilePreview.url
+                    link.download = showFilePreview.name
+                    link.click()
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+                <Button onClick={() => setShowFilePreview(null)}>
+                  Close
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Task Modal */}
+      <CreateTaskModal
+        open={showCreateTaskModal}
+        onClose={() => setShowCreateTaskModal(false)}
+        onTaskCreated={handleTaskCreated}
+        user={user}
+        availableClients={availableClients}
+        projects={projects}
+        users={users}
+      />
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        open={showCreateProjectModal}
+        onClose={() => setShowCreateProjectModal(false)}
+        onProjectCreated={handleProjectCreated}
+        user={user}
+        availableClients={availableClients}
+      />
+
+      {/* Delete Task Confirmation */}
+      <AlertDialog open={!!deleteTaskDialog} onOpenChange={() => setDeleteTaskDialog(null)}>
+        <AlertDialogContent className="glass-modal">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteTaskDialog?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTaskDialog && handleDeleteTask(deleteTaskDialog)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Task
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Project Confirmation */}
+      <AlertDialog open={!!deleteProjectDialog} onOpenChange={() => setDeleteProjectDialog(null)}>
+        <AlertDialogContent className="glass-modal">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteProjectDialog?.name}"? This will also delete all tasks in this project. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteProjectDialog && handleDeleteProject(deleteProjectDialog)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )           
 }  

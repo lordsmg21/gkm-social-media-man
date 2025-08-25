@@ -29,17 +29,17 @@ interface Client {
 
 interface CreateProjectModalProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
   onProjectCreated: (project: Project) => void
-  currentUserId: string
-  availableClients: Client[]
+  user: { id: string; name: string; role: string }
+  availableClients: { id: string; name: string; email: string; role: string }[]
 }
 
 export default function CreateProjectModal({ 
   open, 
-  onOpenChange,
+  onClose,
   onProjectCreated, 
-  currentUserId,
+  user,
   availableClients = []
 }: CreateProjectModalProps) {
   const [formData, setFormData] = useState({
@@ -84,7 +84,7 @@ export default function CreateProjectModal({
   }
 
   const handleClose = () => {
-    onOpenChange(false)
+    onClose()
     resetForm()
   }
 
@@ -123,7 +123,7 @@ export default function CreateProjectModal({
       budget: formData.budget,
       clientId: formData.clientId,
       clientName: selectedClient.name,
-      createdBy: currentUserId,
+      createdBy: user.id,
       createdAt: new Date().toISOString(),
       status: 'active'
     }
@@ -134,7 +134,7 @@ export default function CreateProjectModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl glass-modal mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-heading flex items-center gap-2">

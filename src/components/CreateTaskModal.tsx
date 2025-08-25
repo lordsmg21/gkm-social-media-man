@@ -53,29 +53,15 @@ interface Task {
 
 interface CreateTaskModalProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
   onTaskCreated: (task: Task) => void
+  user: User
+  availableClients: User[]
+  projects: Project[]
   users: User[]
-  currentUser: User
-  projects?: Project[]
-  selectedProject?: string
 }
 
-export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, currentUser, projects, selectedProject }: CreateTaskModalProps) {
-  // Get client list from system users
-  const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
-    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
-    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin' },
-    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client' },
-    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin' },
-    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client' },
-    { id: '6', name: 'Emma de Vries', email: 'emma@boutique.nl', role: 'client' },
-    { id: '7', name: 'Tom Hendriks', email: 'tom@cafe.nl', role: 'client' },
-    { id: '8', name: 'Sophie Jansen', email: 'sophie@salon.nl', role: 'client' }
-  ])
-  
-  // Filter to get only clients
-  const availableClients = systemUsers.filter(user => user.role === 'client')
+export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableClients, projects, users }: CreateTaskModalProps) {
 
   const [formData, setFormData] = useState({
     title: '',
@@ -84,8 +70,8 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     priority: 'medium' as 'low' | 'medium' | 'high',
     description: '',
     deadline: '',
-    assignedTo: [currentUser.id], // Default assign to current user
-    projectId: selectedProject || 'no-project'
+    assignedTo: [user.id], // Default assign to current user
+    projectId: 'no-project'
   })
 
   const [uploadedFiles, setUploadedFiles] = useState<TaskFile[]>([])
@@ -101,8 +87,8 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       priority: 'medium',
       description: '',
       deadline: '',
-      assignedTo: [currentUser.id],
-      projectId: selectedProject || 'no-project'
+      assignedTo: [user.id],
+      projectId: 'no-project'
     })
     setUploadedFiles([])
     setTags([])
@@ -110,7 +96,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
   }
 
   const handleClose = () => {
-    onOpenChange(false)
+    onClose()
     resetForm()
   }
 
@@ -169,7 +155,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
         name: file.name,
         size: file.size,
         type: file.type,
-        uploadedBy: currentUser.id,
+        uploadedBy: user.id,
         uploadedAt: new Date().toISOString(),
         url: fileUrl
       }
@@ -241,7 +227,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl glass-modal mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-heading">
@@ -313,7 +299,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
 
             <div>
               <Label htmlFor="client">Client *</Label>
-              {currentUser.role === 'admin' ? (
+              {user.role === 'admin' ? (
                 <Select value={formData.client} onValueChange={(value) => 
                   setFormData(prev => ({ ...prev, client: value }))
                 }>
