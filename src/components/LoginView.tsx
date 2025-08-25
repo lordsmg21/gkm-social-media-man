@@ -1,180 +1,148 @@
-import { useState } from 'react'
+// src/components/LoginView.tsx
+import React, { useState } from 'react'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { User as UserIcon, Shield } from 'lucide-react'
-import type { User, UserRole } from '../App'
 
-interface LoginViewProps {
-  onLogin: (user: User) => void
+type UserRole = 'admin' | 'client'
+
+interface User {
+  id: string
+  name: string
+  email: string
+  role: UserRole
 }
 
-export function LoginView({ onLogin }: LoginViewProps) {
-  const [loginType, setLoginType] = useState<'admin' | 'client'>('admin')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+type Props = { onLogin?: (user: User) => void }
 
-  const demoUsers: Record<UserRole, User> = {
-    admin: {
-      id: '1',
-      name: 'GKM Admin',
-      email: 'admin@gkm.com',
-      role: 'admin' as UserRole,
-    },
-    client: {
-      id: '2', 
-      name: 'Demo Client',
-      email: 'client@demo.com',
-      role: 'client' as UserRole,
-    }
-  }
+const demoUsers: Record<UserRole, User> = {
+  admin: { id: '1', name: 'GKM Admin', email: 'admin@gkm.com', role: 'admin' },
+  client: { id: '2', name: 'Demo Client', email: 'client@demo.com', role: 'client' },
+}
 
-  const handleLogin = async (e: React.FormEvent) => {
+export default function LoginView({ onLogin }: Props) {
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [loginType, setLoginType] = useState<UserRole>('client')
+
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    const user = Object.values(demoUsers).find(u => u.email === email)
-    if (user && password === 'demo') {
-      onLogin(user)
+
+    const selected = loginType === 'admin' ? demoUsers.admin : demoUsers.client
+    if (email === selected.email) {
+      onLogin?.(selected)
     } else {
       alert('Ongeldige inloggegevens')
     }
+
     setIsLoading(false)
   }
 
-  const handleDemoLogin = (type: UserRole) => {
-    onLogin(demoUsers[type])
+  const handleCreateAccount = () => {
+    alert('Account aanmaken is nog niet beschikbaar in deze demo.')
   }
 
-  const handleCreateAccount = () => {
-    alert('Account aanmaken feature komt binnenkort!')
+  const autofill = (role: UserRole) => {
+    setLoginType(role)
+    setEmail(demoUsers[role].email)
+    setPassword('password')
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        {/* Main Login Card */}
-        <Card className="glass-modal p-8 space-y-8">
-          {/* Header */}
-          <div className="text-center space-y-3">
-            <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto">
-              <span className="text-white font-bold text-2xl">G</span>
-            </div>
-            <h1 className="text-3xl font-heading font-bold text-foreground">
-              GKM Portal
-            </h1>
-            <p className="text-muted-foreground">
-              Social Media Management Platform
-            </p>
+    <div className="min-h-screen w-full flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Shield size={20} />
+            <CardTitle>GKM Portal</CardTitle>
           </div>
+          <CardDescription>Log in of gebruik een demo-account.</CardDescription>
+        </CardHeader>
 
-          {/* Login Type Toggle */}
-          <div className="flex bg-muted rounded-xl p-1">
+        <CardContent>
+          <div className="flex bg-muted rounded-xl p-1 mb-4">
             <button
-              onClick={() => setLoginType('client')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
-                loginType === 'client'
-                  ? 'bg-white text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+              type="button"
+              className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                loginType === 'admin' ? 'bg-background shadow' : ''
               }`}
-            >
-              <UserIcon size={16} className="inline mr-2" />
-              Client
-            </button>
-            <button
               onClick={() => setLoginType('admin')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
-                loginType === 'admin'
-                  ? 'bg-white text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
             >
-              <Shield size={16} className="inline mr-2" />
               Admin
             </button>
+            <button
+              type="button"
+              className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                loginType === 'client' ? 'bg-background shadow' : ''
+              }`}
+              onClick={() => setLoginType('client')}
+            >
+              Client
+            </button>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="email" className="block text-sm font-medium mb-1">
                 Email
               </label>
               <input
                 id="email"
                 type="email"
+                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="je@example.com"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="password" className="block text-sm font-medium mb-1">
                 Wachtwoord
               </label>
               <input
                 id="password"
                 type="password"
+                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Inloggen...' : 'Inloggen'}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Bezig met inloggen…' : 'Inloggen'}
             </Button>
           </form>
 
-          <div className="flex items-center gap-4">
-            <span className="flex-1 h-px bg-border"></span>
-            <span className="text-muted-foreground text-sm">of</span>
-            <span className="flex-1 h-px bg-border"></span>
-          </div>
-
-          {/* Demo Login */}
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Demo toegang:
-            </p>
+          <div className="space-y-2 mt-6">
+            <p className="text-sm text-muted-foreground">Demo</p>
             <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => handleDemoLogin('admin')}
-                className="py-3 bg-white/50 backdrop-blur-sm hover:bg-white/70"
-              >
+              <Button variant="outline" onClick={() => autofill('admin')}>
                 Admin Demo
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleDemoLogin('client')}
-                className="py-3 bg-white/50 backdrop-blur-sm hover:bg-white/70"
-              >
+              <Button variant="outline" onClick={() => autofill('client')}>
                 Client Demo
               </Button>
             </div>
           </div>
+        </CardContent>
 
-          {/* Footer */}
-          <div className="text-center pt-4 border-t border-border">
-            <button
-              onClick={handleCreateAccount}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Nog geen account? Maak er een aan
-            </button>
-          </div>
-        </Card>
-      </div>
+        <CardFooter className="flex justify-between">
+          <button className="text-sm text-muted-foreground" onClick={handleCreateAccount}>
+            Nog geen account? Maak er een aan
+          </button>
+        </CardFooter>
+      </Card>
     </div>
   )
 }
