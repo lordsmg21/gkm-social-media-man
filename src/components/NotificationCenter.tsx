@@ -204,8 +204,8 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
                         {notification.message}
                       </p>
                       
-                      {/* Status and Buttons - Fixed layout */}
-                      <div className="flex items-center gap-3 pt-2">
+                      {/* Status and Clear Button - Simplified layout */}
+                      <div className="flex items-center justify-between pt-2">
                         {!notification.read && (
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <div className="w-2 h-2 bg-primary rounded-full" />
@@ -213,23 +213,13 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
                           </div>
                         )}
                         
-                        {/* Buttons - Properly contained */}
-                        <div className="flex gap-2 ml-auto flex-shrink-0">
-                          {!notification.read && (
-                            <button
-                              onClick={() => markAsRead(notification.id)}
-                              className="text-xs text-primary hover:text-primary/80 font-medium px-2 py-1 rounded-md border border-primary/30 hover:bg-primary/10 transition-colors"
-                            >
-                              Read
-                            </button>
-                          )}
-                          <button
-                            onClick={() => clearNotification(notification.id)}
-                            className="text-xs text-destructive hover:text-destructive/80 font-medium px-2 py-1 rounded-md border border-destructive/30 hover:bg-destructive/10 transition-colors"
-                          >
-                            Clear
-                          </button>
-                        </div>
+                        {/* Clear button only - stays within bounds */}
+                        <button
+                          onClick={() => clearNotification(notification.id)}
+                          className="text-xs text-destructive hover:text-destructive/80 font-medium px-3 py-1 rounded-md border border-destructive/30 hover:bg-destructive/10 transition-colors flex-shrink-0"
+                        >
+                          Clear
+                        </button>
                       </div>
                     </div>
                   </div>
