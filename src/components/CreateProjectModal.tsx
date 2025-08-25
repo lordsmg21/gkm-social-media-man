@@ -29,18 +29,12 @@ interface Client {
 
 interface CreateProjectModalProps {
   open: boolean
-  onClose: () => void
-  onProjectCreated: (project: Project) => void
+  user: { id: string;
+}
   user: { id: string; name: string; role: string }
   availableClients: { id: string; name: string; email: string; role: string }[]
-}
-
-export default function CreateProjectModal({ 
-  open, 
-  onClose,
-  onProjectCreated, 
   user,
-  availableClients = []
+
 }: CreateProjectModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -245,4 +239,4 @@ export default function CreateProjectModal({
       </DialogContent>
     </Dialog>
   )
-}
+}}
