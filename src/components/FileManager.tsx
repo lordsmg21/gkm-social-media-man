@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Upload, 
   Search, 
@@ -19,7 +20,9 @@ import {
   MoreVertical,
   Eye,
   Share,
-  Star
+  Star,
+  Users,
+  User as UserIcon
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
@@ -33,10 +36,13 @@ interface FileItem {
   uploadedBy: string
   project?: string
   client?: string
+  clientId?: string
   url?: string
   thumbnail?: string
   tags: string[]
   isStarred: boolean
+  accessibleTo?: string[] // User IDs who can access this file
+  isPublic?: boolean // If true, all users can access
 }
 
 interface FileManagerProps {
@@ -52,10 +58,12 @@ export function FileManager({ user }: FileManagerProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [selectedUploadClient, setSelectedUploadClient] = useState<string>('all')
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [files] = useKV<FileItem[]>('file-manager', [
+  const [files, setFiles] = useKV<FileItem[]>('file-manager', [
     {
       id: '1',
       name: 'korenbloem-instagram-stories.mp4',
@@ -65,10 +73,13 @@ export function FileManager({ user }: FileManagerProps) {
       uploadedBy: '2',
       project: 'Instagram Campaign',
       client: 'De Korenbloem',
+      clientId: 'client1',
       url: '/files/video1.mp4',
       thumbnail: '/files/video1-thumb.jpg',
       tags: ['instagram', 'stories', 'bakery'],
-      isStarred: true
+      isStarred: true,
+      accessibleTo: ['2', 'client1'],
+      isPublic: false
     },
     {
       id: '2',
@@ -79,9 +90,12 @@ export function FileManager({ user }: FileManagerProps) {
       uploadedBy: '3',
       project: 'Facebook Ads',
       client: 'Bella Vista',
+      clientId: 'client2',
       url: '/files/menu-design.png',
       tags: ['design', 'menu', 'restaurant'],
-      isStarred: false
+      isStarred: false,
+      accessibleTo: ['3', 'client2'],
+      isPublic: false
     },
     {
       id: '3',
@@ -92,9 +106,12 @@ export function FileManager({ user }: FileManagerProps) {
       uploadedBy: '1',
       project: 'Social Media Strategy',
       client: 'Fitness First',
+      clientId: 'client3',
       url: '/files/strategy.pdf',
       tags: ['strategy', 'planning', 'fitness'],
-      isStarred: false
+      isStarred: false,
+      accessibleTo: ['1', 'client3'],
+      isPublic: false
     },
     {
       id: '4',
@@ -104,7 +121,8 @@ export function FileManager({ user }: FileManagerProps) {
       uploadDate: '2024-01-15T16:45:00Z',
       uploadedBy: '1',
       tags: ['branding', 'guidelines', 'internal'],
-      isStarred: true
+      isStarred: true,
+      isPublic: true // All admins can access
     },
     {
       id: '5',
@@ -115,17 +133,24 @@ export function FileManager({ user }: FileManagerProps) {
       uploadedBy: '2',
       project: 'Valentine Campaign',
       client: 'Fashion Boutique',
+      clientId: 'client4',
       url: '/files/mockups.zip',
       tags: ['mockups', 'valentine', 'fashion'],
-      isStarred: false
+      isStarred: false,
+      accessibleTo: ['2', 'client4'],
+      isPublic: false
     }
   ])
 
-  const [users] = useKV<{ id: string; name: string; role: string }[]>('all-users', [
+  const [allUsers] = useKV<{ id: string; name: string; role: string }[]>('all-users', [
     { id: '1', name: 'Alex van der Berg', role: 'admin' },
     { id: '2', name: 'Sarah de Jong', role: 'admin' },
     { id: '3', name: 'Mike Visser', role: 'admin' },
-    { id: '4', name: 'Lisa Bakker', role: 'admin' }
+    { id: '4', name: 'Lisa Bakker', role: 'admin' },
+    { id: 'client1', name: 'De Korenbloem', role: 'client' },
+    { id: 'client2', name: 'Bella Vista', role: 'client' },
+    { id: 'client3', name: 'Fitness First', role: 'client' },
+    { id: 'client4', name: 'Fashion Boutique', role: 'client' }
   ])
 
   const fileTypeIcons = {
@@ -159,7 +184,11 @@ export function FileManager({ user }: FileManagerProps) {
   }
 
   const getUploadedBy = (userId: string) => {
-    return users.find(u => u.id === userId)?.name || 'Unknown'
+    return allUsers.find(u => u.id === userId)?.name || 'Unknown'
+  }
+
+  const getClientsList = () => {
+    return allUsers.filter(u => u.role === 'client')
   }
 
   const filteredFiles = files.filter(file => {
@@ -171,14 +200,18 @@ export function FileManager({ user }: FileManagerProps) {
     
     // Role-based filtering
     if (user.role === 'client') {
-      // Clients can only see files from their own projects or shared files
-      return matchesSearch && matchesFilter && (file.client === 'My Client' || !file.client)
+      // Clients can only see files they have access to
+      const hasAccess = file.isPublic || 
+                       file.accessibleTo?.includes(user.id) ||
+                       file.uploadedBy === user.id
+      return matchesSearch && matchesFilter && hasAccess
     }
     
+    // Admins see all files
     return matchesSearch && matchesFilter
   })
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = event.target.files
     if (!uploadedFiles) return
 
@@ -191,6 +224,34 @@ export function FileManager({ user }: FileManagerProps) {
         if (prev >= 100) {
           clearInterval(progressInterval)
           setIsUploading(false)
+          
+          // Add the new file to the files array
+          const newFile: FileItem = {
+            id: Date.now().toString(),
+            name: uploadedFiles[0].name,
+            type: uploadedFiles[0].type.includes('image') ? 'image' :
+                  uploadedFiles[0].type.includes('video') ? 'video' :
+                  uploadedFiles[0].type.includes('pdf') ? 'document' : 'other',
+            size: uploadedFiles[0].size,
+            uploadDate: new Date().toISOString(),
+            uploadedBy: user.id,
+            tags: [],
+            isStarred: false,
+            isPublic: selectedUploadClient === 'all',
+            accessibleTo: selectedUploadClient === 'all' ? undefined : [user.id, selectedUploadClient]
+          }
+
+          if (selectedUploadClient !== 'all') {
+            const clientUser = allUsers.find(u => u.id === selectedUploadClient)
+            if (clientUser) {
+              newFile.client = clientUser.name
+              newFile.clientId = selectedUploadClient
+            }
+          }
+
+          setFiles((prevFiles) => [...prevFiles, newFile])
+          setShowUploadDialog(false)
+          
           return 100
         }
         return prev + 10
@@ -254,7 +315,7 @@ export function FileManager({ user }: FileManagerProps) {
           <Button 
             size="sm" 
             className="gap-2"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => user.role === 'admin' ? setShowUploadDialog(true) : fileInputRef.current?.click()}
           >
             <Upload className="w-4 h-4" />
             Upload Files
@@ -644,6 +705,83 @@ export function FileManager({ user }: FileManagerProps) {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Upload Dialog for Admin Client Selection */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="glass-modal">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl">Upload Files</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Client Access</label>
+              <Select value={selectedUploadClient} onValueChange={setSelectedUploadClient}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose who can access these files" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      All Users (Public)
+                    </div>
+                  </SelectItem>
+                  {getClientsList().map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="w-4 h-4" />
+                        {client.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {selectedUploadClient === 'all' 
+                  ? 'Files will be accessible by all users' 
+                  : 'Files will only be accessible by you and the selected client'}
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <Button 
+                className="w-full gap-2" 
+                onClick={() => {
+                  fileInputRef.current?.click()
+                }}
+              >
+                <Upload className="w-4 h-4" />
+                Choose Files to Upload
+              </Button>
+              
+              <div 
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:bg-muted/20 transition-colors"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mb-1">
+                  Drag and drop files here, or click to browse
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Max file size: 200MB
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileUpload}
+        accept="image/*,video/*,.pdf,.doc,.docx,.zip"
+      />
     </div>
   )
 }

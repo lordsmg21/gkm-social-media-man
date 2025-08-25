@@ -176,9 +176,12 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="glass-modal max-w-4xl max-h-[90vh] overflow-y-auto border-primary/20">
-        <DialogHeader className="pb-6">
-          <DialogTitle className="font-heading text-2xl text-foreground">
+      <DialogContent className="glass-modal max-w-4xl max-h-[90vh] overflow-y-auto border-primary/20 bg-gradient-to-br from-background/95 to-primary/5 backdrop-blur-xl shadow-2xl">
+        <DialogHeader className="pb-6 border-b border-primary/10">
+          <DialogTitle className="font-heading text-2xl text-foreground flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-primary" />
+            </div>
             Manage Client Dashboard Data
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">

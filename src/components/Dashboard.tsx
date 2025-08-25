@@ -251,6 +251,34 @@ export function Dashboard({ user }: DashboardProps) {
     return num.toString()
   }
 
+  const formatValue = (value: number | undefined, isClient: boolean = false) => {
+    if (isClient && (!value || value === 0)) {
+      return '-'
+    }
+    return value || 0
+  }
+
+  const formatNumberValue = (value: number | undefined, isClient: boolean = false) => {
+    if (isClient && (!value || value === 0)) {
+      return '-'
+    }
+    return formatNumber(value || 0)
+  }
+
+  const formatPercentageValue = (value: number | undefined, isClient: boolean = false) => {
+    if (isClient && (!value || value === 0)) {
+      return '-'
+    }
+    return `${value || 0}%`
+  }
+
+  const formatGrowthValue = (value: number | undefined, isClient: boolean = false) => {
+    if (isClient && (!value || value === 0)) {
+      return '-'
+    }
+    return formatGrowth(value || 0)
+  }
+
   const formatGrowth = (growth: number) => {
     if (!growth && growth !== 0) return '0%'
     return growth > 0 ? `+${growth}%` : `${growth}%`
@@ -320,10 +348,12 @@ export function Dashboard({ user }: DashboardProps) {
               <DollarSign className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">${(kpiData?.revenue || 0).toLocaleString()}</div>
+              <div className="text-2xl font-bold text-foreground">
+                ${user.role === 'client' ? formatValue(kpiData?.revenue, true) : (kpiData?.revenue || 0).toLocaleString()}
+              </div>
               <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.revenueGrowth || 0)}`}>
                 {React.createElement(getGrowthIcon(kpiData?.revenueGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-                {formatGrowth(kpiData?.revenueGrowth || 0)} from last month
+                {formatGrowthValue(kpiData?.revenueGrowth, user.role === 'client')} from last month
               </div>
             </CardContent>
           </Card>
@@ -337,10 +367,10 @@ export function Dashboard({ user }: DashboardProps) {
               <Target className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{kpiData?.projects || 0}</div>
+              <div className="text-2xl font-bold text-foreground">{formatValue(kpiData?.projects, user.role === 'client')}</div>
               <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.projectsGrowth || 0)}`}>
                 {React.createElement(getGrowthIcon(kpiData?.projectsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-                {formatGrowth(kpiData?.projectsGrowth || 0)} from last month
+                {formatGrowthValue(kpiData?.projectsGrowth, user.role === 'client')} from last month
               </div>
             </CardContent>
           </Card>
@@ -384,10 +414,10 @@ export function Dashboard({ user }: DashboardProps) {
               <MessageSquare className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{formatNumber(kpiData?.conversations || 0)}</div>
+              <div className="text-2xl font-bold text-primary">{formatNumberValue(kpiData?.conversations, user.role === 'client')}</div>
               <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.conversationsGrowth || 0)}`}>
                 {React.createElement(getGrowthIcon(kpiData?.conversationsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-                {formatGrowth(kpiData?.conversationsGrowth || 0)} from last month
+                {formatGrowthValue(kpiData?.conversationsGrowth, user.role === 'client')} from last month
               </div>
             </CardContent>
           </Card>
@@ -399,10 +429,10 @@ export function Dashboard({ user }: DashboardProps) {
               <Facebook className="w-4 h-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.facebookReach || 0)}</div>
+              <div className="text-2xl font-bold text-foreground">{formatNumberValue(kpiData?.facebookReach, user.role === 'client')}</div>
               <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.facebookReachGrowth || 0)}`}>
                 {React.createElement(getGrowthIcon(kpiData?.facebookReachGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-                {formatGrowth(kpiData?.facebookReachGrowth || 0)} from last month
+                {formatGrowthValue(kpiData?.facebookReachGrowth, user.role === 'client')} from last month
               </div>
             </CardContent>
           </Card>
@@ -414,10 +444,10 @@ export function Dashboard({ user }: DashboardProps) {
               <Instagram className="w-4 h-4 text-pink-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{kpiData?.instagramEngagement || 0}%</div>
+              <div className="text-2xl font-bold text-foreground">{formatPercentageValue(kpiData?.instagramEngagement, user.role === 'client')}</div>
               <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.instagramEngagementGrowth || 0)}`}>
                 {React.createElement(getGrowthIcon(kpiData?.instagramEngagementGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-                {formatGrowth(kpiData?.instagramEngagementGrowth || 0)} from last month
+                {formatGrowthValue(kpiData?.instagramEngagementGrowth, user.role === 'client')} from last month
               </div>
             </CardContent>
           </Card>
@@ -429,10 +459,10 @@ export function Dashboard({ user }: DashboardProps) {
               <Eye className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.messagesReceived || 0)}</div>
+              <div className="text-2xl font-bold text-foreground">{formatNumberValue(kpiData?.messagesReceived, user.role === 'client')}</div>
               <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.messagesGrowth || 0)}`}>
                 {React.createElement(getGrowthIcon(kpiData?.messagesGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-                {formatGrowth(kpiData?.messagesGrowth || 0)} from last month
+                {formatGrowthValue(kpiData?.messagesGrowth, user.role === 'client')} from last month
               </div>
             </CardContent>
           </Card>
@@ -444,7 +474,7 @@ export function Dashboard({ user }: DashboardProps) {
               <BarChart3 className="w-4 h-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-accent">{kpiData?.growthRate || 0}%</div>
+              <div className="text-2xl font-bold text-accent">{formatPercentageValue(kpiData?.growthRate, user.role === 'client')}</div>
               <div className="text-xs text-muted-foreground">
                 Multi-metric calculation
               </div>
