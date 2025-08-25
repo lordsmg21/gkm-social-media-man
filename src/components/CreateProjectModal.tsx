@@ -7,35 +7,41 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FolderPlus, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
+import { User } from '../App'
 
 interface Project {
   id: string
   name: string
   description: string
-  trajectory: 'social-media' | 'web-development' | 'branding' | 'advertising'
+  trajectory: 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
   budget: number
   clientId: string
   clientName: string
   createdBy: string
   createdAt: string
-  status: 'active' | 'paused' | 'completed'
-}
-
-interface Client {
-  id: string
-  name: string
-  email: string
+  status: 'active' | 'completed' | 'on-hold'
 }
 
 interface CreateProjectModalProps {
   open: boolean
-  user: { id: string;
+  onClose: () => void
+  onProjectCreated: (project: Project) => void
+  user: User
+  availableClients: User[]
 }
-  user: { id: string; name: string; role: string }
-  availableClients: { id: string; name: string; email: string; role: string }[]
-  user,
 
+export default function CreateProjectModal({ 
+  open, 
+  onClose, 
+  onProjectCreated, 
+  user, 
+  availableClients 
 }: CreateProjectModalProps) {
+  // Only allow admins to create projects
+  if (user.role !== 'admin') {
+    return null
+  }
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -51,8 +57,8 @@ interface CreateProjectModalProps {
       description: 'Content creation, community management, and social advertising'
     },
     { 
-      value: 'web-development', 
-      label: '💻 Web Development',
+      value: 'website', 
+      label: '💻 Website Development',
       description: 'Website design, development, and maintenance'
     },
     { 
@@ -64,6 +70,11 @@ interface CreateProjectModalProps {
       value: 'advertising', 
       label: '📢 Digital Advertising',
       description: 'Paid advertising campaigns across multiple platforms'
+    },
+    { 
+      value: 'full-campaign', 
+      label: '🚀 Full Campaign',
+      description: 'Comprehensive marketing campaign across all channels'
     }
   ]
 
@@ -83,6 +94,12 @@ interface CreateProjectModalProps {
   }
 
   const handleSubmit = () => {
+    // Double-check admin role
+    if (user.role !== 'admin') {
+      toast.error('Only admins can create projects')
+      return
+    }
+
     if (!formData.name.trim()) {
       toast.error('Please enter a project name')
       return
@@ -239,4 +256,4 @@ interface CreateProjectModalProps {
       </DialogContent>
     </Dialog>
   )
-}}
+}

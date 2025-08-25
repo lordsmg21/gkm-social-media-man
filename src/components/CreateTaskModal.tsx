@@ -62,6 +62,10 @@ interface CreateTaskModalProps {
 }
 
 export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableClients, projects, users }: CreateTaskModalProps) {
+  // Only allow admins to create tasks
+  if (user.role !== 'admin') {
+    return null
+  }
 
   const [formData, setFormData] = useState({
     title: '',
@@ -101,6 +105,12 @@ export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableC
   }
 
   const handleSubmit = () => {
+    // Double-check admin role
+    if (user.role !== 'admin') {
+      toast.error('Only admins can create tasks')
+      return
+    }
+
     if (!formData.title.trim()) {
       toast.error('Please enter a task title')
       return
