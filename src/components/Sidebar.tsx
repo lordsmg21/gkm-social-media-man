@@ -22,9 +22,10 @@ interface SidebarProps {
   user: User
   activeView: string
   onViewChange: (view: string) => void
+  onLogout?: () => void
 }
 
-export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
+export function Sidebar({ user, activeView, onViewChange, onLogout }: SidebarProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const { unreadCount } = useNotifications()
   
@@ -163,10 +164,14 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
             variant="ghost"
             className="w-full justify-start gap-3 h-11 text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={() => {
-              // Reset user session and refresh page
-              localStorage.clear()
-              sessionStorage.clear()
-              window.location.reload()
+              // Use the onLogout prop if available, otherwise fallback to manual clear
+              if (onLogout) {
+                onLogout()
+              } else {
+                localStorage.clear()
+                sessionStorage.clear()
+                window.location.reload()
+              }
             }}
           >
             <LogOut className="w-4 h-4" />

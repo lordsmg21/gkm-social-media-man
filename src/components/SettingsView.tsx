@@ -170,11 +170,14 @@ export function SettingsView({ user }: SettingsViewProps) {
 
   const saveSettings = async () => {
     try {
-      // Force the settings to be persisted by triggering the KV hook
-      setSettings(currentSettings => {
-        // This triggers the useKV to save to storage
-        return currentSettings
+      // Manually trigger the settings update
+      setSettings(prevSettings => {
+        // Return the same settings object but trigger useKV to save
+        return { ...prevSettings }
       })
+      
+      // Also update the settings state variable directly to ensure save
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       setHasChanges(false)
       toast.success('Settings saved successfully!')

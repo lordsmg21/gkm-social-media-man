@@ -9,6 +9,7 @@ import { CalendarView } from './components/CalendarView'
 import { FileManager } from './components/FileManager'
 import { SettingsView } from './components/SettingsView'
 import { BillingView } from './components/BillingView'
+import { LoginView } from './components/LoginView'
 
 export type UserRole = 'admin' | 'client'
 
@@ -22,20 +23,21 @@ export interface User {
 }
 
 function App() {
-  const [currentUser] = useKV<User>('current-user', {
-    id: '1',
-    name: 'Alex van der Berg',
-    email: 'alex@gkm.nl',
-    avatar: '',
-    role: 'admin',
-    isOnline: true
-  })
-
+  const [currentUser, setCurrentUser] = useKV<User | null>('current-user', null)
   const [activeView, setActiveView] = useState('dashboard')
+
+  const handleLogin = (user: User) => {
+    setCurrentUser(user)
+  }
+
+  const handleLogout = () => {
+    setCurrentUser(null)
+    setActiveView('dashboard')
+  }
 
   const renderActiveView = () => {
     if (!currentUser) {
-      return <div className="flex items-center justify-center h-screen">Loading...</div>
+      return <LoginView onLogin={handleLogin} />
     }
     
     switch (activeView) {
@@ -60,18 +62,21 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex">
-        {currentUser && (
+      {!currentUser ? (
+        renderActiveView()
+      ) : (
+        <div className="flex">
           <Sidebar 
             user={currentUser} 
             activeView={activeView}
             onViewChange={setActiveView}
+            onLogout={handleLogout}
           />
-        )}
-        <main className="flex-1 p-6">
-          {renderActiveView()}
-        </main>
-      </div>
+          <main className="flex-1 p-6">
+            {renderActiveView()}
+          </main>
+        </div>
+      )}
       <Toaster position="top-right" />
     </div>
   )
