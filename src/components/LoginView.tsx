@@ -60,8 +60,8 @@ export function LoginView({ onLogin }: Props) {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-center gap-2">
+        <CardHeader className="text-center">
+          <div className="flex items-center justify-center gap-2">
             <Shield size={20} />
             <CardTitle>GKM Portal</CardTitle>
           </div>
