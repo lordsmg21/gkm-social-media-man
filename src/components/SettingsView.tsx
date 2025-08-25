@@ -31,6 +31,7 @@ import { useKV } from '@github/spark/hooks'
 
 interface SettingsViewProps {
   user: User
+  onUserUpdate?: (user: User) => void
 }
 
 interface UserSettings {
@@ -86,7 +87,7 @@ interface UserSettings {
   }
 }
 
-export function SettingsView({ user }: SettingsViewProps) {
+export function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
   const [settings, setSettings] = useKV<UserSettings>(`user-settings-${user.id}`, {
     personalInfo: {
       name: user.name,
@@ -175,6 +176,17 @@ export function SettingsView({ user }: SettingsViewProps) {
         // Return the same settings object but trigger useKV to save
         return { ...prevSettings }
       })
+      
+      // Also update the global user object with new personal info
+      if (onUserUpdate) {
+        const updatedUser: User = {
+          ...user,
+          name: settings.personalInfo.name,
+          email: settings.personalInfo.email,
+          avatar: settings.personalInfo.avatar
+        }
+        onUserUpdate(updatedUser)
+      }
       
       // Also update the settings state variable directly to ensure save
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -279,6 +291,14 @@ export function SettingsView({ user }: SettingsViewProps) {
                                 const result = readerEvent.target?.result as string
                                 if (result) {
                                   updateSettings('personalInfo', 'avatar', result)
+                                  // Also update the user immediately for live preview
+                                  if (onUserUpdate) {
+                                    const updatedUser: User = {
+                                      ...user,
+                                      avatar: result
+                                    }
+                                    onUserUpdate(updatedUser)
+                                  }
                                 }
                               }
                               reader.readAsDataURL(file)
@@ -303,7 +323,17 @@ export function SettingsView({ user }: SettingsViewProps) {
                   <label className="text-sm font-medium text-foreground">Full Name</label>
                   <Input
                     value={settings.personalInfo.name}
-                    onChange={(e) => updateSettings('personalInfo', 'name', e.target.value)}
+                    onChange={(e) => {
+                      updateSettings('personalInfo', 'name', e.target.value)
+                      // Live update the user for immediate sidebar sync
+                      if (onUserUpdate) {
+                        const updatedUser: User = {
+                          ...user,
+                          name: e.target.value
+                        }
+                        onUserUpdate(updatedUser)
+                      }
+                    }}
                   />
                 </div>
                 
@@ -312,7 +342,17 @@ export function SettingsView({ user }: SettingsViewProps) {
                   <Input
                     type="email"
                     value={settings.personalInfo.email}
-                    onChange={(e) => updateSettings('personalInfo', 'email', e.target.value)}
+                    onChange={(e) => {
+                      updateSettings('personalInfo', 'email', e.target.value)
+                      // Live update the user for immediate sidebar sync
+                      if (onUserUpdate) {
+                        const updatedUser: User = {
+                          ...user,
+                          email: e.target.value
+                        }
+                        onUserUpdate(updatedUser)
+                      }
+                    }}
                   />
                 </div>
                 

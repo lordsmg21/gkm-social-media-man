@@ -35,6 +35,10 @@ function App() {
     setActiveView('dashboard')
   }
 
+  const updateUser = (updatedUser: User) => {
+    setCurrentUser(updatedUser)
+  }
+
   const renderActiveView = () => {
     if (!currentUser) {
       return <LoginView onLogin={handleLogin} />
@@ -54,7 +58,7 @@ function App() {
       case 'billing':
         return <BillingView user={currentUser} />
       case 'settings':
-        return <SettingsView user={currentUser} />
+        return <SettingsView user={currentUser} onUserUpdate={updateUser} />
       default:
         return <Dashboard user={currentUser} />
     }
