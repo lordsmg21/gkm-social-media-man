@@ -25,6 +25,7 @@ interface SidebarProps {
 
 export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const { unreadCount } = useNotifications()
   
   const menuItems = [
     {
@@ -139,11 +140,16 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
         <div className="mt-auto space-y-2">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 h-11 relative"
+            className="w-full justify-start gap-3 h-11"
             onClick={() => setIsNotificationOpen(true)}
           >
             <Bell className="w-4 h-4" />
             <span className="flex-1 text-left">Notifications</span>
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="text-xs min-w-[20px] h-5">
+                {unreadCount}
+              </Badge>
+            )}
           </Button>
           
           <Button
