@@ -1,34 +1,34 @@
 import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FolderPlus, DollarSign } from 'lucide-react'
-  id: string
+import { toast } from 'sonner'
 import { User } from '../App'
 
 interface Project {
-  clientName
+  id: string
   name: string
-  status: 'active' | 
+  description: string
   trajectory: 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
-export default f
-  onClose, 
-  user, 
-}: CreateProjectMod
-  if (user.role !==
-  }
- 
+  budget: number
+  clientId: string
+  clientName: string
+  createdBy: string
+  createdAt: string
+  status: 'active' | 'completed' | 'on-hold'
+}
 
-    budget: 0,
-  })
-  const trajectoryOpt
-      value: 'social-media', 
-      descri
-    { 
- 
+interface CreateProjectModalProps {
+  open: boolean
+  onClose: () => void
+  onProjectCreated: (project: Project) => void
+  user: User
+  availableClients: User[]
+}
 
 export default function CreateProjectModal({ 
   open, 
@@ -40,7 +40,7 @@ export default function CreateProjectModal({
   // Only allow admins to create projects
   if (user.role !== 'admin') {
     return null
-   
+  }
 
   const [formData, setFormData] = useState({
     name: '',
@@ -62,69 +62,69 @@ export default function CreateProjectModal({
       description: 'Website design, development, and maintenance'
     },
     { 
-    const newProject: Pro
-      name: formData.name.trim(),
-      trajectory: formData.trajectory,
-      
-      
-      status: 'active'
+      value: 'branding', 
+      label: '🎨 Branding & Identity',
+      description: 'Logo design, brand guidelines, and visual identity'
+    },
+    { 
+      value: 'advertising', 
+      label: '📢 Digital Advertising',
+      description: 'PPC campaigns, display ads, and social media advertising'
+    },
+    { 
+      value: 'full-campaign', 
+      label: '🚀 Full Campaign',
+      description: 'Comprehensive marketing campaign across all channels'
+    }
+  ]
 
-    handleClose()
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      trajectory: 'social-media',
+      budget: 0,
+      clientId: ''
+    })
   }
-  retu
-      <DialogContent className
-          <DialogTitle className
-            Create New Project
-     
-   
 
-              <Input
-                p
-               
-              />
+  const handleClose = () => {
+    onClose()
+    resetForm()
+  }
 
-              <L
-                id
-      
-   
+  const handleSubmit = () => {
+    // Double-check admin role
+    if (user.role !== 'admin') {
+      toast.error('Only admins can create projects')
+      return
+    }
 
+    if (!formData.name.trim()) {
+      toast.error('Please enter a project name')
+      return
+    }
 
-             
-               
-   
+    if (!formData.description.trim()) {
+      toast.error('Please enter a project description')
+      return
+    }
 
-                <SelectContent
-                    <SelectIte
-                        <div cla
-                          <div className="font-mediu
-            
-     
+    if (!formData.clientId) {
+      toast.error('Please select a client')
+      return
+    }
 
-            </div>
-            <div>
-            
-     
+    if (formData.budget <= 0) {
+      toast.error('Please enter a valid budget amount')
+      return
+    }
 
-                  placeholder="5000"
-                  onChange={(e) => setFormData(prev => 
-            
-     
-
-              <Select 
-                onValueChange={(value: Proj
-            
-     
-
-                      <div clas
-                        <div className="text-xs 
-            
-     
-
-
-            <Button varian
-            </Button>
-            
-     
+    const selectedClient = availableClients.find(c => c.id === formData.clientId)
+    if (!selectedClient) {
+      toast.error('Invalid client selection')
+      return
+    }
 
     const newProject: Project = {
       id: `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -254,5 +254,6 @@ export default function CreateProjectModal({
           </div>
         </div>
       </DialogContent>
-
+    </Dialog>
   )
+}

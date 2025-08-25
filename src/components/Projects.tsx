@@ -1265,8 +1265,6 @@ export function Projects({ user }: ProjectsProps) {
         </Card>
       </div> 
 
-    </div>   
-
       {/* Floating Chat Button */}
       <Button
         className="fixed bottom-6 right-6 w-12 h-12 rounded-full shadow-lg hover:shadow-xl z-50"
@@ -1780,4 +1778,4 @@ export function Projects({ user }: ProjectsProps) {
       </AlertDialog>
     </div>
   )           
-}  
+}
