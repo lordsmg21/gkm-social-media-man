@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useKV } from '@github/spark/hooks'
+import { User } from '../App'
 
 // Mock FileDropZone component since it's not available
 function FileDropZone({ onFilesSelected, acceptedFileTypes, maxFileSize, className }: {
@@ -34,14 +36,6 @@ function FileDropZone({ onFilesSelected, acceptedFileTypes, maxFileSize, classNa
   )
 }
 
-// Define User interface locally
-interface AppUser {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'client'
-}
-
 interface Invoice {
   id: string
   invoiceNumber: string
@@ -61,23 +55,23 @@ interface Invoice {
 }
 
 interface BillingViewProps {
-  user: AppUser
+  user: User
 }
 
 export function BillingView({ user }: BillingViewProps) {
-  const [invoices, setInvoices] = useState<Invoice[]>([
+  const [invoices, setInvoices] = useKV<Invoice[]>('billing-invoices', [
     {
       id: '1',
       invoiceNumber: 'INV-2024-001',
-      clientId: '2',
-      clientName: 'Sarah Johnson',
+      clientId: 'client1',
+      clientName: 'De Korenbloem',
       amount: 2500.00,
-      currency: 'USD',
+      currency: '$',
       dueDate: '2024-02-15',
       issueDate: '2024-01-15',
       status: 'sent',
       description: 'Social media management services for January 2024',
-      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDEpIFRqCjAgLTIwIFRkCihDbGllbnQ6IFNhcmFoIEpvaG5zb24pIFRqCjAgLTIwIFRkCihBbW91bnQ6IOKCrDI1MDAuMDApIFRqCjAgLTIwIFRkCihEZXNjcmlwdGlvbjogU29jaWFsIG1lZGlhIG1hbmFnZW1lbnQgc2VydmljZXMpIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9IZWx2ZXRpY2EKPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxMCAwMDAwMCBuIAowMDAwMDAwMDUzIDAwMDAwIG4gCjAwMDAwMDAxMjUgMDAwMDAgbiAKMDAwMDAwMDM0OCAwMDAwMCBuIAowMDAwMDAwNTY1IDAwMDAwIG4gCnRyYWlsZXIKPDwKL1NpemUgNgovUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNjY1CiUlRU9G',
+      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDEpIFRqCjAgLTIwIFRkCihDbGllbnQ6IERlIEtvcmVuYmxvZW0pIFRqCjAgLTIwIFRkCihBbW91bnQ6ICQyNTAwLjAwKSBUagowIC0yMCBUZAooRGVzY3JpcHRpb246IFNvY2lhbCBtZWRpYSBtYW5hZ2VtZW50IHNlcnZpY2VzKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1MyAwMDAwMCBuIAowMDAwMDAwMTI1IDAwMDAwIG4gCjAwMDAwMDAzNDggMDAwMDAgbiAKMDAwMDAwMDU2NSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDYKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjY2NQolJUVPRg==',
       fileName: 'INV-2024-001.pdf',
       fileSize: 245000,
       uploadedBy: 'Admin',
@@ -86,15 +80,15 @@ export function BillingView({ user }: BillingViewProps) {
     {
       id: '2',
       invoiceNumber: 'INV-2024-002',
-      clientId: '3',
-      clientName: 'Mike Chen',
+      clientId: 'client2',
+      clientName: 'Bella Vista',
       amount: 1800.00,
-      currency: 'USD',
+      currency: '$',
       dueDate: '2024-02-20',
       issueDate: '2024-01-20',
       status: 'paid',
       description: 'Instagram campaign design and implementation',
-      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDIpIFRqCjAgLTIwIFRkCihDbGllbnQ6IE1pa2UgQ2hlbikgVGoKMCAtMjAgVGQKKEFtb3VudDog4oKsMTgwMC4wMCkgVGoKMCAtMjAgVGQKKERlc2NyaXB0aW9uOiBJbnN0YWdyYW0gY2FtcGFpZ24gZGVzaWduKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1MyAwMDAwMCBuIAowMDAwMDAwMTI1IDAwMDAwIG4gCjAwMDAwMDAzNDggMDAwMDAgbiAKMDAwMDAwMDU2NSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDYKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjY2NQolJUVPRg==',
+      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDIpIFRqCjAgLTIwIFRkCihDbGllbnQ6IEJlbGxhIFZpc3RhKSBUagowIC0yMCBUZAooQW1vdW50OiAkMTgwMC4wMCkgVGoKMCAtMjAgVGQKKERlc2NyaXB0aW9uOiBJbnN0YWdyYW0gY2FtcGFpZ24gZGVzaWduKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1MyAwMDAwMCBuIAowMDAwMDAwMTI1IDAwMDAwIG4gCjAwMDAwMDAzNDggMDAwMDAgbiAKMDAwMDAwMDU2NSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDYKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjY2NQolJUVPRg==',
       fileName: 'INV-2024-002.pdf',
       fileSize: 189000,
       uploadedBy: 'Admin',
@@ -102,12 +96,23 @@ export function BillingView({ user }: BillingViewProps) {
     }
   ])
   
-  const [clients] = useState<AppUser[]>([
-    { id: '2', name: 'Sarah Johnson', email: 'sarah@company.com', role: 'client' },
-    { id: '3', name: 'Mike Chen', email: 'mike@startup.com', role: 'client' },
-    { id: '4', name: 'Emma Davis', email: 'emma@business.com', role: 'client' }
+  // Get clients from the shared users database
+  const [allUsers] = useKV<User[]>('users-database', [
+    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
+    { id: '3', name: 'Mike Visser', email: 'mike@gkm.nl', role: 'admin', isOnline: false },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin', isOnline: true },
+    { id: 'client1', name: 'De Korenbloem', email: 'info@korenbloem.nl', role: 'client', isOnline: false },
+    { id: 'client2', name: 'Bella Vista', email: 'info@bellavista.nl', role: 'client', isOnline: true },
+    { id: 'client3', name: 'Fitness First', email: 'info@fitnessfirst.nl', role: 'client', isOnline: false },
+    { id: 'client4', name: 'Fashion Boutique', email: 'info@fashionboutique.nl', role: 'client', isOnline: true }
   ])
-  
+
+  // Get available clients for admin
+  const availableClients = user.role === 'admin' 
+    ? allUsers.filter(u => u.role === 'client')
+    : []
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
@@ -123,11 +128,6 @@ export function BillingView({ user }: BillingViewProps) {
     description: '',
     status: 'draft' as const
   })
-
-  // Get available clients for admin
-  const availableClients = user.role === 'admin' 
-    ? clients.filter(client => client.role === 'client')
-    : []
 
   // Filter invoices based on user role and filters
   const filteredInvoices = invoices
@@ -185,7 +185,7 @@ export function BillingView({ user }: BillingViewProps) {
         clientId: newInvoice.clientId,
         clientName: selectedClient?.name || 'Unknown Client',
         amount: parseFloat(newInvoice.amount) || 0,
-        currency: 'USD',
+        currency: '$',
         dueDate: newInvoice.dueDate,
         issueDate: new Date().toISOString().split('T')[0],
         status: newInvoice.status,
