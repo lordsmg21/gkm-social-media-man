@@ -949,10 +949,10 @@ export function Projects({ user }: ProjectsProps) {
                 variant="outline"
                 className="gap-2"
                 onClick={() => setShowCreateProjectModal(true)}
-                <span className="hidden sm:inline">New Project</span>
+              >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">New Project</span>
-                size="sm" 
+              </Button>
               <Button 
                 size="sm" 
                 className="gap-2"
