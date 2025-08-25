@@ -30,10 +30,13 @@ import {
   Download,
   BarChart3,
   LineChart,
-  PieChart
+  PieChart,
+  Plus,
+  Edit
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
+import { AdminDataManager } from './AdminDataManager'
 
 interface RecentProject {
   id: string
@@ -70,6 +73,7 @@ interface KPIData {
   growthRate: number
   projectBudget: number
   budgetUsed: number
+  clientId?: string // Optional client ID for client-specific data
 }
 
 interface ChartData {
@@ -80,6 +84,7 @@ interface ChartData {
   facebookReach: number
   instagramEngagement: number
   date: string
+  clientId?: string // Optional client ID for client-specific data
 }
 
 interface DashboardProps {
@@ -89,94 +94,125 @@ interface DashboardProps {
 export function Dashboard({ user }: DashboardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [selectedChart, setSelectedChart] = useState('revenue')
+  const [showAdminManager, setShowAdminManager] = useState(false)
 
-  const [kpiData] = useKV<KPIData>('dashboard-kpi', {
-    revenue: 125600,
-    revenueGrowth: 12.5,
-    projects: 28,
-    projectsGrowth: 8.2,
-    teamMembers: 12,
-    conversations: 1847,
-    conversationsGrowth: 23.1,
-    facebookReach: 45200,
-    facebookReachGrowth: 15.3,
-    instagramEngagement: 8.7,
-    instagramEngagementGrowth: 18.9,
-    messagesReceived: 2341,
-    messagesGrowth: 19.7,
-    growthRate: 16.8,
-    projectBudget: 85000,
-    budgetUsed: 62400
-  })
-
-  const [chartData] = useKV<ChartData[]>('chart-data', [
-    {
-      name: 'Week 1',
-      revenue: 28400,
-      conversations: 412,
-      messagesReceived: 523,
-      facebookReach: 10200,
-      instagramEngagement: 7.2,
-      date: '2024-01-01'
-    },
-    {
-      name: 'Week 2', 
-      revenue: 31200,
-      conversations: 456,
-      messagesReceived: 578,
-      facebookReach: 11800,
-      instagramEngagement: 8.1,
-      date: '2024-01-08'
-    },
-    {
-      name: 'Week 3',
-      revenue: 33600,
-      conversations: 498,
-      messagesReceived: 634,
-      facebookReach: 12400,
-      instagramEngagement: 8.8,
-      date: '2024-01-15'
-    },
-    {
-      name: 'Week 4',
-      revenue: 32400,
-      conversations: 481,
-      messagesReceived: 606,
-      facebookReach: 10800,
-      instagramEngagement: 8.9,
-      date: '2024-01-22'
+  // Get KPI data - client-specific or admin aggregate
+  const kpiStorageKey = user.role === 'client' ? `client-kpi-${user.id}` : 'admin-kpi'
+  const [kpiData] = useKV<KPIData>(kpiStorageKey, 
+    user.role === 'client' ? {
+      revenue: 0,
+      revenueGrowth: 0,
+      projects: 0,
+      projectsGrowth: 0,
+      teamMembers: 1,
+      conversations: 0,
+      conversationsGrowth: 0,
+      facebookReach: 0,
+      facebookReachGrowth: 0,
+      instagramEngagement: 0,
+      instagramEngagementGrowth: 0,
+      messagesReceived: 0,
+      messagesGrowth: 0,
+      growthRate: 0,
+      projectBudget: 0,
+      budgetUsed: 0,
+      clientId: user.id
+    } : {
+      revenue: 125600,
+      revenueGrowth: 12.5,
+      projects: 28,
+      projectsGrowth: 8.2,
+      teamMembers: 12,
+      conversations: 1847,
+      conversationsGrowth: 23.1,
+      facebookReach: 45200,
+      facebookReachGrowth: 15.3,
+      instagramEngagement: 8.7,
+      instagramEngagementGrowth: 18.9,
+      messagesReceived: 2341,
+      messagesGrowth: 19.7,
+      growthRate: 16.8,
+      projectBudget: 85000,
+      budgetUsed: 62400
     }
-  ])
+  )
 
-  const [recentProjects] = useKV<RecentProject[]>('recent-projects', [
-    {
-      id: '1',
-      name: 'Bakkerij de Korenbloem - Instagram Campaign',
-      client: 'De Korenbloem',
-      status: 'in-progress',
-      progress: 75,
-      deadline: '2024-01-25',
-      team: ['Alex', 'Sarah']
-    },
-    {
-      id: '2', 
-      name: 'Restaurant Bella Vista - Facebook Ads',
-      client: 'Bella Vista',
-      status: 'review',
-      progress: 90,
-      deadline: '2024-01-22',
-      team: ['Mike', 'Lisa']
-    },
-    {
-      id: '3',
-      name: 'Fitness First - Social Media Strategy',
-      client: 'Fitness First',
-      status: 'to-do',
-      progress: 25,
-      deadline: '2024-02-01',
-      team: ['Alex', 'Tom']
-    }
-  ])
+  // Get chart data - client-specific or admin aggregate  
+  const chartStorageKey = user.role === 'client' ? `client-chart-${user.id}` : 'admin-chart'
+  const [chartData] = useKV<ChartData[]>(chartStorageKey,
+    user.role === 'client' ? [] : [
+      {
+        name: 'Week 1',
+        revenue: 28400,
+        conversations: 412,
+        messagesReceived: 523,
+        facebookReach: 10200,
+        instagramEngagement: 7.2,
+        date: '2024-01-01'
+      },
+      {
+        name: 'Week 2', 
+        revenue: 31200,
+        conversations: 456,
+        messagesReceived: 578,
+        facebookReach: 11800,
+        instagramEngagement: 8.1,
+        date: '2024-01-08'
+      },
+      {
+        name: 'Week 3',
+        revenue: 33600,
+        conversations: 498,
+        messagesReceived: 634,
+        facebookReach: 12400,
+        instagramEngagement: 8.8,
+        date: '2024-01-15'
+      },
+      {
+        name: 'Week 4',
+        revenue: 32400,
+        conversations: 481,
+        messagesReceived: 606,
+        facebookReach: 10800,
+        instagramEngagement: 8.9,
+        date: '2024-01-22'
+      }
+    ]
+  )
+
+  // Get recent projects - client-specific or admin aggregate
+  const projectsStorageKey = user.role === 'client' ? `client-projects-${user.id}` : 'admin-recent-projects'
+  const [recentProjects] = useKV<RecentProject[]>(projectsStorageKey,
+    user.role === 'client' ? [] : [
+      {
+        id: '1',
+        name: 'Bakkerij de Korenbloem - Instagram Campaign',
+        client: 'De Korenbloem',
+        status: 'in-progress',
+        progress: 75,
+        deadline: '2024-01-25',
+        team: ['Alex', 'Sarah']
+      },
+      {
+        id: '2', 
+        name: 'Restaurant Bella Vista - Facebook Ads',
+        client: 'Bella Vista',
+        status: 'review',
+        progress: 90,
+        deadline: '2024-01-22',
+        team: ['Mike', 'Lisa']
+      },
+      {
+        id: '3',
+        name: 'Fitness First - Social Media Strategy',
+        client: 'Fitness First',
+        status: 'to-do',
+        progress: 25,
+        deadline: '2024-02-01',
+        team: ['Alex', 'Tom']
+      }
+    ]
+  )
 
   const [teamMembers] = useKV<TeamMember[]>('team-members', [
     { id: '1', name: 'Alex van der Berg', role: 'Creative Director', avatar: '', isOnline: true },
@@ -230,451 +266,560 @@ export function Dashboard({ user }: DashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="font-heading font-bold text-3xl text-foreground mb-2">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          {user.role === 'admin' ? 'Welcome back! Here\'s what\'s happening with your projects.' : 'Track your project progress and team communication.'}
-        </p>
+      {/* Header with Admin Data Management */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="font-heading font-bold text-3xl text-foreground mb-2">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            {user.role === 'admin' ? 'Welcome back! Here\'s what\'s happening with your projects.' : 'Track your project progress and performance metrics.'}
+          </p>
+        </div>
+        {user.role === 'admin' && (
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowAdminManager(true)}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Manage Client Data
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Admin Data Manager Modal */}
+      {user.role === 'admin' && showAdminManager && (
+        <AdminDataManager onClose={() => setShowAdminManager(false)} />
+      )}
+
+      {/* Show message for clients with no data */}
+      {user.role === 'client' && (!kpiData || (kpiData.revenue === 0 && kpiData.conversations === 0 && kpiData.projects === 0)) && (
+        <Card className="glass-card border-primary/50">
+          <CardContent className="p-6 text-center">
+            <MessageSquare className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h3 className="font-semibold text-lg mb-2">Welcome to Your Dashboard!</h3>
+            <p className="text-muted-foreground">
+              Your GKM team will add your project data and analytics here. 
+              Check back soon to see your performance metrics and progress updates.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Enhanced KPI Cards Grid - 8 Cards in 2x4 Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {/* Revenue */}
-        <Card className="glass-card hover:glass-modal transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Revenue</CardTitle>
-            <DollarSign className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">${(kpiData?.revenue || 0).toLocaleString()}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.revenueGrowth || 0)}`}>
-              {React.createElement(getGrowthIcon(kpiData?.revenueGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData?.revenueGrowth || 0)} from last month
-            </div>
-          </CardContent>
-        </Card>
+      {(user.role === 'admin' || (user.role === 'client' && kpiData && (kpiData.revenue > 0 || kpiData.conversations > 0 || kpiData.projects > 0))) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {/* Revenue */}
+          <Card className="glass-card hover:glass-modal transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {user.role === 'client' ? 'Budget Allocated' : 'Monthly Revenue'}
+              </CardTitle>
+              <DollarSign className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">${(kpiData?.revenue || 0).toLocaleString()}</div>
+              <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.revenueGrowth || 0)}`}>
+                {React.createElement(getGrowthIcon(kpiData?.revenueGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+                {formatGrowth(kpiData?.revenueGrowth || 0)} from last month
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Active Projects */}
-        <Card className="glass-card hover:glass-modal transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Projects</CardTitle>
-            <Target className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{kpiData?.projects || 0}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.projectsGrowth || 0)}`}>
-              {React.createElement(getGrowthIcon(kpiData?.projectsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData?.projectsGrowth || 0)} from last month
-            </div>
-          </CardContent>
-        </Card>
+          {/* Active Projects */}
+          <Card className="glass-card hover:glass-modal transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {user.role === 'client' ? 'Your Projects' : 'Active Projects'}
+              </CardTitle>
+              <Target className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{kpiData?.projects || 0}</div>
+              <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.projectsGrowth || 0)}`}>
+                {React.createElement(getGrowthIcon(kpiData?.projectsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+                {formatGrowth(kpiData?.projectsGrowth || 0)} from last month
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Team Members */}
-        <Card className="glass-card hover:glass-modal transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Team Members</CardTitle>
-            <Users className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{kpiData?.teamMembers || 0}</div>
-            <div className="text-xs text-muted-foreground">
-              {(teamMembers || []).filter(m => m.isOnline).length} online now
-            </div>
-          </CardContent>
-        </Card>
+          {/* Team Members */}
+          {user.role === 'admin' && (
+            <Card className="glass-card hover:glass-modal transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Team Members</CardTitle>
+                <Users className="w-4 h-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">{kpiData?.teamMembers || 0}</div>
+                <div className="text-xs text-muted-foreground">
+                  {(teamMembers || []).filter(m => m.isOnline).length} online now
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Started Conversations - Primary KPI */}
-        <Card className="glass-card border-primary/50 hover:border-primary/70 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-primary">Started Conversations</CardTitle>
-            <MessageSquare className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">{formatNumber(kpiData?.conversations || 0)}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.conversationsGrowth || 0)}`}>
-              {React.createElement(getGrowthIcon(kpiData?.conversationsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData?.conversationsGrowth || 0)} from last month
-            </div>
-          </CardContent>
-        </Card>
+          {/* GKM Team (for clients) */}
+          {user.role === 'client' && (
+            <Card className="glass-card hover:glass-modal transition-all duration-300">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">GKM Team</CardTitle>
+                <Users className="w-4 h-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">{(teamMembers || []).length}</div>
+                <div className="text-xs text-muted-foreground">
+                  {(teamMembers || []).filter(m => m.isOnline).length} online now
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Facebook Reach */}
-        <Card className="glass-card hover:glass-modal transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Facebook Reach</CardTitle>
-            <Facebook className="w-4 h-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.facebookReach || 0)}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.facebookReachGrowth || 0)}`}>
-              {React.createElement(getGrowthIcon(kpiData?.facebookReachGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData?.facebookReachGrowth || 0)} from last month
-            </div>
-          </CardContent>
-        </Card>
+          {/* Started Conversations - Primary KPI */}
+          <Card className="glass-card border-primary/50 hover:border-primary/70 transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-primary">Started Conversations</CardTitle>
+              <MessageSquare className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{formatNumber(kpiData?.conversations || 0)}</div>
+              <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.conversationsGrowth || 0)}`}>
+                {React.createElement(getGrowthIcon(kpiData?.conversationsGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+                {formatGrowth(kpiData?.conversationsGrowth || 0)} from last month
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Instagram Engagement */}
-        <Card className="glass-card hover:glass-modal transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Instagram Engagement</CardTitle>
-            <Instagram className="w-4 h-4 text-pink-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{kpiData?.instagramEngagement || 0}%</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.instagramEngagementGrowth || 0)}`}>
-              {React.createElement(getGrowthIcon(kpiData?.instagramEngagementGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData?.instagramEngagementGrowth || 0)} from last month
-            </div>
-          </CardContent>
-        </Card>
+          {/* Facebook Reach */}
+          <Card className="glass-card hover:glass-modal transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Facebook Reach</CardTitle>
+              <Facebook className="w-4 h-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.facebookReach || 0)}</div>
+              <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.facebookReachGrowth || 0)}`}>
+                {React.createElement(getGrowthIcon(kpiData?.facebookReachGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+                {formatGrowth(kpiData?.facebookReachGrowth || 0)} from last month
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Messages Received */}
-        <Card className="glass-card hover:glass-modal transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Messages Received</CardTitle>
-            <Eye className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.messagesReceived || 0)}</div>
-            <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.messagesGrowth || 0)}`}>
-              {React.createElement(getGrowthIcon(kpiData?.messagesGrowth || 0), { className: 'w-3 h-3 mr-1' })}
-              {formatGrowth(kpiData?.messagesGrowth || 0)} from last month
-            </div>
-          </CardContent>
-        </Card>
+          {/* Instagram Engagement */}
+          <Card className="glass-card hover:glass-modal transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Instagram Engagement</CardTitle>
+              <Instagram className="w-4 h-4 text-pink-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{kpiData?.instagramEngagement || 0}%</div>
+              <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.instagramEngagementGrowth || 0)}`}>
+                {React.createElement(getGrowthIcon(kpiData?.instagramEngagementGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+                {formatGrowth(kpiData?.instagramEngagementGrowth || 0)} from last month
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Growth Rate */}
-        <Card className="glass-card hover:glass-modal transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Overall Growth</CardTitle>
-            <BarChart3 className="w-4 h-4 text-accent" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-accent">{kpiData?.growthRate || 0}%</div>
-            <div className="text-xs text-muted-foreground">
-              Multi-metric calculation
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Messages Received */}
+          <Card className="glass-card hover:glass-modal transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Messages Received</CardTitle>
+              <Eye className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{formatNumber(kpiData?.messagesReceived || 0)}</div>
+              <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.messagesGrowth || 0)}`}>
+                {React.createElement(getGrowthIcon(kpiData?.messagesGrowth || 0), { className: 'w-3 h-3 mr-1' })}
+                {formatGrowth(kpiData?.messagesGrowth || 0)} from last month
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Growth Rate */}
+          <Card className="glass-card hover:glass-modal transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Overall Growth</CardTitle>
+              <BarChart3 className="w-4 h-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-accent">{kpiData?.growthRate || 0}%</div>
+              <div className="text-xs text-muted-foreground">
+                Multi-metric calculation
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Advanced Chart Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Main Analytics Chart */}
-        <Card className="glass-card col-span-1 lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold text-foreground">Analytics Overview</CardTitle>
-              <p className="text-sm text-muted-foreground">Track your key performance metrics over time</p>
-            </div>
-            <div className="flex gap-2">
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Week</SelectItem>
-                  <SelectItem value="month">Month</SelectItem>
-                  <SelectItem value="quarter">Quarter</SelectItem>
-                  <SelectItem value="year">Year</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={selectedChart} onValueChange={setSelectedChart}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="revenue">Revenue</SelectItem>
-                  <SelectItem value="conversations">Conversations</SelectItem>
-                  <SelectItem value="messages">Messages</SelectItem>
-                  <SelectItem value="social">Social Media</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={selectedChart} onValueChange={setSelectedChart}>
-              <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="revenue">Revenue</TabsTrigger>
-                <TabsTrigger value="conversations">Leads</TabsTrigger>
-                <TabsTrigger value="messages">Messages</TabsTrigger>
-                <TabsTrigger value="social">Social</TabsTrigger>
-              </TabsList>
-              
-              {/* Simulated Chart Area */}
-              <div className="h-80 bg-muted/20 rounded-lg flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg"></div>
-                <div className="text-center z-10">
-                  <div className="mb-4">
-                    {selectedChart === 'revenue' && <LineChart className="w-16 h-16 mx-auto text-primary" />}
-                    {selectedChart === 'conversations' && <BarChart3 className="w-16 h-16 mx-auto text-accent" />}
-                    {selectedChart === 'messages' && <MessageSquare className="w-16 h-16 mx-auto text-blue-500" />}
-                    {selectedChart === 'social' && <TrendingUp className="w-16 h-16 mx-auto text-green-500" />}
-                  </div>
-                  <h3 className="text-lg font-medium text-foreground mb-2">
-                    {selectedChart === 'revenue' && 'Income Tracker'}
-                    {selectedChart === 'conversations' && 'Lead Generation Analytics'}
-                    {selectedChart === 'messages' && 'Message Flow Analysis'}
-                    {selectedChart === 'social' && 'Social Media Performance'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    {selectedChart === 'revenue' && 'Track revenue trends with gradient fill and interactive hover tooltips'}
-                    {selectedChart === 'conversations' && 'Compare messages received vs started conversations with conversion rates'}
-                    {selectedChart === 'messages' && 'Monitor message volume and response times'}
-                    {selectedChart === 'social' && 'Facebook reach and Instagram engagement trends'}
-                  </p>
-                  
-                  {/* Sample Data Points */}
-                  <div className="flex justify-center gap-8 mt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-foreground">
-                        {selectedChart === 'revenue' && chartData && chartData.length > 0 && `$${chartData[chartData.length - 1]?.revenue?.toLocaleString() || '0'}`}
-                        {selectedChart === 'conversations' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.conversations || 0)}
-                        {selectedChart === 'messages' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.messagesReceived || 0)}
-                        {selectedChart === 'social' && chartData && chartData.length > 0 && `${chartData[chartData.length - 1]?.instagramEngagement || 0}%`}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Current Period</div>
+      {(user.role === 'admin' || (user.role === 'client' && chartData && chartData.length > 0)) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Main Analytics Chart */}
+          <Card className="glass-card col-span-1 lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-foreground">Analytics Overview</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {user.role === 'client' ? 'Track your campaign performance over time' : 'Track your key performance metrics over time'}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="week">Week</SelectItem>
+                    <SelectItem value="month">Month</SelectItem>
+                    <SelectItem value="quarter">Quarter</SelectItem>
+                    <SelectItem value="year">Year</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={selectedChart} onValueChange={setSelectedChart}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="revenue">{user.role === 'client' ? 'Budget' : 'Revenue'}</SelectItem>
+                    <SelectItem value="conversations">Conversations</SelectItem>
+                    <SelectItem value="messages">Messages</SelectItem>
+                    <SelectItem value="social">Social Media</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={selectedChart} onValueChange={setSelectedChart}>
+                <TabsList className="grid w-full grid-cols-4 mb-6">
+                  <TabsTrigger value="revenue">{user.role === 'client' ? 'Budget' : 'Revenue'}</TabsTrigger>
+                  <TabsTrigger value="conversations">Leads</TabsTrigger>
+                  <TabsTrigger value="messages">Messages</TabsTrigger>
+                  <TabsTrigger value="social">Social</TabsTrigger>
+                </TabsList>
+                
+                {/* Simulated Chart Area */}
+                <div className="h-80 bg-muted/20 rounded-lg flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg"></div>
+                  <div className="text-center z-10">
+                    <div className="mb-4">
+                      {selectedChart === 'revenue' && <LineChart className="w-16 h-16 mx-auto text-primary" />}
+                      {selectedChart === 'conversations' && <BarChart3 className="w-16 h-16 mx-auto text-accent" />}
+                      {selectedChart === 'messages' && <MessageSquare className="w-16 h-16 mx-auto text-blue-500" />}
+                      {selectedChart === 'social' && <TrendingUp className="w-16 h-16 mx-auto text-green-500" />}
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-accent">
-                        {selectedChart === 'revenue' && '+12.5%'}
-                        {selectedChart === 'conversations' && '+23.1%'}
-                        {selectedChart === 'messages' && '+19.7%'}
-                        {selectedChart === 'social' && '+18.9%'}
+                    <h3 className="text-lg font-medium text-foreground mb-2">
+                      {selectedChart === 'revenue' && (user.role === 'client' ? 'Budget Tracker' : 'Income Tracker')}
+                      {selectedChart === 'conversations' && 'Lead Generation Analytics'}
+                      {selectedChart === 'messages' && 'Message Flow Analysis'}
+                      {selectedChart === 'social' && 'Social Media Performance'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                      {selectedChart === 'revenue' && (user.role === 'client' ? 'Track budget usage and campaign spend over time' : 'Track revenue trends with gradient fill and interactive hover tooltips')}
+                      {selectedChart === 'conversations' && 'Compare messages received vs started conversations with conversion rates'}
+                      {selectedChart === 'messages' && 'Monitor message volume and response times'}
+                      {selectedChart === 'social' && 'Facebook reach and Instagram engagement trends'}
+                    </p>
+                    
+                    {/* Sample Data Points */}
+                    <div className="flex justify-center gap-8 mt-6">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-foreground">
+                          {selectedChart === 'revenue' && chartData && chartData.length > 0 && `$${chartData[chartData.length - 1]?.revenue?.toLocaleString() || '0'}`}
+                          {selectedChart === 'conversations' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.conversations || 0)}
+                          {selectedChart === 'messages' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.messagesReceived || 0)}
+                          {selectedChart === 'social' && chartData && chartData.length > 0 && `${chartData[chartData.length - 1]?.instagramEngagement || 0}%`}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Current Period</div>
                       </div>
-                      <div className="text-xs text-muted-foreground">Growth Rate</div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-accent">
+                          {selectedChart === 'revenue' && '+12.5%'}
+                          {selectedChart === 'conversations' && '+23.1%'}
+                          {selectedChart === 'messages' && '+19.7%'}
+                          {selectedChart === 'social' && '+18.9%'}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Growth Rate</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Real-time Updates & Performance Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Lead Conversion Metrics */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-foreground">Lead Conversion</CardTitle>
-            <p className="text-sm text-muted-foreground">Messages to conversations ratio</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Messages Received</span>
-              <span className="font-semibold text-foreground">{(kpiData?.messagesReceived || 0).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Started Conversations</span>
-              <span className="font-semibold text-primary">{(kpiData?.conversations || 0).toLocaleString()}</span>
-            </div>
-            <Progress 
-              value={((kpiData?.conversations || 0) / (kpiData?.messagesReceived || 1)) * 100}
-              className="h-2"
-            />
-            <div className="text-center">
-              <div className="text-2xl font-bold text-accent">
-                {Math.round(((kpiData?.conversations || 0) / (kpiData?.messagesReceived || 1)) * 100)}%
+      {(user.role === 'admin' || (user.role === 'client' && kpiData && (kpiData.revenue > 0 || kpiData.conversations > 0))) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Lead Conversion Metrics */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">Lead Conversion</CardTitle>
+              <p className="text-sm text-muted-foreground">Messages to conversations ratio</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Messages Received</span>
+                <span className="font-semibold text-foreground">{(kpiData?.messagesReceived || 0).toLocaleString()}</span>
               </div>
-              <div className="text-xs text-muted-foreground">Conversion Rate</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Social Media Performance */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-foreground">Social Performance</CardTitle>
-            <p className="text-sm text-muted-foreground">Platform comparison</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Facebook className="w-4 h-4 text-blue-600" />
-                <span className="text-sm">Facebook</span>
-              </div>
-              <div className="text-right">
-                <div className="font-semibold text-foreground">{formatNumber(kpiData?.facebookReach || 0)}</div>
-                <div className="text-xs text-muted-foreground">Reach</div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Instagram className="w-4 h-4 text-pink-600" />
-                <span className="text-sm">Instagram</span>
-              </div>
-              <div className="text-right">
-                <div className="font-semibold text-foreground">{kpiData?.instagramEngagement || 0}%</div>
-                <div className="text-xs text-muted-foreground">Engagement</div>
-              </div>
-            </div>
-            <div className="pt-2">
-              <div className="flex justify-between mb-2">
-                <span className="text-xs text-muted-foreground">Combined Performance</span>
-                <span className="text-xs font-semibold text-accent">Excellent</span>
-              </div>
-              <Progress value={85} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Team Activity */}
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-foreground">Team Activity</CardTitle>
-            <p className="text-sm text-muted-foreground">Real-time status</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {(teamMembers || []).slice(0, 4).map((member) => (
-                <div key={member.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Avatar className="w-6 h-6">
-                        <AvatarImage src={member.avatar} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                          {member.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      {member.isOnline && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-background"></div>
-                      )}
-                    </div>
-                    <span className="text-sm text-foreground">{member.name.split(' ')[0]}</span>
-                  </div>
-                  <Badge variant={member.isOnline ? "default" : "secondary"} className="text-xs">
-                    {member.isOnline ? 'Online' : 'Away'}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 pt-4 border-t border-border">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Team Utilization</span>
-                <span className="font-semibold text-foreground">87%</span>
-              </div>
-              <Progress value={87} className="h-2 mt-2" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Enhanced Recent Projects & Budget Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Projects with Enhanced Details */}
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold text-foreground">Recent Projects</CardTitle>
-              <p className="text-sm text-muted-foreground">Latest project updates and progress</p>
-            </div>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(recentProjects || []).map((project) => (
-              <div key={project.id} className="group p-4 rounded-lg hover:bg-muted/30 cursor-pointer transition-all duration-200 border border-transparent hover:border-border">
-                <div className="flex items-start gap-3">
-                  <div className={`w-3 h-3 rounded-full mt-1.5 ${getStatusColor(project.status)}`}></div>
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                          {project.name}
-                        </h4>
-                        <p className="text-xs text-muted-foreground">{project.client}</p>
-                      </div>
-                      <Badge variant="outline" className="text-xs flex-shrink-0">
-                        {getStatusText(project.status)}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Progress value={project.progress} className="w-20 h-1.5" />
-                        <span className="text-xs text-muted-foreground">{project.progress}%</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        {project.deadline}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">{project.team.join(', ')}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            <Button variant="ghost" className="w-full mt-4">
-              View All Projects
-              <ArrowUp className="w-4 h-4 ml-2 rotate-45" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Project Budget Overview with Enhanced Details */}
-        <Card className="glass-card">
-          <CardHeader>
-            <div>
-              <CardTitle className="text-lg font-semibold text-foreground">Budget Overview</CardTitle>
-              <p className="text-sm text-muted-foreground">Financial performance and allocation</p>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Budget Used</span>
-                <span className="font-medium text-foreground">${(kpiData?.budgetUsed || 0).toLocaleString()} / ${(kpiData?.projectBudget || 0).toLocaleString()}</span>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Started Conversations</span>
+                <span className="font-semibold text-primary">{(kpiData?.conversations || 0).toLocaleString()}</span>
               </div>
               <Progress 
-                value={((kpiData?.budgetUsed || 0) / (kpiData?.projectBudget || 1)) * 100} 
-                className="h-3"
+                value={((kpiData?.conversations || 0) / (kpiData?.messagesReceived || 1)) * 100}
+                className="h-2"
               />
-              <div className="text-xs text-muted-foreground">
-                {Math.round(((kpiData?.budgetUsed || 0) / (kpiData?.projectBudget || 1)) * 100)}% of total budget allocated
+              <div className="text-center">
+                <div className="text-2xl font-bold text-accent">
+                  {Math.round(((kpiData?.conversations || 0) / (kpiData?.messagesReceived || 1)) * 100)}%
+                </div>
+                <div className="text-xs text-muted-foreground">Conversion Rate</div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <Separator />
-
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm text-foreground">Budget Breakdown</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Active Projects</span>
-                  <span className="font-medium">$38,400</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Team Resources</span>
-                  <span className="font-medium">$18,200</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Marketing Tools</span>
-                  <span className="font-medium">$5,800</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-muted/20 p-3 rounded-lg">
+          {/* Social Media Performance */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">Social Performance</CardTitle>
+              <p className="text-sm text-muted-foreground">Platform comparison</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Remaining Budget</span>
-                <span className="text-lg font-bold text-accent">${((kpiData?.projectBudget || 0) - (kpiData?.budgetUsed || 0)).toLocaleString()}</span>
+                <div className="flex items-center gap-2">
+                  <Facebook className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm">Facebook</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-foreground">{formatNumber(kpiData?.facebookReach || 0)}</div>
+                  <div className="text-xs text-muted-foreground">Reach</div>
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground mt-1">Available for new projects</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Instagram className="w-4 h-4 text-pink-600" />
+                  <span className="text-sm">Instagram</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-foreground">{kpiData?.instagramEngagement || 0}%</div>
+                  <div className="text-xs text-muted-foreground">Engagement</div>
+                </div>
+              </div>
+              <div className="pt-2">
+                <div className="flex justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">Combined Performance</span>
+                  <span className="text-xs font-semibold text-accent">
+                    {kpiData?.facebookReach && kpiData.instagramEngagement ? 'Excellent' : 'Getting Started'}
+                  </span>
+                </div>
+                <Progress value={kpiData?.facebookReach && kpiData.instagramEngagement ? 85 : 25} className="h-2" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Team Activity or Client Support */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">
+                {user.role === 'admin' ? 'Team Activity' : 'Your GKM Team'}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {user.role === 'admin' ? 'Real-time status' : 'Available support'}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {(teamMembers || []).slice(0, 4).map((member) => (
+                  <div key={member.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                            {member.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        {member.isOnline && (
+                          <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-background"></div>
+                        )}
+                      </div>
+                      <span className="text-sm text-foreground">{member.name.split(' ')[0]}</span>
+                    </div>
+                    <Badge variant={member.isOnline ? "default" : "secondary"} className="text-xs">
+                      {member.isOnline ? 'Online' : 'Away'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {user.role === 'admin' ? 'Team Utilization' : 'Team Availability'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {user.role === 'admin' ? '87%' : `${(teamMembers || []).filter(m => m.isOnline).length}/${(teamMembers || []).length}`}
+                  </span>
+                </div>
+                <Progress value={user.role === 'admin' ? 87 : ((teamMembers || []).filter(m => m.isOnline).length / (teamMembers || []).length) * 100} className="h-2 mt-2" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Enhanced Recent Projects & Budget Overview */}
+      {(user.role === 'admin' || (user.role === 'client' && (recentProjects?.length || 0) > 0)) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Projects with Enhanced Details */}
+          <Card className="glass-card">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  {user.role === 'client' ? 'Your Projects' : 'Recent Projects'}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">Latest project updates and progress</p>
+              </div>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {(recentProjects || []).map((project) => (
+                <div key={project.id} className="group p-4 rounded-lg hover:bg-muted/30 cursor-pointer transition-all duration-200 border border-transparent hover:border-border">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-3 h-3 rounded-full mt-1.5 ${getStatusColor(project.status)}`}></div>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                            {project.name}
+                          </h4>
+                          {user.role === 'admin' && (
+                            <p className="text-xs text-muted-foreground">{project.client}</p>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="text-xs flex-shrink-0">
+                          {getStatusText(project.status)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Progress value={project.progress} className="w-20 h-1.5" />
+                          <span className="text-xs text-muted-foreground">{project.progress}%</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          {project.deadline}
+                        </div>
+                      </div>
+                      {user.role === 'admin' && (
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">{project.team.join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(recentProjects || []).length === 0 && user.role === 'client' && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                  <p>No projects yet. Your GKM team will add your projects here soon.</p>
+                </div>
+              )}
+              <Button variant="ghost" className="w-full mt-4">
+                View All Projects
+                <ArrowUp className="w-4 h-4 ml-2 rotate-45" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Project Budget Overview with Enhanced Details */}
+          <Card className="glass-card">
+            <CardHeader>
+              <div>
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  {user.role === 'client' ? 'Budget Overview' : 'Budget Overview'}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {user.role === 'client' ? 'Your allocated budget and usage' : 'Financial performance and allocation'}
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Budget Used</span>
+                  <span className="font-medium text-foreground">${(kpiData?.budgetUsed || 0).toLocaleString()} / ${(kpiData?.projectBudget || 0).toLocaleString()}</span>
+                </div>
+                <Progress 
+                  value={((kpiData?.budgetUsed || 0) / (kpiData?.projectBudget || 1)) * 100} 
+                  className="h-3"
+                />
+                <div className="text-xs text-muted-foreground">
+                  {Math.round(((kpiData?.budgetUsed || 0) / (kpiData?.projectBudget || 1)) * 100)}% of total budget allocated
+                </div>
+              </div>
+
+              {kpiData?.projectBudget && kpiData.projectBudget > 0 && (
+                <>
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-foreground">Budget Breakdown</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          {user.role === 'client' ? 'Campaign Development' : 'Active Projects'}
+                        </span>
+                        <span className="font-medium">${Math.round((kpiData?.budgetUsed || 0) * 0.6).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          {user.role === 'client' ? 'Content Creation' : 'Team Resources'}
+                        </span>
+                        <span className="font-medium">${Math.round((kpiData?.budgetUsed || 0) * 0.3).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">
+                          {user.role === 'client' ? 'Platform Tools' : 'Marketing Tools'}
+                        </span>
+                        <span className="font-medium">${Math.round((kpiData?.budgetUsed || 0) * 0.1).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/20 p-3 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">Remaining Budget</span>
+                      <span className="text-lg font-bold text-accent">${((kpiData?.projectBudget || 0) - (kpiData?.budgetUsed || 0)).toLocaleString()}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {user.role === 'client' ? 'Available for upcoming campaigns' : 'Available for new projects'}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {(!kpiData?.projectBudget || kpiData.projectBudget === 0) && user.role === 'client' && (
+                <div className="text-center py-6 text-muted-foreground">
+                  <DollarSign className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                  <p>Budget information will be available once your GKM team sets up your campaigns.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
