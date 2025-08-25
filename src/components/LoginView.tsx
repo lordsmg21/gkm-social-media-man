@@ -36,11 +36,9 @@ export function LoginView({ onLogin }: Props) {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
     const selected = loginType === 'admin' ? demoUsers.admin : demoUsers.client
     if (email === selected.email) onLogin?.(selected)
     else alert('Ongeldige inloggegevens')
-
     setIsLoading(false)
   }
 
@@ -55,10 +53,19 @@ export function LoginView({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden">
+      {/* --- Achtergrond: zachte gele gradient + vage blobs voor zichtbare blur --- */}
+      <div aria-hidden className="absolute inset-0 -z-10">
+        {/* basis zachte gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-amber-50/60 to-orange-50" />
+        {/* blobs (lichtgeel) */}
+        <div className="absolute -top-24 -left-24 w-[32rem] h-[32rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.35)_0%,rgba(251,191,36,0)_60%)] blur-3xl" />
+        <div className="absolute -bottom-40 -right-32 w-[36rem] h-[36rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.28)_0%,rgba(245,158,11,0)_60%)] blur-3xl" />
+      </div>
+
+      {/* --- Kaart met sterk glas-effect --- */}
+      <Card className="w-full max-w-md bg-white/25 backdrop-blur-2xl backdrop-saturate-150 border border-white/30 shadow-[0_8px_32px_rgba(31,38,135,0.15)]">
         <CardHeader className="text-center">
-          {/* Geel schild + gecentreerd */}
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2 mx-auto">
             <Shield className="w-5 h-5 text-yellow-500" />
           </div>
@@ -67,12 +74,12 @@ export function LoginView({ onLogin }: Props) {
         </CardHeader>
 
         <CardContent className="text-center">
-          {/* Role toggle */}
+          {/* Rol-toggle */}
           <div className="flex bg-muted rounded-xl p-1 mb-4">
             <button
               type="button"
               className={`flex-1 px-4 py-2 rounded-lg text-sm ${
-                loginType === 'admin' ? 'bg-background shadow' : ''
+                loginType === 'admin' ? 'bg-background/80 backdrop-blur-sm shadow' : ''
               }`}
               onClick={() => setLoginType('admin')}
             >
@@ -81,7 +88,7 @@ export function LoginView({ onLogin }: Props) {
             <button
               type="button"
               className={`flex-1 px-4 py-2 rounded-lg text-sm ${
-                loginType === 'client' ? 'bg-background shadow' : ''
+                loginType === 'client' ? 'bg-background/80 backdrop-blur-sm shadow' : ''
               }`}
               onClick={() => setLoginType('client')}
             >
@@ -124,7 +131,7 @@ export function LoginView({ onLogin }: Props) {
             </Button>
           </form>
 
-          {/* Demo accounts */}
+          {/* Demo-accounts */}
           <div className="mt-6">
             <p className="text-sm text-muted-foreground mb-2">Demo accounts:</p>
             <div className="grid grid-cols-2 gap-3">
