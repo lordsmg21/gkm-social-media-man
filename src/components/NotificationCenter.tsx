@@ -86,7 +86,7 @@ export function useNotifications() {
 }
 
 export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotifications()
+  const { notifications, markAsRead, clearNotification } = useNotifications()
 
   const getIcon = (type: Notification['type']) => {
     const iconMap = {
@@ -142,11 +142,6 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
               </div>
               <h2 className="text-lg font-semibold font-heading text-foreground">Notifications</h2>
             </div>
-            {unreadCount > 0 && (
-              <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center flex-shrink-0 mr-2">
-                {unreadCount}
-              </span>
-            )}
             <button
               onClick={onClose}
               className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
@@ -157,23 +152,9 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
             </button>
           </div>
           
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground">
             Stay updated with your team and projects
           </p>
-
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm text-muted-foreground">
-              {notifications.length} notifications
-            </span>
-            {unreadCount > 0 && (
-              <button 
-                onClick={markAllAsRead}
-                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors px-3 py-1 rounded-md hover:bg-primary/10"
-              >
-                Mark all as read
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Content - Fixed for proper text wrapping and button positioning */}
@@ -223,28 +204,28 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
                         {notification.message}
                       </p>
                       
-                      {/* Status and Buttons - Proper layout to prevent cutoff */}
-                      <div className="flex items-center justify-between gap-3 pt-2">
+                      {/* Status and Buttons - Fixed layout */}
+                      <div className="flex items-center gap-3 pt-2">
                         {!notification.read && (
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="w-2 h-2 bg-primary rounded-full" />
                             <span className="text-xs text-primary font-medium">New</span>
                           </div>
                         )}
                         
-                        {/* Buttons - Properly spaced and sized */}
-                        <div className="flex gap-2 ml-auto">
+                        {/* Buttons - Properly contained */}
+                        <div className="flex gap-2 ml-auto flex-shrink-0">
                           {!notification.read && (
                             <button
                               onClick={() => markAsRead(notification.id)}
-                              className="text-xs text-primary hover:text-primary/80 font-medium px-3 py-1.5 rounded-md border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap"
+                              className="text-xs text-primary hover:text-primary/80 font-medium px-2 py-1 rounded-md border border-primary/30 hover:bg-primary/10 transition-colors"
                             >
-                              Mark as read
+                              Read
                             </button>
                           )}
                           <button
                             onClick={() => clearNotification(notification.id)}
-                            className="text-xs text-destructive hover:text-destructive/80 font-medium px-3 py-1.5 rounded-md border border-destructive/30 hover:bg-destructive/10 transition-colors whitespace-nowrap"
+                            className="text-xs text-destructive hover:text-destructive/80 font-medium px-2 py-1 rounded-md border border-destructive/30 hover:bg-destructive/10 transition-colors"
                           >
                             Clear
                           </button>

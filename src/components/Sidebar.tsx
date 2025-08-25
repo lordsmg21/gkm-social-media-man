@@ -25,7 +25,6 @@ interface SidebarProps {
 
 export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const { unreadCount } = useNotifications()
   
   const menuItems = [
     {
@@ -145,11 +144,6 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
           >
             <Bell className="w-4 h-4" />
             <span className="flex-1 text-left">Notifications</span>
-            {unreadCount > 0 && (
-              <Badge variant="destructive" className="min-w-[20px] h-5 p-0 text-xs flex items-center justify-center">
-                {unreadCount}
-              </Badge>
-            )}
           </Button>
           
           <Button
