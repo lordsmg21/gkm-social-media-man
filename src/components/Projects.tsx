@@ -874,8 +874,6 @@ export function Projects({ user }: ProjectsProps) {
     })
   }
 
-  // Handle task deletion
-  const handleDeleteTask = (task: Task) => {
     setTasks(prev => (prev || []).filter(t => t.id !== task.id))
     setDeleteTaskDialog(null)
     toast.success(`Task "${task.title}" deleted successfully`)
@@ -920,6 +918,8 @@ export function Projects({ user }: ProjectsProps) {
 
   // Handle new task creation
   const handleTaskCreated = (newTask: Task) => {
+  // Handle new task creation
+  const handleTaskCreated = (newTask: Task) => {
     setTasks((prevTasks) => [...(prevTasks || []), newTask])
   }
 
@@ -935,7 +935,7 @@ export function Projects({ user }: ProjectsProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Board View</h1>
+          <h1 className="font-heading font-bold text-2xl md:text-3xl text-foreground mb-2">Board View</h1>king'}
           <p className="text-sm md:text-base text-muted-foreground">
             Drag and drop projects between phases • {user.role === 'admin' ? 'Team collaboration view' : 'Project progress tracking'}
           </p>
@@ -949,10 +949,10 @@ export function Projects({ user }: ProjectsProps) {
                 variant="outline"
                 className="gap-2"
                 onClick={() => setShowCreateProjectModal(true)}
-              >
+                <span className="hidden sm:inline">New Project</span>
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">New Project</span>
-              </Button>
+                size="sm" 
               <Button 
                 size="sm" 
                 className="gap-2"
@@ -961,13 +961,13 @@ export function Projects({ user }: ProjectsProps) {
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">New Task</span>
               </Button>
-              {selectedProject !== 'all' && (
-                <Button 
                   size="sm" 
                   variant="destructive"
                   className="gap-2"
                   onClick={() => {
                     const project = projects.find(p => p.id === selectedProject)
+                    if (project) {
+                      setDeleteProjectDialog(project)
                     if (project) {
                       setDeleteProjectDialog(project)
                     }
@@ -1001,13 +1001,13 @@ export function Projects({ user }: ProjectsProps) {
                 <SelectContent>
                   <SelectItem value="all">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full" />
-                      <div>
                         <div className="font-medium">All Projects</div>
                         <div className="text-xs text-muted-foreground">Show tasks from all projects</div>
                       </div>
                     </div>
                   </SelectItem>
+                  {(projects || []).map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
                   {(projects || []).map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       <div className="flex items-center gap-2">
@@ -1016,8 +1016,6 @@ export function Projects({ user }: ProjectsProps) {
                           project.status === 'completed' ? 'bg-blue-500' : 'bg-yellow-500'
                         }`} />
                         <div>
-                          <div className="font-medium">{project.name}</div>
-                          <div className="text-xs text-muted-foreground">
                             {project.clientName} • ${project.budget.toLocaleString()}
                           </div>
                         </div>
@@ -1117,10 +1115,7 @@ export function Projects({ user }: ProjectsProps) {
                                           e.stopPropagation()
                                           setDeleteTaskDialog(task)
                                         }}
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    )}
+                                          setDeleteTaskDialog(task)
                                     <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
                                       <MoreVertical className="w-3 h-3" />
                                     </Button>
@@ -1164,9 +1159,9 @@ export function Projects({ user }: ProjectsProps) {
                                       <div className="aspect-square bg-muted rounded flex items-center justify-center border-2 border-dashed">
                                         <span className="text-xs text-muted-foreground">+{(task.files || []).length - 2}</span>
                                       </div>
-                                    )}
-                                  </div>
-                                )}
+                                    ))}
+                                    {(task.files || []).length > 2 && (
+                                      <div className="aspect-square bg-muted rounded flex items-center justify-center border-2 border-dashed">
                                 
                                 {task.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-3">
@@ -1886,9 +1881,7 @@ export function Projects({ user }: ProjectsProps) {
       <AlertDialog open={!!deleteTaskDialog} onOpenChange={() => setDeleteTaskDialog(null)}>
         <AlertDialogContent className="glass-modal">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="w-5 h-5" />
-              Delete Task
+  <AlertDialogTitle className="flex items-center gap-2 text-destructive">
             </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete task <strong>"{deleteTaskDialog?.title}"</strong>?
@@ -1947,5 +1940,7 @@ export function Projects({ user }: ProjectsProps) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  )
+}    </div>
   )
 }
