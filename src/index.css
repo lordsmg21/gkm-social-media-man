@@ -215,44 +215,4 @@
     backdrop-filter: blur(8px);
   }
 
-  .notification-panel {
-    backdrop-filter: blur(20px);
-    background: var(--card);
-    border: 1px solid var(--border);
-  }
-
-  .notification-item {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-    width: 100%;
-  }
-
-  .notification-item h4 {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    white-space: normal;
-    line-height: 1.4;
-    width: 100%;
-    max-width: calc(100% - 4rem); /* Account for timestamp */
-  }
-
-  .notification-item p {
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    white-space: normal;
-    line-height: 1.5;
-    width: 100%;
-  }
-
-  .notification-buttons {
-    width: 100%;
-  }
-
-  .notification-buttons button {
-    flex-shrink: 0;
-    white-space: nowrap;
-    min-width: fit-content;
-  }
-
 }
