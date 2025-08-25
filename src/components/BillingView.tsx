@@ -613,11 +613,9 @@ export function BillingView({ user }: BillingViewProps) {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    </div>
                     <p className="text-muted-foreground">No file available for preview</p>
                   </div>
-                    <p className="text-muted-foreground">No file available for preview</p>
-                  </div>
+                </div>
                 </div>
               )}
         </div>
