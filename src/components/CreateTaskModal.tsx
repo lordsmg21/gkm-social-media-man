@@ -85,7 +85,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     description: '',
     deadline: '',
     assignedTo: [currentUser.id], // Default assign to current user
-    projectId: selectedProject || ''
+    projectId: selectedProject || 'no-project'
   })
 
   const [uploadedFiles, setUploadedFiles] = useState<TaskFile[]>([])
@@ -102,7 +102,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       description: '',
       deadline: '',
       assignedTo: [currentUser.id],
-      projectId: selectedProject || ''
+      projectId: selectedProject || 'no-project'
     })
     setUploadedFiles([])
     setTags([])
@@ -143,7 +143,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
       description: formData.description.trim() || '',
       tags: tags,
       files: uploadedFiles,
-      projectId: formData.projectId || undefined
+      projectId: formData.projectId === 'no-project' ? undefined : formData.projectId
     }
 
     onTaskCreated(newTask)
@@ -269,9 +269,11 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
                   onValueChange={(value) => {
                     setFormData(prev => ({ ...prev, projectId: value }))
                     // Auto-select client based on project
-                    const selectedProj = projects.find(p => p.id === value)
-                    if (selectedProj) {
-                      setFormData(prev => ({ ...prev, client: selectedProj.clientId }))
+                    if (value !== 'no-project') {
+                      const selectedProj = projects.find(p => p.id === value)
+                      if (selectedProj) {
+                        setFormData(prev => ({ ...prev, client: selectedProj.clientId }))
+                      }
                     }
                   }}
                 >
@@ -279,7 +281,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
                     <SelectValue placeholder="Select a project (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="no-project">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-muted-foreground rounded-full" />
                         <div>
