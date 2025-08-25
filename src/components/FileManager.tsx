@@ -142,15 +142,16 @@ export function FileManager({ user }: FileManagerProps) {
     }
   ])
 
-  const [allUsers] = useKV<{ id: string; name: string; role: string }[]>('all-users', [
-    { id: '1', name: 'Alex van der Berg', role: 'admin' },
-    { id: '2', name: 'Sarah de Jong', role: 'admin' },
-    { id: '3', name: 'Mike Visser', role: 'admin' },
-    { id: '4', name: 'Lisa Bakker', role: 'admin' },
-    { id: 'client1', name: 'De Korenbloem', role: 'client' },
-    { id: 'client2', name: 'Bella Vista', role: 'client' },
-    { id: 'client3', name: 'Fitness First', role: 'client' },
-    { id: 'client4', name: 'Fashion Boutique', role: 'client' }
+  // Get clients from the main users database
+  const [allUsers] = useKV<User[]>('users-database', [
+    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
+    { id: '3', name: 'Mike Visser', email: 'mike@gkm.nl', role: 'admin', isOnline: false },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin', isOnline: true },
+    { id: 'client1', name: 'De Korenbloem', email: 'info@korenbloem.nl', role: 'client', isOnline: false },
+    { id: 'client2', name: 'Bella Vista', email: 'info@bellavista.nl', role: 'client', isOnline: true },
+    { id: 'client3', name: 'Fitness First', email: 'info@fitnessfirst.nl', role: 'client', isOnline: false },
+    { id: 'client4', name: 'Fashion Boutique', email: 'info@fashionboutique.nl', role: 'client', isOnline: true }
   ])
 
   const fileTypeIcons = {
@@ -715,23 +716,23 @@ export function FileManager({ user }: FileManagerProps) {
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Client Access</label>
+              <label className="text-sm font-medium text-foreground">Select Client Access</label>
               <Select value={selectedUploadClient} onValueChange={setSelectedUploadClient}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose who can access these files" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      All Users (Public)
+                      <span>All Users (Public)</span>
                     </div>
                   </SelectItem>
                   {getClientsList().map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       <div className="flex items-center gap-2">
                         <UserIcon className="w-4 h-4" />
-                        {client.name}
+                        <span>{client.name}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -740,7 +741,9 @@ export function FileManager({ user }: FileManagerProps) {
               <p className="text-xs text-muted-foreground">
                 {selectedUploadClient === 'all' 
                   ? 'Files will be accessible by all users' 
-                  : 'Files will only be accessible by you and the selected client'}
+                  : selectedUploadClient 
+                    ? `Files will only be accessible by you and ${allUsers.find(u => u.id === selectedUploadClient)?.name || 'selected client'}`
+                    : 'Choose access level for the uploaded files'}
               </p>
             </div>
             
