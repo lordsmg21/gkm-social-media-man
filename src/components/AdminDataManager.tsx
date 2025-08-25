@@ -1,19 +1,19 @@
 import React, { useMemo, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-type Status = 'in-progress' | 'review' | 'to-do
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Search, User, Plus, Trash2, Target } from 'lucide-react'
+
+type Status = 'in-progress' | 'review' | 'to-do' | 'completed'
+
 interface Client {
-
-}
-
-  revenueGrowth: n
-  projectsGr
-  conversation
+  id: string
+  name: string
   email: string
 }
 
@@ -30,85 +30,81 @@ interface KPIData {
   instagramEngagement: number
   instagramEngagementGrowth: number
   messagesReceived: number
-  messagesReceived: numb
-  instagramEngagemen
+  messagesReceivedGrowth: number
+  growthRate: number
   clientId?: string
+}
 
+interface ChartData {
+  name: string
+  revenue: number
+  conversations: number
+  messagesReceived: number
+  facebookReach: number
+  instagramEngagement: number
+  date: string
+  clientId?: string
+}
+
+interface RecentProject {
   id: string
- 
-
+  name: string
+  client: string
+  status: Status
+  progress: number
+  deadline: string
 }
+
 type Props = {
-  onClose: (open:
+  open: boolean
+  onClose: () => void
 }
-export default function Cl
-  const [selectedClient
 
-    const q = 
-      (c) =>
- 
+export default function ClientDataManager({ open, onClose }: Props) {
+  const [clients] = useKV<Client[]>('clients-list', [])
+  const [selectedClient, setSelectedClient] = useState('')
+  const [searchClient, setSearchClient] = useState('')
+  const [kpiData, setKpiData] = useKV<KPIData[]>('client-kpi-data', [])
+  const [chartData, setChartData] = useKV<ChartData[]>('client-chart-data', [])
+  const [projectsData, setProjectsData] = useKV<RecentProject[]>('client-projects-data', [])
 
-  const selectedClientDat
-  // Get cli
-    revenue: 0
+  const filteredClients = useMemo(() => {
+    return clients.filter((client) =>
+      client.name.toLowerCase().includes(searchClient.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchClient.toLowerCase())
+    )
+  }, [clients, searchClient])
+
+  const selectedClientData = clients.find((c) => c.id === selectedClient)
+
+  // Get client-specific data
+  const clientKpiData = kpiData.find((data) => data.clientId === selectedClient) || {
+    revenue: 0,
+    revenueGrowth: 0,
     projects: 0,
-    teamMembers:
-    conversationsG
-    facebookReachG
- 
-
-    projectBud
-    clientId: s
-
-  const [chartData,
- 
+    projectsGrowth: 0,
+    teamMembers: 0,
+    conversations: 0,
+    conversationsGrowth: 0,
+    facebookReach: 0,
+    facebookReachGrowth: 0,
+    instagramEngagement: 0,
+    instagramEngagementGrowth: 0,
+    messagesReceived: 0,
+    messagesReceivedGrowth: 0,
+    growthRate: 0,
+    clientId: selectedClient,
+  }
 
   const updateKpiData = (field: keyof KPIData, value: number) => {
-  }
-  // Chart data handlers
-    if (!selectedClient) {
-
-    const newDataPoint: ChartData = {
-      revenue: 0,
-      messagesReceived: 0,
-      instag
-      clientId: selectedClient,
-    setChartData((prev) => [...prev, newD
-
-    index: number,
-
-    const updated = [...chartData]
-
-
-  const [newProject, setNewProject] = useState<{
-    status: Sta
-    deadline: string
-    name: '',
-    progress: 0,
-  })
-  const handleAddProj
-      alert('Please select 
+    const existingIndex = kpiData.findIndex((data) => data.clientId === selectedClient)
+    if (existingIndex >= 0) {
+      const updated = [...kpiData]
+      updated[existingIndex] = { ...updated[existingIndex], [field]: value }
+      setKpiData(updated)
+    } else {
+      setKpiData([...kpiData, { ...clientKpiData, [field]: value, clientId: selectedClient }])
     }
-      id: Date.now().toStri
-      client: clients.find(
-      progress: newProject.progre
-    }
-    setNewProject({ na
-
-    setProjectsData((
-
-    <Dialog open={open} onOp
-    
-
-          <DialogDescription className="text-muted-foregrou
-          </DialogDescription>
-
-          {/* Client Selection */}
-            <Label className="text-sm font-medium">Select Client</Label>
-
-                <Input
-                  value={searchClient}
-                  className="pl-10 glass-card border-border/50 fo
   }
 
   // Chart data handlers
@@ -118,7 +114,7 @@ export default function Cl
       return
     }
     const newDataPoint: ChartData = {
-      name: `Week ${chartData.length + 1}`,
+      name: `Week ${chartData.filter(d => d.clientId === selectedClient).length + 1}`,
       revenue: 0,
       conversations: 0,
       messagesReceived: 0,
@@ -127,7 +123,7 @@ export default function Cl
       date: new Date().toISOString().split('T')[0],
       clientId: selectedClient,
     }
-    setChartData((prev) => [...prev, newDataPoint])
+    setChartData([...chartData, newDataPoint])
   }
 
   const handleUpdateChartData = (
@@ -166,13 +162,16 @@ export default function Cl
       progress: newProject.progress,
       deadline: newProject.deadline,
     }
-    setProjectsData((prev) => [...prev, project])
+    setProjectsData([...projectsData, project])
     setNewProject({ name: '', status: 'to-do', progress: 0, deadline: '' })
   }
 
   const handleDeleteProject = (projectId: string) => {
-    setProjectsData((prev) => prev.filter((p) => p.id !== projectId))
+    setProjectsData(projectsData.filter((p) => p.id !== projectId))
   }
+
+  const clientChartData = chartData.filter((d) => d.clientId === selectedClient)
+  const clientProjects = projectsData.filter((p) => p.client === selectedClientData?.name)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -240,392 +239,290 @@ export default function Cl
             </Card>
           )}
 
-                          type
-                          onChange={(e) => updateKpiData('i
-                        />
-                      <div className="space-y-2">
-                        <Input
-                          
-                          clas
-                      </div>
-                        <Label className="text-sm font-me
-                        
-                          onCh
-                        />
-                      <div className="space-y-2">
-                        <I
-                          valu
-                         
+          {selectedClient && (
+            <Tabs defaultValue="kpi" className="w-full">
+              <TabsList className="glass-card border-border/30 grid w-full grid-cols-3">
+                <TabsTrigger value="kpi" className="font-medium">
+                  KPI Data
+                </TabsTrigger>
+                <TabsTrigger value="charts" className="font-medium">
+                  Chart Data
+                </TabsTrigger>
+                <TabsTrigger value="projects" className="font-medium">
+                  Projects
+                </TabsTrigger>
+              </TabsList>
 
-                        <Label className=
-                          type="number"
-                          onChange={(e) => updateKpiData('grow
-                        />
-                      <div className="space-y-2">
-                        <Input
-                          value
-                          className="glass-card border-border/50 focus:border-primary/50"
-                      </div>
-                        <Label className="text-sm font-medium">Budget Used ($)</Label>
-                          type
-                          onChange={(e)
-                        />
-                    </div>
-                </Card>
-
-              <TabsContent v
-                  <CardHeader>
-                  </CardHeader>
-                    <div class
-                        <Card key={inde
-                            <div>
-                              <Input
-                                value={d.revenue}
-                          
-                            
-                                  )
-                                className="glass-card border-border/50 focus:border-pr
-                            </
-                              <Label cl
-                                type="number"
-                                onChange={(e) =>
-                                    index,
-                          
-                            
-                              />
-                            <div>
-                              
-                                value={
-                                  handleUpdateChartData(
-                                    'messagesReceived',
-                                  )
-                          
-                            
-                              <Label className="t
-                                type="number"
-                              
-                                    ind
-                                    parseFloat(e.target.value) || 0
-                                }
-                              />
-                          
-                            
-                                value={d.instagra
-                                  handleUpdateChartData(
-                              
-                                  )
-                                className="glass-card border-
-                            </div>
-                        </Card>
-
-                        <div
-                          <p>No chart data points
-                      )}
-                      <div cla
-                          onClick={hand
-                        >
-                          Add Data Point
-                      </div>
-                  </CardCo
-              </TabsContent>
-              {/* Projects Management */}
+              {/* KPI Management */}
+              <TabsContent value="kpi" className="space-y-6">
                 <Card className="glass-card border-border/30">
-                    <CardTitle
+                  <CardHeader>
+                    <CardTitle className="text-foreground">KPI Metrics</CardTitle>
+                  </CardHeader>
                   <CardContent>
-                      <div className="space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Revenue ($)</Label>
                         <Input
-                          onChange={(e) =>
-                          
-                          cl
-                      </div>
-                        <Label className="text-sm font-medium">Status</Label>
-                          valu
-                            setNewProje
-                        >
-                            <SelectValue />
-                          <SelectContent className="glass-modal border-border/50">
-                          
-                            
-                        </Select>
-                      <div className="space-y-3">
-                        <Input
-                          min={0}
-                          value={newProject.progress}
-                            setNewProject((p) => ({
-                              progress: parseFloat(e.target.value) || 0,
-                          
+                          type="number"
+                          value={clientKpiData.revenue || ''}
+                          onChange={(e) => updateKpiData('revenue', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
-                      <div className="space-y-3">
-                        <Input
-                          valu
-                            setNewProje
-                          className="glass-card border-border/
                       </div>
-                    <div className="mt-6 flex justify-end">
-                        on
-                      >
-                        Add Project
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Revenue Growth (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.revenueGrowth || ''}
+                          onChange={(e) => updateKpiData('revenueGrowth', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Active Projects</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.projects || ''}
+                          onChange={(e) => updateKpiData('projects', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Started Conversations</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.conversations || ''}
+                          onChange={(e) => updateKpiData('conversations', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Facebook Reach</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.facebookReach || ''}
+                          onChange={(e) => updateKpiData('facebookReach', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Instagram Engagement (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.instagramEngagement || ''}
+                          onChange={(e) => updateKpiData('instagramEngagement', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
                     </div>
+                  </CardContent>
                 </Card>
-                <Card className="glass-
-                    <CardTitle className="text-foreground"
+              </TabsContent>
+
+              {/* Chart Data Management */}
+              <TabsContent value="charts" className="space-y-6">
+                <Card className="glass-card border-border/30">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">Chart Data Points</CardTitle>
+                  </CardHeader>
                   <CardContent>
-                      {projectsData.map((project) => (
-                          
-                        >
-                            <h4 className="font-m
-                              Status: {project.status} • Progress: {project.progress}% • 
-                            </
-                          <Button
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            <Trash2 className="w-4 h-4" />
-                        </
-                      {proje
-                          <Target className="w-12
+                    <div className="space-y-4">
+                      {clientChartData.map((data, index) => (
+                        <Card key={index} className="glass-card border-border/20">
+                          <CardContent className="p-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Revenue</Label>
+                                <Input
+                                  type="number"
+                                  value={data.revenue}
+                                  onChange={(e) =>
+                                    handleUpdateChartData(
+                                      chartData.findIndex(d => d === data),
+                                      'revenue',
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  className="glass-card border-border/50 focus:border-primary/50"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Conversations</Label>
+                                <Input
+                                  type="number"
+                                  value={data.conversations}
+                                  onChange={(e) =>
+                                    handleUpdateChartData(
+                                      chartData.findIndex(d => d === data),
+                                      'conversations',
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  className="glass-card border-border/50 focus:border-primary/50"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Instagram Engagement</Label>
+                                <Input
+                                  type="number"
+                                  value={data.instagramEngagement}
+                                  onChange={(e) =>
+                                    handleUpdateChartData(
+                                      chartData.findIndex(d => d === data),
+                                      'instagramEngagement',
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  className="glass-card border-border/50 focus:border-primary/50"
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {clientChartData.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>No chart data points yet. Add your first data point to get started.</p>
                         </div>
+                      )}
+
+                      <div className="flex justify-center">
+                        <Button
+                          onClick={handleAddChartDataPoint}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Data Point
+                        </Button>
+                      </div>
                     </div>
+                  </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Projects Management */}
+              <TabsContent value="projects" className="space-y-6">
+                <Card className="glass-card border-border/30">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">Add New Project</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Project Name</Label>
+                        <Input
+                          value={newProject.name}
+                          onChange={(e) =>
+                            setNewProject((p) => ({ ...p, name: e.target.value }))
+                          }
+                          placeholder="Enter project name"
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Status</Label>
+                        <Select
+                          value={newProject.status}
+                          onValueChange={(value: Status) =>
+                            setNewProject((p) => ({ ...p, status: value }))
+                          }
+                        >
+                          <SelectTrigger className="glass-card border-border/50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="glass-modal border-border/50">
+                            <SelectItem value="to-do">To Do</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="review">Review</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Progress (%)</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={newProject.progress}
+                          onChange={(e) =>
+                            setNewProject((p) => ({
+                              ...p,
+                              progress: parseFloat(e.target.value) || 0,
+                            }))
+                          }
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Deadline</Label>
+                        <Input
+                          type="date"
+                          value={newProject.deadline}
+                          onChange={(e) =>
+                            setNewProject((p) => ({ ...p, deadline: e.target.value }))
+                          }
+                          className="glass-card border-border/50 focus:border-primary/50"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-6 flex justify-end">
+                      <Button
+                        onClick={handleAddProject}
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Project
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card border-border/30">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">Existing Projects</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {clientProjects.map((project) => (
+                        <div
+                          key={project.id}
+                          className="flex items-center justify-between p-3 glass-card border-border/20 rounded-lg"
+                        >
+                          <div>
+                            <h4 className="font-medium text-foreground">{project.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Status: {project.status} • Progress: {project.progress}% • 
+                              Deadline: {project.deadline || 'Not set'}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteProject(project.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      {clientProjects.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>No projects yet. Add your first project to get started.</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
+          )}
         </div>
+      </DialogContent>
     </Dialog>
+  )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
