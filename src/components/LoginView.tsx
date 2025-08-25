@@ -1,22 +1,22 @@
 import { useState } from 'react'
-import { User, Shield } from 'lucide-react'
 
-// Define UserRole and UserType locally
-type UserRole = 'admin' | 'client'
 
 interface UserType {
-  id: string
   name: string
-  email: string
-  avatar?: string
-  role: UserRole
+
   isOnline?: boolean
-}
+
+  onLogin: (us
+
+  const [loginTyp
+  const [passwor
+
+ 
 
 interface LoginViewProps {
   onLogin: (user: UserType) => void
-}
-
+}     email: 'alex@gkm.nl',
+      avatar: '',
 export function LoginView({ onLogin }: LoginViewProps) {
   const [loginType, setLoginType] = useState<UserRole>('client')
   const [email, setEmail] = useState('')
@@ -28,19 +28,6 @@ export function LoginView({ onLogin }: LoginViewProps) {
     {
       id: '1',
       name: 'Alex van der Berg',
-      email: 'alex@gkm.nl',
-      avatar: '',
-      role: 'admin' as UserRole,
-      isOnline: true
-    },
-    {
-      id: '2',
-      name: 'Sarah Johnson', 
-      email: 'sarah@client.com',
-      avatar: '',
-      role: 'client' as UserRole,
-      isOnline: true
-    },
     {
       id: '3',
       name: 'Mike Chen',
@@ -242,11 +229,11 @@ export default function App() {
   }
 
   const handleLogout = () => {
-    setUser(null)
-  }
+}
 
-  if (user) {
-    return (
+export default function App() {
+  const [user, setUser] = useState<UserType | null>(null)
+
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg shadow p-6">
@@ -290,4 +277,4 @@ export default function App() {
   }
 
   return <LoginView onLogin={handleLogin} />
-}
+}}
