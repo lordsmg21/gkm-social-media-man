@@ -613,15 +613,13 @@ export function BillingView({ user }: BillingViewProps) {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="p-6 bg-primary/20 rounded-lg inline-flex mb-4">
-                      <span className="text-primary text-6xl">$</span>
                     </div>
+                    <p className="text-muted-foreground">No file available for preview</p>
+                  </div>
                     <p className="text-muted-foreground">No file available for preview</p>
                   </div>
                 </div>
               )}
-            </div>
-          </div>
         </div>
       )}
     </div>
