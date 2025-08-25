@@ -63,15 +63,15 @@ export function BillingView({ user }: BillingViewProps) {
     {
       id: '1',
       invoiceNumber: 'INV-2024-001',
-      clientId: 'client1',
-      clientName: 'De Korenbloem',
+      clientId: '3',
+      clientName: 'Mike Visser',
       amount: 2500.00,
       currency: '$',
       dueDate: '2024-02-15',
       issueDate: '2024-01-15',
       status: 'sent',
       description: 'Social media management services for January 2024',
-      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDEpIFRqCjAgLTIwIFRkCihDbGllbnQ6IERlIEtvcmVuYmxvZW0pIFRqCjAgLTIwIFRkCihBbW91bnQ6ICQyNTAwLjAwKSBUagowIC0yMCBUZAooRGVzY3JpcHRpb246IFNvY2lhbCBtZWRpYSBtYW5hZ2VtZW50IHNlcnZpY2VzKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1MyAwMDAwMCBuIAowMDAwMDAwMTI1IDAwMDAwIG4gCjAwMDAwMDAzNDggMDAwMDAgbiAKMDAwMDAwMDU2NSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDYKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjY2NQolJUVPRg==',
+      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDEpIFRqCjAgLTIwIFRkCihDbGllbnQ6IE1pa2UgVmlzc2VyKSBUagowIC0yMCBUZAooQW1vdW50OiAkMjUwMC4wMCkgVGoKMCAtMjAgVGQKKERlc2NyaXB0aW9uOiBTb2NpYWwgbWVkaWEgbWFuYWdlbWVudCBzZXJ2aWNlcykgVGoKRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0hlbHZldGljYQo+PgplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNTMgMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAowMDAwMDAwMzQ4IDAwMDAwIG4gCjAwMDAwMDA1NjUgMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSA2Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgo2NjUKJSVFT0Y=',
       fileName: 'INV-2024-001.pdf',
       fileSize: 245000,
       uploadedBy: 'Admin',
@@ -80,15 +80,15 @@ export function BillingView({ user }: BillingViewProps) {
     {
       id: '2',
       invoiceNumber: 'INV-2024-002',
-      clientId: 'client2',
-      clientName: 'Bella Vista',
+      clientId: '5',
+      clientName: 'Jan Peters',
       amount: 1800.00,
       currency: '$',
       dueDate: '2024-02-20',
       issueDate: '2024-01-20',
       status: 'paid',
       description: 'Instagram campaign design and implementation',
-      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDIpIFRqCjAgLTIwIFRkCihDbGllbnQ6IEJlbGxhIFZpc3RhKSBUagowIC0yMCBUZAooQW1vdW50OiAkMTgwMC4wMCkgVGoKMCAtMjAgVGQKKERlc2NyaXB0aW9uOiBJbnN0YWdyYW0gY2FtcGFpZ24gZGVzaWduKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTAgMDAwMDAgbiAKMDAwMDAwMDA1MyAwMDAwMCBuIAowMDAwMDAwMTI1IDAwMDAwIG4gCjAwMDAwMDAzNDggMDAwMDAgbiAKMDAwMDAwMDU2NSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDYKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjY2NQolJUVPRg==',
+      fileUrl: 'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovQ29udGVudHMgNCAwIFIKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbL1BERiAvVGV4dF0KL0ZvbnQgPDwKL0YxIDUgMCBSCj4+Cj4+Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9MZW5ndGggMTI1Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihJbnZvaWNlOiBJTlYtMjAyNC0wMDIpIFRqCjAgLTIwIFRkCihDbGllbnQ6IEphbiBQZXRlcnMpIFRqCjAgLTIwIFRkCihBbW91bnQ6ICQxODAwLjAwKSBUagowIC0yMCBUZAooRGVzY3JpcHRpb246IEluc3RhZ3JhbSBjYW1wYWlnbiBkZXNpZ24pIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKNSAwIG9iago8PAovVHlwZSAvRm9udAovU3VidHlwZSAvVHlwZTEKL0Jhc2VGb250IC9IZWx2ZXRpY2EKPj4KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxMCAwMDAwMCBuIAowMDAwMDAwMDUzIDAwMDAwIG4gCjAwMDAwMDAxMjUgMDAwMDAgbiAKMDAwMDAwMDM0OCAwMDAwMCBuIAowMDAwMDAwNTY1IDAwMDAwIG4gCnRyYWlsZXIKPDwKL1NpemUgNgovUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNjY1CiUlRU9G',
       fileName: 'INV-2024-002.pdf',
       fileSize: 189000,
       uploadedBy: 'Admin',
@@ -96,16 +96,13 @@ export function BillingView({ user }: BillingViewProps) {
     }
   ])
   
-  // Get clients from the shared users database
-  const [allUsers] = useKV<User[]>('users-database', [
+  // Get clients from the system users database (shared with SettingsView)
+  const [allUsers] = useKV<User[]>('system-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
     { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
-    { id: '3', name: 'Mike Visser', email: 'mike@gkm.nl', role: 'admin', isOnline: false },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client', isOnline: false },
     { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin', isOnline: true },
-    { id: 'client1', name: 'De Korenbloem', email: 'info@korenbloem.nl', role: 'client', isOnline: false },
-    { id: 'client2', name: 'Bella Vista', email: 'info@bellavista.nl', role: 'client', isOnline: true },
-    { id: 'client3', name: 'Fitness First', email: 'info@fitnessfirst.nl', role: 'client', isOnline: false },
-    { id: 'client4', name: 'Fashion Boutique', email: 'info@fashionboutique.nl', role: 'client', isOnline: true }
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client', isOnline: true }
   ])
 
   // Get available clients for admin

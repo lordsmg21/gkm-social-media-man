@@ -329,11 +329,12 @@ export function Projects({ user }: ProjectsProps) {
   // Filter to get only clients
   const availableClients = systemUsers.filter(user => user.role === 'client')
 
-  const [users] = useKV<User[]>('all-users', [
+  const [users] = useKV<User[]>('system-users', [
     { id: '1', name: 'Alex van der Berg', role: 'admin', avatar: '', email: 'alex@gkm.nl', isOnline: true },
     { id: '2', name: 'Sarah de Jong', role: 'admin', avatar: '', email: 'sarah@gkm.nl', isOnline: true },
-    { id: '3', name: 'Mike Visser', role: 'admin', avatar: '', email: 'mike@gkm.nl', isOnline: false },
-    { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true }
+    { id: '3', name: 'Mike Visser', role: 'client', avatar: '', email: 'mike@client.nl', isOnline: false },
+    { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true },
+    { id: '5', name: 'Jan Peters', role: 'client', avatar: '', email: 'jan@restaurant.nl', isOnline: true }
   ])
 
   const [chatMessages, setChatMessages] = useKV<ChatMessage[]>('team-chat-messages', [

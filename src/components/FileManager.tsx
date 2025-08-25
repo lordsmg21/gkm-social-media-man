@@ -66,51 +66,51 @@ export function FileManager({ user }: FileManagerProps) {
   const [files, setFiles] = useKV<FileItem[]>('file-manager', [
     {
       id: '1',
-      name: 'korenbloem-instagram-stories.mp4',
+      name: 'client-instagram-stories.mp4',
       type: 'video',
       size: 15680000,
       uploadDate: '2024-01-20T10:30:00Z',
       uploadedBy: '2',
       project: 'Instagram Campaign',
-      client: 'De Korenbloem',
-      clientId: 'client1',
+      client: 'Mike Visser',
+      clientId: '3',
       url: '/files/video1.mp4',
       thumbnail: '/files/video1-thumb.jpg',
-      tags: ['instagram', 'stories', 'bakery'],
+      tags: ['instagram', 'stories', 'client'],
       isStarred: true,
-      accessibleTo: ['2', 'client1'],
+      accessibleTo: ['2', '3'],
       isPublic: false
     },
     {
       id: '2',
-      name: 'bella-vista-menu-design.png',
+      name: 'jan-menu-design.png',
       type: 'image',
       size: 2450000,
       uploadDate: '2024-01-19T14:15:00Z',
-      uploadedBy: '3',
+      uploadedBy: '4',
       project: 'Facebook Ads',
-      client: 'Bella Vista',
-      clientId: 'client2',
+      client: 'Jan Peters',
+      clientId: '5',
       url: '/files/menu-design.png',
       tags: ['design', 'menu', 'restaurant'],
       isStarred: false,
-      accessibleTo: ['3', 'client2'],
+      accessibleTo: ['4', '5'],
       isPublic: false
     },
     {
       id: '3',
-      name: 'fitness-first-strategy.pdf',
+      name: 'client-fitness-strategy.pdf',
       type: 'document',
       size: 890000,
       uploadDate: '2024-01-18T09:20:00Z',
       uploadedBy: '1',
       project: 'Social Media Strategy',
-      client: 'Fitness First',
-      clientId: 'client3',
+      client: 'Mike Visser',
+      clientId: '3',
       url: '/files/strategy.pdf',
       tags: ['strategy', 'planning', 'fitness'],
       isStarred: false,
-      accessibleTo: ['1', 'client3'],
+      accessibleTo: ['1', '3'],
       isPublic: false
     },
     {
@@ -126,32 +126,29 @@ export function FileManager({ user }: FileManagerProps) {
     },
     {
       id: '5',
-      name: 'valentine-campaign-mockups.zip',
+      name: 'jan-restaurant-campaign.zip',
       type: 'other',
       size: 12300000,
       uploadDate: '2024-01-21T11:30:00Z',
       uploadedBy: '2',
-      project: 'Valentine Campaign',
-      client: 'Fashion Boutique',
-      clientId: 'client4',
+      project: 'Restaurant Campaign',
+      client: 'Jan Peters',
+      clientId: '5',
       url: '/files/mockups.zip',
-      tags: ['mockups', 'valentine', 'fashion'],
+      tags: ['mockups', 'restaurant', 'campaign'],
       isStarred: false,
-      accessibleTo: ['2', 'client4'],
+      accessibleTo: ['2', '5'],
       isPublic: false
     }
   ])
 
-  // Get clients from the main users database
-  const [allUsers] = useKV<User[]>('users-database', [
+  // Get clients from the system users database (shared with SettingsView)
+  const [allUsers] = useKV<User[]>('system-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
     { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
-    { id: '3', name: 'Mike Visser', email: 'mike@gkm.nl', role: 'admin', isOnline: false },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client', isOnline: false },
     { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin', isOnline: true },
-    { id: 'client1', name: 'De Korenbloem', email: 'info@korenbloem.nl', role: 'client', isOnline: false },
-    { id: 'client2', name: 'Bella Vista', email: 'info@bellavista.nl', role: 'client', isOnline: true },
-    { id: 'client3', name: 'Fitness First', email: 'info@fitnessfirst.nl', role: 'client', isOnline: false },
-    { id: 'client4', name: 'Fashion Boutique', email: 'info@fashionboutique.nl', role: 'client', isOnline: true }
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client', isOnline: true }
   ])
 
   const fileTypeIcons = {
