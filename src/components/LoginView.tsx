@@ -62,57 +62,57 @@ export function LoginView({ onLogin }: Props) {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2">
-            <Shield size={20} />
+            <CardTitle>GKM Porta
             <CardTitle>GKM Portal</CardTitle>
-          </div>
+        </CardHe
           <CardDescription>Log in of gebruik een demo-account.</CardDescription>
-        </CardHeader>
-
+          <div className="flex bg-muted rounded-xl p-1 mb-4">
+ton
         <CardContent className="text-center">
           <div className="flex bg-muted rounded-xl p-1 mb-4">
-            <button
+                log
               type="button"
-              className={`flex-1 px-3 py-2 rounded-lg text-sm ${
-                loginType === 'admin' ? 'bg-background shadow' : ''
+            >
+            </button>
               }`}
               onClick={() => setLoginType('admin')}
-            >
+             
               Admin
             </button>
             <button
-              type="button"
+
               className={`flex-1 px-3 py-2 rounded-lg text-sm ${
                 loginType === 'client' ? 'bg-background shadow' : ''
               }`}
-              onClick={() => setLoginType('client')}
+              <input
             >
               Client
             </button>
-          </div>
+                
 
           <form onSubmit={handleLogin} className="space-y-4">
-            <div className="text-left">
-              <label htmlFor="email" className="block text-sm font-medium mb-1 text-center">
+              {isLoading ? 'Bezig met i
+          </form>
                 Email
               </label>
               <input
                 id="email"
                 type="email"
-                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring text-center"
+          </div>
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
 
-            <div className="text-left">
-              <label htmlFor="password" className="block text-sm font-medium mb-1 text-center">
+
+
                 Wachtwoord
               </label>
               <input
                 id="password"
                 type="password"
-                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring text-center"
+
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -125,7 +125,7 @@ export function LoginView({ onLogin }: Props) {
           </form>
 
           <div className="space-y-2 mt-6">
-            <p className="text-sm text-muted-foreground text-center">Demo</p>
+
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" onClick={() => autofill('admin')}>
                 Admin Demo
@@ -137,12 +137,9 @@ export function LoginView({ onLogin }: Props) {
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-center">
-          <button className="text-sm text-muted-foreground text-center" onClick={handleCreateAccount}>
+
+
             Nog geen account? Maak er een aan
           </button>
-        </CardFooter>
-      </Card>
-    </div>
-  )
+        </CardFooter>      </Card>    </div>  )
 }
