@@ -63,6 +63,13 @@ type Props = {
 export default function ClientDataManager({ open, onClose }: Props) {
   const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin' },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client' },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin' },
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client' },
+    { id: '6', name: 'Emma de Vries', email: 'emma@boutique.nl', role: 'client' },
+    { id: '7', name: 'Tom Hendriks', email: 'tom@cafe.nl', role: 'client' },
+    { id: '8', name: 'Sophie Jansen', email: 'sophie@salon.nl', role: 'client' }
   ])
   
   // Filter to get only clients

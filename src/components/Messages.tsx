@@ -87,7 +87,10 @@ export function Messages({ user }: MessagesProps) {
     { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
     { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client', isOnline: false },
     { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin', isOnline: true },
-    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client', isOnline: true }
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client', isOnline: true },
+    { id: '6', name: 'Emma de Vries', email: 'emma@boutique.nl', role: 'client', isOnline: false },
+    { id: '7', name: 'Tom Hendriks', email: 'tom@cafe.nl', role: 'client', isOnline: true },
+    { id: '8', name: 'Sophie Jansen', email: 'sophie@salon.nl', role: 'client', isOnline: false }
   ])
 
   const [conversations, setConversations] = useKV<Conversation[]>('conversations', [
@@ -106,6 +109,24 @@ export function Messages({ user }: MessagesProps) {
     {
       id: 'conv-3',
       participants: ['1', '2'],
+      unreadCount: 0,
+      type: 'direct'
+    },
+    {
+      id: 'conv-4',
+      participants: ['1', '6'],
+      unreadCount: 0,
+      type: 'direct'
+    },
+    {
+      id: 'conv-5',
+      participants: ['2', '7'],
+      unreadCount: 1,
+      type: 'direct'
+    },
+    {
+      id: 'conv-6',
+      participants: ['4', '8'],
       unreadCount: 0,
       type: 'direct'
     },
@@ -207,6 +228,33 @@ export function Messages({ user }: MessagesProps) {
       fileSize: 2048576,
       fileType: 'image/png',
       fileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+    },
+    {
+      id: 'msg-9',
+      senderId: '6',
+      conversationId: 'conv-4',
+      content: 'Hallo Alex, kunnen we de social media strategie voor volgend kwartaal bespreken?',
+      timestamp: '2024-01-19T10:30:00Z',
+      read: false,
+      type: 'text'
+    },
+    {
+      id: 'msg-10',
+      senderId: '7',
+      conversationId: 'conv-5',
+      content: 'Sarah, de laatste Instagram posts hebben geweldige engagement! Dank je wel.',
+      timestamp: '2024-01-19T14:15:00Z',
+      read: false,
+      type: 'text'
+    },
+    {
+      id: 'msg-11',
+      senderId: '8',
+      conversationId: 'conv-6',
+      content: 'Lisa, ik heb wat nieuwe foto\'s van de salon. Kunnen we ze gebruiken voor Facebook?',
+      timestamp: '2024-01-18T11:45:00Z',
+      read: true,
+      type: 'text'
     }
   ])
 
@@ -509,9 +557,9 @@ export function Messages({ user }: MessagesProps) {
           <div className="flex gap-2">
             <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Direct
+                <Button size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Start a Chat
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -519,32 +567,101 @@ export function Messages({ user }: MessagesProps) {
                   <DialogTitle>Start New Conversation</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    {getAvailableUsers().map(availableUser => (
-                      <div 
-                        key={availableUser.id}
-                        onClick={() => handleNewConversation(availableUser.id)}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                      >
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={availableUser.avatar} />
-                          <AvatarFallback>{availableUser.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="font-medium">{availableUser.name}</p>
-                          <p className="text-sm text-muted-foreground">{availableUser.role}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Circle className={`w-2 h-2 fill-current ${availableUser.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
-                        </div>
+                  {user.role === 'admin' && (
+                    <>
+                      {/* Clients Section */}
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-medium text-muted-foreground">Clients</h3>
+                        {getAvailableUsers().filter(u => u.role === 'client').map(availableUser => (
+                          <div 
+                            key={availableUser.id}
+                            onClick={() => handleNewConversation(availableUser.id)}
+                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors border border-border/50"
+                          >
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={availableUser.avatar} />
+                              <AvatarFallback className="bg-primary text-primary-foreground">{availableUser.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <p className="font-medium">{availableUser.name}</p>
+                              <p className="text-sm text-muted-foreground">{availableUser.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Circle className={`w-2 h-2 fill-current ${availableUser.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                              <Badge variant="secondary" className="text-xs">Client</Badge>
+                            </div>
+                          </div>
+                        ))}
+                        {getAvailableUsers().filter(u => u.role === 'client').length === 0 && (
+                          <p className="text-center text-muted-foreground py-2 text-sm">
+                            All clients already have conversations
+                          </p>
+                        )}
                       </div>
-                    ))}
-                    {getAvailableUsers().length === 0 && (
-                      <p className="text-center text-muted-foreground py-4">
-                        No users available for new conversations
-                      </p>
-                    )}
-                  </div>
+                      
+                      {/* Team Members Section */}
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-medium text-muted-foreground">Team Members</h3>
+                        {getAvailableUsers().filter(u => u.role === 'admin').map(availableUser => (
+                          <div 
+                            key={availableUser.id}
+                            onClick={() => handleNewConversation(availableUser.id)}
+                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors border border-border/50"
+                          >
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={availableUser.avatar} />
+                              <AvatarFallback className="bg-secondary text-secondary-foreground">{availableUser.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <p className="font-medium">{availableUser.name}</p>
+                              <p className="text-sm text-muted-foreground">{availableUser.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Circle className={`w-2 h-2 fill-current ${availableUser.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                              <Badge variant="outline" className="text-xs">Admin</Badge>
+                            </div>
+                          </div>
+                        ))}
+                        {getAvailableUsers().filter(u => u.role === 'admin').length === 0 && (
+                          <p className="text-center text-muted-foreground py-2 text-sm">
+                            All team members already have conversations
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  
+                  {user.role === 'client' && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium text-muted-foreground">GKM Team</h3>
+                      {getAvailableUsers().map(availableUser => (
+                        <div 
+                          key={availableUser.id}
+                          onClick={() => handleNewConversation(availableUser.id)}
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors border border-border/50"
+                        >
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={availableUser.avatar} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">{availableUser.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium">{availableUser.name}</p>
+                            <p className="text-sm text-muted-foreground">{availableUser.email}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Circle className={`w-2 h-2 fill-current ${availableUser.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                            <Badge variant="default" className="text-xs">Team</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {getAvailableUsers().length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">
+                      All available users already have active conversations with you.
+                    </p>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>
