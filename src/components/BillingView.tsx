@@ -72,7 +72,7 @@ export function BillingView({ user }: BillingViewProps) {
       clientId: '2',
       clientName: 'Sarah Johnson',
       amount: 2500.00,
-      currency: 'EUR',
+      currency: 'USD',
       dueDate: '2024-02-15',
       issueDate: '2024-01-15',
       status: 'sent',
@@ -89,7 +89,7 @@ export function BillingView({ user }: BillingViewProps) {
       clientId: '3',
       clientName: 'Mike Chen',
       amount: 1800.00,
-      currency: 'EUR',
+      currency: 'USD',
       dueDate: '2024-02-20',
       issueDate: '2024-01-20',
       status: 'paid',
@@ -185,7 +185,7 @@ export function BillingView({ user }: BillingViewProps) {
         clientId: newInvoice.clientId,
         clientName: selectedClient?.name || 'Unknown Client',
         amount: parseFloat(newInvoice.amount) || 0,
-        currency: 'EUR',
+        currency: 'USD',
         dueDate: newInvoice.dueDate,
         issueDate: new Date().toISOString().split('T')[0],
         status: newInvoice.status,
@@ -308,12 +308,12 @@ export function BillingView({ user }: BillingViewProps) {
         <div className="glass-card p-6 rounded-xl hover:scale-105 transition-transform">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary/20 rounded-lg">
-              <span className="text-primary text-xl">€</span>
+              <span className="text-primary text-xl">$</span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Amount</p>
               <p className="text-2xl font-bold text-foreground font-heading">
-                €{calculateTotalAmount().toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                ${calculateTotalAmount().toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
@@ -418,8 +418,8 @@ export function BillingView({ user }: BillingViewProps) {
                         {invoice.clientName}
                       </div>
                       <div className="flex items-center gap-1">
-                        <span>€</span>
-                        €{invoice.amount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                        <span>$</span>
+                        ${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </div>
                       <div className="flex items-center gap-1">
                         <span>⏱</span>
@@ -519,7 +519,7 @@ export function BillingView({ user }: BillingViewProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Amount (EUR)
+                    Amount (USD)
                   </label>
                   <input
                     type="number"

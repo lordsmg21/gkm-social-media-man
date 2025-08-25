@@ -168,9 +168,20 @@ export function SettingsView({ user }: SettingsViewProps) {
     setHasChanges(true)
   }
 
-  const saveSettings = () => {
-    // In a real app, this would sync to server
-    setHasChanges(false)
+  const saveSettings = async () => {
+    try {
+      // Force the settings to be persisted by triggering the KV hook
+      setSettings(currentSettings => {
+        // This triggers the useKV to save to storage
+        return currentSettings
+      })
+      
+      setHasChanges(false)
+      toast.success('Settings saved successfully!')
+    } catch (error) {
+      toast.error('Failed to save settings. Please try again.')
+      console.error('Settings save error:', error)
+    }
   }
 
   const testNotification = (type: string) => {

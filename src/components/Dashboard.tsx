@@ -249,7 +249,7 @@ export function Dashboard({ user }: DashboardProps) {
             <DollarSign className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">€{(kpiData?.revenue || 0).toLocaleString()}</div>
+            <div className="text-2xl font-bold text-foreground">${(kpiData?.revenue || 0).toLocaleString()}</div>
             <div className={`flex items-center text-xs ${getGrowthColor(kpiData?.revenueGrowth || 0)}`}>
               {React.createElement(getGrowthIcon(kpiData?.revenueGrowth || 0), { className: 'w-3 h-3 mr-1' })}
               {formatGrowth(kpiData?.revenueGrowth || 0)} from last month
@@ -435,7 +435,7 @@ export function Dashboard({ user }: DashboardProps) {
                   <div className="flex justify-center gap-8 mt-6">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-foreground">
-                        {selectedChart === 'revenue' && chartData && chartData.length > 0 && `€${chartData[chartData.length - 1]?.revenue?.toLocaleString() || '0'}`}
+                        {selectedChart === 'revenue' && chartData && chartData.length > 0 && `$${chartData[chartData.length - 1]?.revenue?.toLocaleString() || '0'}`}
                         {selectedChart === 'conversations' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.conversations || 0)}
                         {selectedChart === 'messages' && chartData && chartData.length > 0 && (chartData[chartData.length - 1]?.messagesReceived || 0)}
                         {selectedChart === 'social' && chartData && chartData.length > 0 && `${chartData[chartData.length - 1]?.instagramEngagement || 0}%`}
@@ -634,7 +634,7 @@ export function Dashboard({ user }: DashboardProps) {
             <div className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Budget Used</span>
-                <span className="font-medium text-foreground">€{(kpiData?.budgetUsed || 0).toLocaleString()} / €{(kpiData?.projectBudget || 0).toLocaleString()}</span>
+                <span className="font-medium text-foreground">${(kpiData?.budgetUsed || 0).toLocaleString()} / ${(kpiData?.projectBudget || 0).toLocaleString()}</span>
               </div>
               <Progress 
                 value={((kpiData?.budgetUsed || 0) / (kpiData?.projectBudget || 1)) * 100} 
@@ -652,15 +652,15 @@ export function Dashboard({ user }: DashboardProps) {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Active Projects</span>
-                  <span className="font-medium">€38,400</span>
+                  <span className="font-medium">$38,400</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Team Resources</span>
-                  <span className="font-medium">€18,200</span>
+                  <span className="font-medium">$18,200</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Marketing Tools</span>
-                  <span className="font-medium">€5,800</span>
+                  <span className="font-medium">$5,800</span>
                 </div>
               </div>
             </div>
@@ -668,7 +668,7 @@ export function Dashboard({ user }: DashboardProps) {
             <div className="bg-muted/20 p-3 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Remaining Budget</span>
-                <span className="text-lg font-bold text-accent">€{((kpiData?.projectBudget || 0) - (kpiData?.budgetUsed || 0)).toLocaleString()}</span>
+                <span className="text-lg font-bold text-accent">${((kpiData?.projectBudget || 0) - (kpiData?.budgetUsed || 0)).toLocaleString()}</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">Available for new projects</div>
             </div>
