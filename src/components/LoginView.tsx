@@ -10,35 +10,34 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { User as UserIcon, Shield } from 'lucide-react'
-
-type UserRole = 'admin' | 'client'
-
-interface User {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-}
+import { useKV } from '@github/spark/hooks'
+import { User, UserRole } from '../App'
 
 type Props = { onLogin?: (user: User) => void }
 
-const demoUsers: Record<UserRole, User> = {
-  admin: { id: '1', name: 'GKM Admin', email: 'admin@gkm.com', role: 'admin' },
-  client: { id: '2', name: 'Demo Client', email: 'client@demo.com', role: 'client' },
-}
+const defaultUsers: User[] = [
+  { id: 'admin-1', name: 'GKM Admin', email: 'admin@gkm.com', role: 'admin', isOnline: false },
+  { id: 'client-1', name: 'Demo Client', email: 'client@demo.com', role: 'client', isOnline: false },
+]
 
 export function LoginView({ onLogin }: Props) {
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [loginType, setLoginType] = useState<UserRole>('client')
+  const [allUsers, setAllUsers] = useKV<User[]>('system-users', defaultUsers)
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    const selected = loginType === 'admin' ? demoUsers.admin : demoUsers.client
-    if (email === selected.email) onLogin?.(selected)
-    else alert('Ongeldige inloggegevens')
+    
+    const foundUser = allUsers.find(user => user.email === email && user.role === loginType)
+    if (foundUser) {
+      const loginUser = { ...foundUser, isOnline: true }
+      onLogin?.(loginUser)
+    } else {
+      alert('Ongeldige inloggegevens of gebruiker bestaat niet')
+    }
     setIsLoading(false)
   }
 
@@ -48,8 +47,11 @@ export function LoginView({ onLogin }: Props) {
 
   const autofill = (role: UserRole) => {
     setLoginType(role)
-    setEmail(demoUsers[role].email)
-    setPassword('password')
+    const demoUser = allUsers.find(user => user.role === role)
+    if (demoUser) {
+      setEmail(demoUser.email)
+      setPassword('demo')
+    }
   }
 
   return (

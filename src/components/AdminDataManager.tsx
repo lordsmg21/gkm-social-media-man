@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Users, Plus, Trash2, Search } from 'lucide-react'
+import { useKV } from '@github/spark/hooks'
 
 type Status = 'in-progress' | 'review' | 'to-do' | 'completed'
 
@@ -38,6 +39,26 @@ interface Client {
   id: string
   name: string
   email: string
+}
+
+interface KPIData {
+  revenue: number
+  revenueGrowth: number
+  projects: number
+  projectsGrowth: number
+  teamMembers: number
+  conversations: number
+  conversationsGrowth: number
+  facebookReach: number
+  facebookReachGrowth: number
+  instagramEngagement: number
+  instagramEngagementGrowth: number
+  messagesReceived: number
+  messagesGrowth: number
+  growthRate: number
+  projectBudget: number
+  budgetUsed: number
+  clientId?: string
 }
 
 interface ChartData {
@@ -50,8 +71,6 @@ interface ChartData {
   date: string
   clientId?: string
 }
-
-interface RecentProject {
   id: string
   name: string
   client: string
@@ -82,8 +101,39 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
 
   const selectedClientData = clients.find((c) => c.id === selectedClient)
 
-  // chart data
-  const [chartData, setChartData] = useState<ChartData[]>([])
+  // Get client-specific KPI data using useKV
+  const [clientKpiData, setClientKpiData] = useKV<KPIData>(`client-kpi-${selectedClient}`, {
+    revenue: 0,
+    revenueGrowth: 0,
+    projects: 0,
+    projectsGrowth: 0,
+    teamMembers: 1,
+    conversations: 0,
+    conversationsGrowth: 0,
+    facebookReach: 0,
+    facebookReachGrowth: 0,
+    instagramEngagement: 0,
+    instagramEngagementGrowth: 0,
+    messagesReceived: 0,
+    messagesGrowth: 0,
+    growthRate: 0,
+    projectBudget: 0,
+    budgetUsed: 0,
+    clientId: selectedClient
+  })
+
+  // Get client-specific chart data
+  const [chartData, setChartData] = useKV<ChartData[]>(`client-chart-${selectedClient}`, [])
+  
+  // Get client-specific projects
+  const [projectsData, setProjectsData] = useKV<RecentProject[]>(`client-projects-${selectedClient}`, [])
+  // Handle KPI Data Updates
+  const updateKpiData = (field: keyof KPIData, value: number) => {
+    setClientKpiData(current => ({ ...current, [field]: value }))
+    toast.success('KPI data updated successfully!')
+  }
+
+  // Chart data handlers
   const handleAddChartDataPoint = () => {
     if (!selectedClient) {
       toast.error('Please select a client first')
@@ -102,21 +152,17 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
     setChartData((prev) => [...prev, newDataPoint])
     toast.success('New chart data point added!')
   }
+
   const handleUpdateChartData = (
     index: number,
-    field: keyof Omit<
-      ChartData,
-      'name' | 'date' | 'clientId'
-    >,
+    field: keyof Omit<ChartData, 'name' | 'date' | 'clientId'>,
     value: number
   ) => {
     const updated = [...chartData]
     updated[index] = { ...updated[index], [field]: value }
     setChartData(updated)
   }
-
-  // projecten
-  const [projectsData, setProjectsData] = useState<RecentProject[]>([])
+  // Project management
   const [newProject, setNewProject] = useState<{
     name: string
     status: Status
@@ -219,11 +265,137 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
           )}
 
           {selectedClient && (
-            <Tabs defaultValue="charts" className="space-y-6">
+            <Tabs defaultValue="kpi" className="space-y-6">
               <TabsList>
+                <TabsTrigger value="kpi">KPI Data</TabsTrigger>
                 <TabsTrigger value="charts">Charts</TabsTrigger>
                 <TabsTrigger value="projects">Projects</TabsTrigger>
               </TabsList>
+
+              {/* KPI Data Management */}
+              <TabsContent value="kpi" className="space-y-4">
+                <Card className="glass-card">
+                  <CardHeader>
+                    <CardTitle>Client KPI Data</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Monthly Revenue ($)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.revenue}
+                          onChange={(e) => updateKpiData('revenue', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Revenue Growth (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.revenueGrowth}
+                          onChange={(e) => updateKpiData('revenueGrowth', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Active Projects</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.projects}
+                          onChange={(e) => updateKpiData('projects', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Started Conversations</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.conversations}
+                          onChange={(e) => updateKpiData('conversations', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Conversations Growth (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.conversationsGrowth}
+                          onChange={(e) => updateKpiData('conversationsGrowth', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Facebook Reach</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.facebookReach}
+                          onChange={(e) => updateKpiData('facebookReach', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Facebook Growth (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.facebookReachGrowth}
+                          onChange={(e) => updateKpiData('facebookReachGrowth', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Instagram Engagement (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.instagramEngagement}
+                          onChange={(e) => updateKpiData('instagramEngagement', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Instagram Growth (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.instagramEngagementGrowth}
+                          onChange={(e) => updateKpiData('instagramEngagementGrowth', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Messages Received</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.messagesReceived}
+                          onChange={(e) => updateKpiData('messagesReceived', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Messages Growth (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.messagesGrowth}
+                          onChange={(e) => updateKpiData('messagesGrowth', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Overall Growth Rate (%)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.growthRate}
+                          onChange={(e) => updateKpiData('growthRate', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Project Budget ($)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.projectBudget}
+                          onChange={(e) => updateKpiData('projectBudget', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Budget Used ($)</Label>
+                        <Input
+                          type="number"
+                          value={clientKpiData.budgetUsed}
+                          onChange={(e) => updateKpiData('budgetUsed', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
               {/* Charts Management */}
               <TabsContent value="charts" className="space-y-4">

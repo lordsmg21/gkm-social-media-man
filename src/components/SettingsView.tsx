@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { 
   User as UserIcon, 
@@ -24,9 +26,12 @@ import {
   Camera,
   Lock,
   Download,
-  Trash2
+  Trash2,
+  Users,
+  Plus,
+  AlertTriangle
 } from 'lucide-react'
-import { User } from '../App'
+import { User, UserRole } from '../App'
 import { useKV } from '@github/spark/hooks'
 
 interface SettingsViewProps {
@@ -143,6 +148,18 @@ export function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
 
   const [hasChanges, setHasChanges] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
+  
+  // User management states
+  const [allUsers, setAllUsers] = useKV<User[]>('system-users', [])
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
+  const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    role: 'client' as UserRole,
+    password: ''
+  })
 
   const updateSettings = <K extends keyof UserSettings>(section: K, field: string, value: unknown) => {
     setSettings(prev => ({
@@ -204,6 +221,52 @@ export function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
     toast.success(`Test ${type} notification sent!`)
   }
 
+  const createUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    if (allUsers.find(u => u.email === newUser.email)) {
+      toast.error('User with this email already exists')
+      return
+    }
+
+    const userId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const createdUser: User = {
+      id: userId,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      isOnline: false
+    }
+
+    setAllUsers(current => [...current, createdUser])
+    
+    // Reset form
+    setNewUser({
+      name: '',
+      email: '',
+      role: 'client',
+      password: ''
+    })
+    
+    setIsCreateUserOpen(false)
+    toast.success(`${newUser.role === 'admin' ? 'Admin' : 'Client'} user created successfully`)
+  }
+
+  const deleteUser = async (userToDelete: User) => {
+    if (userToDelete.id === user.id) {
+      toast.error('You cannot delete your own account from here')
+      return
+    }
+
+    setAllUsers(current => current.filter(u => u.id !== userToDelete.id))
+    setUserToDelete(null)
+    setIsDeleteUserOpen(false)
+    toast.success('User deleted successfully')
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -224,7 +287,7 @@ export function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className={`grid w-full ${user.role === 'admin' ? 'grid-cols-6' : 'grid-cols-5'}`}>
           <TabsTrigger value="profile" className="gap-2">
             <UserIcon className="w-4 h-4" />
             Profile
@@ -241,6 +304,12 @@ export function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
             <Shield className="w-4 h-4" />
             Privacy
           </TabsTrigger>
+          {user.role === 'admin' && (
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="w-4 h-4" />
+              Users
+            </TabsTrigger>
+          )}
           <TabsTrigger value="account" className="gap-2">
             <Lock className="w-4 h-4" />
             Account
@@ -649,6 +718,187 @@ export function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* User Management - Admin Only */}
+        {user.role === 'admin' && (
+          <TabsContent value="users" className="space-y-6">
+            <Card className="glass-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  User Management
+                </CardTitle>
+                <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Add User
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="glass-modal">
+                    <DialogHeader>
+                      <DialogTitle>Create New User</DialogTitle>
+                      <DialogDescription>
+                        Add a new admin or client user to the system
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Full Name</label>
+                          <Input
+                            value={newUser.name}
+                            onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="John Doe"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Email</label>
+                          <Input
+                            type="email"
+                            value={newUser.email}
+                            onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="john@example.com"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">User Role</label>
+                          <Select value={newUser.role} onValueChange={(value: UserRole) => setNewUser(prev => ({ ...prev, role: value }))}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Admin (GKM Team)</SelectItem>
+                              <SelectItem value="client">Client</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Password</label>
+                          <Input
+                            type="password"
+                            value={newUser.password}
+                            onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                            placeholder="••••••••"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsCreateUserOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={createUser}>Create User</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {allUsers.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No users found. Create your first user to get started.
+                    </div>
+                  ) : (
+                    allUsers.map((managedUser) => (
+                      <div key={managedUser.id} className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={managedUser.avatar} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">
+                              {managedUser.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-foreground">{managedUser.name}</h4>
+                              <Badge variant={managedUser.role === 'admin' ? 'default' : 'secondary'}>
+                                {managedUser.role === 'admin' ? 'Admin' : 'Client'}
+                              </Badge>
+                              {managedUser.isOnline && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{managedUser.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {managedUser.id !== user.id && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                setUserToDelete(managedUser)
+                                setIsDeleteUserOpen(true)
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {managedUser.id === user.id && (
+                            <Badge variant="outline">You</Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Delete User Confirmation Dialog */}
+            <Dialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen}>
+              <DialogContent className="glass-modal">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="w-5 h-5" />
+                    Delete User Account
+                  </DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. This will permanently delete the user account and remove all associated data.
+                  </DialogDescription>
+                </DialogHeader>
+                {userToDelete && (
+                  <div className="py-4">
+                    <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/20">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={userToDelete.avatar} />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {userToDelete.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-medium text-foreground">{userToDelete.name}</h4>
+                          <p className="text-sm text-muted-foreground">{userToDelete.email}</p>
+                          <Badge variant={userToDelete.role === 'admin' ? 'default' : 'secondary'}>
+                            {userToDelete.role === 'admin' ? 'Admin' : 'Client'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => {
+                    setIsDeleteUserOpen(false)
+                    setUserToDelete(null)
+                  }}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => userToDelete && deleteUser(userToDelete)}
+                  >
+                    Delete User
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
+        )}
 
         {/* Privacy Settings */}
         <TabsContent value="privacy" className="space-y-6">

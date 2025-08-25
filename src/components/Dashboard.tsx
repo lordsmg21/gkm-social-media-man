@@ -36,7 +36,7 @@ import {
 } from 'lucide-react'
 import { User } from '../App'
 import { useKV } from '@github/spark/hooks'
-import { AdminDataManager } from './AdminDataManager'
+import { AdminDataManagerWrapper as AdminDataManager } from './AdminDataManagerWrapper'
 
 interface RecentProject {
   id: string
