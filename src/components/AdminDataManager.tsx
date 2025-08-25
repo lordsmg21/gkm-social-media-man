@@ -1,4 +1,13 @@
 import React, { useMemo, useState } from 'react'
+import { useKV } from '@github/spark/hooks'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Search, Plus, Trash2, User, TrendingUp, BarChart3, Target } from 'lucide-react'
 
 type Status = 'in-progress' | 'review' | 'to-do' | 'completed'
 
@@ -54,200 +63,8 @@ type Props = {
   clients: Client[]
 }
 
-// Mock UI components
-function Dialog({ open, onOpenChange, children }: { open: boolean, onOpenChange: (open: boolean) => void, children: React.ReactNode }) {
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div onClick={() => onOpenChange(false)} className="absolute inset-0" />
-      <div className="relative">{children}</div>
-    </div>
-  )
-}
-
-function DialogContent({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <div className={className}>{children}</div>
-}
-
-function DialogHeader({ children }: { children: React.ReactNode }) {
-  return <div className="mb-6">{children}</div>
-}
-
-function DialogTitle({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <h2 className={className}>{children}</h2>
-}
-
-function DialogDescription({ children }: { children: React.ReactNode }) {
-  return <p className="text-muted-foreground">{children}</p>
-}
-
-function Card({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <div className={className}>{children}</div>
-}
-
-function CardContent({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <div className={className}>{children}</div>
-}
-
-function CardHeader({ children }: { children: React.ReactNode }) {
-  return <div className="mb-4">{children}</div>
-}
-
-function CardTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-lg font-semibold">{children}</h3>
-}
-
-function Tabs({ defaultValue, className, children }: { defaultValue: string, className?: string, children: React.ReactNode }) {
-  const [activeTab, setActiveTab] = useState(defaultValue)
-  
-  return (
-    <div className={className}>
-      {React.Children.map(children, child => 
-        React.isValidElement(child) 
-          ? React.cloneElement(child as React.ReactElement<any>, { activeTab, setActiveTab })
-          : child
-      )}
-    </div>
-  )
-}
-
-function TabsList({ children, activeTab, setActiveTab }: { children: React.ReactNode, activeTab?: string, setActiveTab?: (tab: string) => void }) {
-  return (
-    <div className="flex space-x-1 rounded-lg bg-muted p-1">
-      {React.Children.map(children, child =>
-        React.isValidElement(child) 
-          ? React.cloneElement(child as React.ReactElement<any>, { activeTab, setActiveTab })
-          : child
-      )}
-    </div>
-  )
-}
-
-function TabsTrigger({ value, children, activeTab, setActiveTab }: { value: string, children: React.ReactNode, activeTab?: string, setActiveTab?: (tab: string) => void }) {
-  return (
-    <button
-      className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-        activeTab === value 
-          ? 'bg-background text-foreground shadow-sm' 
-          : 'text-muted-foreground hover:text-foreground'
-      }`}
-      onClick={() => setActiveTab?.(value)}
-    >
-      {children}
-    </button>
-  )
-}
-
-function TabsContent({ value, className, children, activeTab }: { value: string, className?: string, children: React.ReactNode, activeTab?: string }) {
-  if (activeTab !== value) return null
-  return <div className={className}>{children}</div>
-}
-
-function Select({ value, onValueChange, children }: { value: string, onValueChange: (value: string) => void, children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false)
-  
-  return (
-    <div className="relative">
-      {React.Children.map(children, child =>
-        React.isValidElement(child) 
-          ? React.cloneElement(child as React.ReactElement<any>, { value, onValueChange, isOpen, setIsOpen })
-          : child
-      )}
-    </div>
-  )
-}
-
-function SelectTrigger({ children, value, isOpen, setIsOpen }: { children: React.ReactNode, value?: string, isOpen?: boolean, setIsOpen?: (open: boolean) => void }) {
-  return (
-    <button
-      className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-      onClick={() => setIsOpen?.(!isOpen)}
-    >
-      {children}
-      <span>▼</span>
-    </button>
-  )
-}
-
-function SelectValue({ placeholder, value }: { placeholder?: string, value?: string }) {
-  return <span>{value || placeholder}</span>
-}
-
-function SelectContent({ children, isOpen, onValueChange, setIsOpen }: { children: React.ReactNode, isOpen?: boolean, onValueChange?: (value: string) => void, setIsOpen?: (open: boolean) => void }) {
-  if (!isOpen) return null
-  
-  return (
-    <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
-      {React.Children.map(children, child =>
-        React.isValidElement(child) 
-          ? React.cloneElement(child as React.ReactElement<any>, { onValueChange, setIsOpen })
-          : child
-      )}
-    </div>
-  )
-}
-
-function SelectItem({ value, children, onValueChange, setIsOpen }: { value: string, children: React.ReactNode, onValueChange?: (value: string) => void, setIsOpen?: (open: boolean) => void }) {
-  return (
-    <div
-      className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground cursor-pointer"
-      onClick={() => {
-        onValueChange?.(value)
-        setIsOpen?.(false)
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { className?: string }) {
-  return (
-    <input
-      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-      {...props}
-    />
-  )
-}
-
-function Label({ children, className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement> & { children: React.ReactNode, className?: string }) {
-  return (
-    <label className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`} {...props}>
-      {children}
-    </label>
-  )
-}
-
-function Button({ variant = "default", size = "default", className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "default" | "ghost"
-  size?: "default" | "sm"
-  className?: string
-  children: React.ReactNode
-}) {
-  const baseClasses = "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-  
-  const variantClasses = {
-    default: "bg-primary text-primary-foreground hover:bg-primary/90",
-    ghost: "hover:bg-accent hover:text-accent-foreground"
-  }
-  
-  const sizeClasses = {
-    default: "h-10 px-4 py-2",
-    sm: "h-9 rounded-md px-3"
-  }
-  
-  return (
-    <button 
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-}
-
 export default function ClientDataDialog({ open, onClose, clients }: Props) {
-  // client selectie
+  // Client selection
   const [selectedClient, setSelectedClient] = useState<string>('')
   const [searchClient, setSearchClient] = useState<string>('')
 
@@ -262,8 +79,8 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
 
   const selectedClientData = clients.find((c) => c.id === selectedClient)
 
-  // Get client-specific KPI data using mock state
-  const [clientKpiData, setClientKpiData] = useState<KPIData>({
+  // Get client-specific KPI data with persistent storage
+  const [clientKpiData, setClientKpiData] = useKV<KPIData>(`client-kpi-${selectedClient}`, {
     revenue: 0,
     revenueGrowth: 0,
     projects: 0,
@@ -283,16 +100,15 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
     clientId: selectedClient
   })
 
-  // Get client-specific chart data
-  const [chartData, setChartData] = useState<ChartData[]>([])
+  // Get client-specific chart data with persistent storage
+  const [chartData, setChartData] = useKV<ChartData[]>(`client-chart-${selectedClient}`, [])
   
-  // Get client-specific projects
-  const [projectsData, setProjectsData] = useState<RecentProject[]>([])
+  // Get client-specific projects with persistent storage
+  const [projectsData, setProjectsData] = useKV<RecentProject[]>(`client-projects-${selectedClient}`, [])
 
   // Handle KPI Data Updates
   const updateKpiData = (field: keyof KPIData, value: number) => {
     setClientKpiData(current => ({ ...current, [field]: value }))
-    alert('KPI data updated successfully!')
   }
 
   // Chart data handlers
@@ -312,7 +128,6 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
       clientId: selectedClient,
     }
     setChartData((prev) => [...prev, newDataPoint])
-    alert('New chart data point added!')
   }
 
   const handleUpdateChartData = (
@@ -353,47 +168,45 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
     }
     setProjectsData((prev) => [...prev, project])
     setNewProject({ name: '', status: 'to-do', progress: 0, deadline: '' })
-    alert('Project added successfully!')
   }
 
   const handleDeleteProject = (projectId: string) => {
     setProjectsData((prev) => prev.filter((p) => p.id !== projectId))
-    alert('Project deleted successfully!')
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="glass-modal max-w-4xl max-h-[90vh] overflow-y-auto p-6">
-        <DialogHeader>
-          <DialogTitle className="font-heading text-2xl">
+      <DialogContent className="glass-modal max-w-4xl max-h-[90vh] overflow-y-auto border-primary/20">
+        <DialogHeader className="pb-6">
+          <DialogTitle className="font-heading text-2xl text-foreground">
             Manage Client Dashboard Data
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-muted-foreground">
             Add and update KPI data, chart metrics, and projects for your clients.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Client Selection */}
-          <div className="space-y-3">
-            <Label>Select Client</Label>
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">Select Client</Label>
             <div className="flex gap-3">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-3 h-4 w-4 text-muted-foreground">🔍</span>
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search clients..."
                   value={searchClient}
                   onChange={(e) => setSearchClient(e.target.value)}
-                  className="pl-9"
+                  className="pl-10 glass-card border-border/50 focus:border-primary/50"
                 />
               </div>
             </div>
 
             <Select value={selectedClient} onValueChange={setSelectedClient}>
-              <SelectTrigger>
+              <SelectTrigger className="glass-card border-border/50 focus:border-primary/50">
                 <SelectValue placeholder="Choose a client to manage data for..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass-modal border-border/50">
                 {filteredClients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     <div className="flex items-center gap-2">
@@ -410,14 +223,14 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
           </div>
 
           {selectedClient && selectedClientData && (
-            <Card className="glass-card border-primary/30">
+            <Card className="glass-card border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary">👥</span>
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center backdrop-blur-sm">
+                    <User className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{selectedClientData.name}</h3>
+                    <h3 className="font-semibold text-foreground">{selectedClientData.name}</h3>
                     <p className="text-sm text-muted-foreground">
                       {selectedClientData.email}
                     </p>
@@ -429,130 +242,153 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
 
           {selectedClient && (
             <Tabs defaultValue="kpi" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="kpi">KPI Data</TabsTrigger>
-                <TabsTrigger value="charts">Charts</TabsTrigger>
-                <TabsTrigger value="projects">Projects</TabsTrigger>
+              <TabsList className="glass-card bg-muted/30 border-border/50">
+                <TabsTrigger value="kpi" className="data-[state=active]:glass-modal data-[state=active]:border-primary/20">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  KPI Data
+                </TabsTrigger>
+                <TabsTrigger value="charts" className="data-[state=active]:glass-modal data-[state=active]:border-primary/20">
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Charts
+                </TabsTrigger>
+                <TabsTrigger value="projects" className="data-[state=active]:glass-modal data-[state=active]:border-primary/20">
+                  <Target className="w-4 h-4 mr-2" />
+                  Projects
+                </TabsTrigger>
               </TabsList>
 
               {/* KPI Data Management */}
               <TabsContent value="kpi" className="space-y-4">
-                <Card className="glass-card">
+                <Card className="glass-card border-border/30">
                   <CardHeader>
-                    <CardTitle>Client KPI Data</CardTitle>
+                    <CardTitle className="text-foreground">Client KPI Data</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label>Monthly Revenue ($)</Label>
+                        <Label className="text-sm font-medium">Budget Allocated ($)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.revenue}
                           onChange={(e) => updateKpiData('revenue', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Revenue Growth (%)</Label>
+                        <Label className="text-sm font-medium">Revenue Growth (%)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.revenueGrowth}
                           onChange={(e) => updateKpiData('revenueGrowth', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Active Projects</Label>
+                        <Label className="text-sm font-medium">Active Projects</Label>
                         <Input
                           type="number"
                           value={clientKpiData.projects}
                           onChange={(e) => updateKpiData('projects', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Started Conversations</Label>
+                        <Label className="text-sm font-medium">Started Conversations</Label>
                         <Input
                           type="number"
                           value={clientKpiData.conversations}
                           onChange={(e) => updateKpiData('conversations', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Conversations Growth (%)</Label>
+                        <Label className="text-sm font-medium">Conversations Growth (%)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.conversationsGrowth}
                           onChange={(e) => updateKpiData('conversationsGrowth', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Facebook Reach</Label>
+                        <Label className="text-sm font-medium">Facebook Reach</Label>
                         <Input
                           type="number"
                           value={clientKpiData.facebookReach}
                           onChange={(e) => updateKpiData('facebookReach', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Facebook Growth (%)</Label>
+                        <Label className="text-sm font-medium">Facebook Growth (%)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.facebookReachGrowth}
                           onChange={(e) => updateKpiData('facebookReachGrowth', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Instagram Engagement (%)</Label>
+                        <Label className="text-sm font-medium">Instagram Engagement (%)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.instagramEngagement}
                           onChange={(e) => updateKpiData('instagramEngagement', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Instagram Growth (%)</Label>
+                        <Label className="text-sm font-medium">Instagram Growth (%)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.instagramEngagementGrowth}
                           onChange={(e) => updateKpiData('instagramEngagementGrowth', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Messages Received</Label>
+                        <Label className="text-sm font-medium">Messages Received</Label>
                         <Input
                           type="number"
                           value={clientKpiData.messagesReceived}
                           onChange={(e) => updateKpiData('messagesReceived', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Messages Growth (%)</Label>
+                        <Label className="text-sm font-medium">Messages Growth (%)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.messagesGrowth}
                           onChange={(e) => updateKpiData('messagesGrowth', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Overall Growth Rate (%)</Label>
+                        <Label className="text-sm font-medium">Overall Growth Rate (%)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.growthRate}
                           onChange={(e) => updateKpiData('growthRate', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Project Budget ($)</Label>
+                        <Label className="text-sm font-medium">Project Budget ($)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.projectBudget}
                           onChange={(e) => updateKpiData('projectBudget', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Budget Used ($)</Label>
+                        <Label className="text-sm font-medium">Budget Used ($)</Label>
                         <Input
                           type="number"
                           value={clientKpiData.budgetUsed}
                           onChange={(e) => updateKpiData('budgetUsed', parseFloat(e.target.value) || 0)}
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                     </div>
@@ -562,17 +398,17 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
 
               {/* Charts Management */}
               <TabsContent value="charts" className="space-y-4">
-                <Card className="glass-card">
+                <Card className="glass-card border-border/30">
                   <CardHeader>
-                    <CardTitle>Chart Data</CardTitle>
+                    <CardTitle className="text-foreground">Chart Data Points</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {chartData.map((d, index) => (
-                        <Card key={index} className="border p-4">
-                          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 p-0">
+                        <Card key={index} className="glass-card bg-muted/10 border-border/20">
+                          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                             <div>
-                              <Label>Revenue</Label>
+                              <Label className="text-sm font-medium">Revenue</Label>
                               <Input
                                 type="number"
                                 value={d.revenue}
@@ -583,10 +419,11 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                                     parseFloat(e.target.value) || 0
                                   )
                                 }
+                                className="glass-card border-border/50 focus:border-primary/50"
                               />
                             </div>
                             <div>
-                              <Label>Conversations</Label>
+                              <Label className="text-sm font-medium">Conversations</Label>
                               <Input
                                 type="number"
                                 value={d.conversations}
@@ -597,10 +434,11 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                                     parseFloat(e.target.value) || 0
                                   )
                                 }
+                                className="glass-card border-border/50 focus:border-primary/50"
                               />
                             </div>
                             <div>
-                              <Label>Messages Received</Label>
+                              <Label className="text-sm font-medium">Messages Received</Label>
                               <Input
                                 type="number"
                                 value={d.messagesReceived}
@@ -611,10 +449,11 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                                     parseFloat(e.target.value) || 0
                                   )
                                 }
+                                className="glass-card border-border/50 focus:border-primary/50"
                               />
                             </div>
                             <div>
-                              <Label>Facebook Reach</Label>
+                              <Label className="text-sm font-medium">Facebook Reach</Label>
                               <Input
                                 type="number"
                                 value={d.facebookReach}
@@ -625,10 +464,11 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                                     parseFloat(e.target.value) || 0
                                   )
                                 }
+                                className="glass-card border-border/50 focus:border-primary/50"
                               />
                             </div>
                             <div>
-                              <Label>Instagram Engagement</Label>
+                              <Label className="text-sm font-medium">Instagram Engagement</Label>
                               <Input
                                 type="number"
                                 value={d.instagramEngagement}
@@ -639,6 +479,7 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                                     parseFloat(e.target.value) || 0
                                   )
                                 }
+                                className="glass-card border-border/50 focus:border-primary/50"
                               />
                             </div>
                           </CardContent>
@@ -646,14 +487,18 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                       ))}
 
                       {chartData.length === 0 && (
-                        <div className="text-center py-8 text-muted-foreground">
-                          No chart data points yet. Add some to get started.
+                        <div className="text-center py-12 text-muted-foreground">
+                          <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>No chart data points yet. Add some to get started.</p>
                         </div>
                       )}
 
                       <div className="flex justify-end">
-                        <Button onClick={handleAddChartDataPoint}>
-                          <span className="mr-2">➕</span>
+                        <Button 
+                          onClick={handleAddChartDataPoint}
+                          className="glass-card bg-gradient-to-r from-primary/20 to-accent/20 backdrop-blur-md border-primary/30 text-foreground hover:from-primary/30 hover:to-accent/30 hover:border-primary/50 hover:text-primary transition-all duration-300"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
                           Add Data Point
                         </Button>
                       </div>
@@ -664,34 +509,35 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
 
               {/* Projects Management */}
               <TabsContent value="projects" className="space-y-6">
-                <Card className="glass-card">
+                <Card className="glass-card border-border/30">
                   <CardHeader>
-                    <CardTitle>Add New Project</CardTitle>
+                    <CardTitle className="text-foreground">Add New Project</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-3">
-                        <Label>Project Name</Label>
+                        <Label className="text-sm font-medium">Project Name</Label>
                         <Input
                           value={newProject.name}
                           onChange={(e) =>
                             setNewProject((p) => ({ ...p, name: e.target.value }))
                           }
                           placeholder="Enter project name..."
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-3">
-                        <Label>Status</Label>
+                        <Label className="text-sm font-medium">Status</Label>
                         <Select
                           value={newProject.status}
                           onValueChange={(value: Status) =>
                             setNewProject((p) => ({ ...p, status: value }))
                           }
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="glass-card border-border/50 focus:border-primary/50">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="glass-modal border-border/50">
                             <SelectItem value="to-do">To Do</SelectItem>
                             <SelectItem value="in-progress">In Progress</SelectItem>
                             <SelectItem value="review">Review</SelectItem>
@@ -700,7 +546,7 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                         </Select>
                       </div>
                       <div className="space-y-3">
-                        <Label>Progress (%)</Label>
+                        <Label className="text-sm font-medium">Progress (%)</Label>
                         <Input
                           type="number"
                           min={0}
@@ -712,41 +558,46 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                               progress: parseFloat(e.target.value) || 0,
                             }))
                           }
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                       <div className="space-y-3">
-                        <Label>Deadline</Label>
+                        <Label className="text-sm font-medium">Deadline</Label>
                         <Input
                           type="date"
                           value={newProject.deadline}
                           onChange={(e) =>
                             setNewProject((p) => ({ ...p, deadline: e.target.value }))
                           }
+                          className="glass-card border-border/50 focus:border-primary/50"
                         />
                       </div>
                     </div>
-                    <div className="mt-4 flex justify-end">
-                      <Button onClick={handleAddProject}>
-                        <span className="mr-2">➕</span>
+                    <div className="mt-6 flex justify-end">
+                      <Button 
+                        onClick={handleAddProject}
+                        className="glass-card bg-gradient-to-r from-primary/20 to-accent/20 backdrop-blur-md border-primary/30 text-foreground hover:from-primary/30 hover:to-accent/30 hover:border-primary/50 hover:text-primary transition-all duration-300"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
                         Add Project
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="glass-card">
+                <Card className="glass-card border-border/30">
                   <CardHeader>
-                    <CardTitle>Current Projects</CardTitle>
+                    <CardTitle className="text-foreground">Current Projects</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       {projectsData.map((project) => (
                         <div
                           key={project.id}
-                          className="flex items-center justify-between p-3 border rounded-lg"
+                          className="flex items-center justify-between p-4 glass-card bg-muted/10 border-border/20 rounded-lg hover:bg-muted/20 transition-all duration-200"
                         >
                           <div>
-                            <h4 className="font-medium">{project.name}</h4>
+                            <h4 className="font-medium text-foreground">{project.name}</h4>
                             <p className="text-sm text-muted-foreground">
                               Status: {project.status} • Progress: {project.progress}% • Deadline:{' '}
                               {project.deadline}
@@ -756,14 +607,16 @@ export default function ClientDataDialog({ open, onClose, clients }: Props) {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteProject(project.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            <span>🗑️</span>
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       ))}
                       {projectsData.length === 0 && (
-                        <div className="text-center py-8 text-muted-foreground">
-                          No projects added yet.
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>No projects added yet.</p>
                         </div>
                       )}
                     </div>

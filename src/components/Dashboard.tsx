@@ -280,7 +280,7 @@ export function Dashboard({ user }: DashboardProps) {
           <div className="flex gap-2">
             <Button 
               onClick={() => setShowAdminManager(true)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="glass-card bg-gradient-to-r from-primary/20 to-accent/20 backdrop-blur-md border-primary/30 text-foreground hover:from-primary/30 hover:to-accent/30 hover:border-primary/50 hover:text-primary transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <Edit className="w-4 h-4 mr-2" />
               Manage Client Data
