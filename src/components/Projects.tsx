@@ -914,6 +914,33 @@ export function Projects({ user }: ProjectsProps) {
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">New Task</span>
               </Button>
+              <Button 
+                size="sm" 
+                variant="destructive"
+                className="gap-2"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete selected tasks? This action cannot be undone.')) {
+                    // Show options to delete tasks from current project or all tasks
+                    const projectTasks = selectedProject !== 'all' 
+                      ? visibleTasks.filter(task => task.projectId === selectedProject)
+                      : []
+                    
+                    if (selectedProject !== 'all' && projectTasks.length > 0) {
+                      const confirmDelete = window.confirm(`Delete all ${projectTasks.length} tasks from this project?`)
+                      if (confirmDelete) {
+                        setTasks(prev => (prev || []).filter(task => task.projectId !== selectedProject))
+                        toast.success(`Deleted ${projectTasks.length} tasks from project`)
+                      }
+                    } else {
+                      // Generic task deletion - this could be extended to allow selection
+                      toast.info('Select a specific project to delete tasks, or use individual task delete buttons')
+                    }
+                  }
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Delete Tasks</span>
+              </Button>
               {selectedProject !== 'all' && (
                 <Button 
                   size="sm" 
