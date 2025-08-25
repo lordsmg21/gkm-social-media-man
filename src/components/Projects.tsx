@@ -314,28 +314,24 @@ export function Projects({ user }: ProjectsProps) {
     }
   ])
 
-  // Get client list from system users
-  const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
-    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
-    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin' },
-    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client' },
-    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin' },
-    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client' },
-    { id: '6', name: 'Emma de Vries', email: 'emma@boutique.nl', role: 'client' },
-    { id: '7', name: 'Tom Hendriks', email: 'tom@cafe.nl', role: 'client' },
-    { id: '8', name: 'Sophie Jansen', email: 'sophie@salon.nl', role: 'client' }
+  // Get system users
+  const [systemUsers] = useKV<User[]>('system-users', [
+    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client', isOnline: false },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin', isOnline: true },
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client', isOnline: true },
+    { id: '6', name: 'Emma de Vries', email: 'emma@boutique.nl', role: 'client', isOnline: false },
+    { id: '7', name: 'Tom Hendriks', email: 'tom@cafe.nl', role: 'client', isOnline: true },
+    { id: '8', name: 'Sophie Jansen', email: 'sophie@salon.nl', role: 'client', isOnline: false }
   ])
   
-  // Filter to get only clients
+  // Filter to get only clients and admin users
   const availableClients = systemUsers.filter(user => user.role === 'client')
-
-  const [users] = useKV<User[]>('system-users', [
-    { id: '1', name: 'Alex van der Berg', role: 'admin', avatar: '', email: 'alex@gkm.nl', isOnline: true },
-    { id: '2', name: 'Sarah de Jong', role: 'admin', avatar: '', email: 'sarah@gkm.nl', isOnline: true },
-    { id: '3', name: 'Mike Visser', role: 'client', avatar: '', email: 'mike@client.nl', isOnline: false },
-    { id: '4', name: 'Lisa Bakker', role: 'admin', avatar: '', email: 'lisa@gkm.nl', isOnline: true },
-    { id: '5', name: 'Jan Peters', role: 'client', avatar: '', email: 'jan@restaurant.nl', isOnline: true }
-  ])
+  const adminUsers = systemUsers.filter(user => user.role === 'admin')
+  
+  // Use system users as main users array
+  const users = systemUsers
 
   const [chatMessages, setChatMessages] = useKV<ChatMessage[]>('team-chat-messages', [
     {
@@ -918,6 +914,28 @@ export function Projects({ user }: ProjectsProps) {
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">New Task</span>
               </Button>
+              {selectedProject !== 'all' && (
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  className="gap-2"
+                  onClick={() => {
+                    const project = projects.find(p => p.id === selectedProject)
+                    if (project && window.confirm(`Are you sure you want to delete project "${project.name}"? This will also delete all tasks in this project.`)) {
+                      // Delete all tasks in this project
+                      setTasks(prev => (prev || []).filter(task => task.projectId !== selectedProject))
+                      // Delete the project
+                      setProjects(prev => (prev || []).filter(p => p.id !== selectedProject))
+                      // Reset selected project
+                      setSelectedProject('all')
+                      toast.success(`Project "${project.name}" deleted successfully`)
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Delete Project</span>
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -1048,9 +1066,27 @@ export function Projects({ user }: ProjectsProps) {
                                     <span className="text-lg">{getPlatformIcon(task.platform)}</span>
                                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}></div>
                                   </div>
-                                  <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
-                                    <MoreVertical className="w-3 h-3" />
-                                  </Button>
+                                  <div className="flex items-center gap-1">
+                                    {user.role === 'admin' && (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="w-6 h-6 p-0 text-destructive hover:bg-destructive/10"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          if (window.confirm(`Are you sure you want to delete task "${task.title}"?`)) {
+                                            setTasks(prev => (prev || []).filter(t => t.id !== task.id))
+                                            toast.success(`Task "${task.title}" deleted`)
+                                          }
+                                        }}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    )}
+                                    <Button variant="ghost" size="sm" className="w-6 h-6 p-0">
+                                      <MoreVertical className="w-3 h-3" />
+                                    </Button>
+                                  </div>
                                 </div>
                                 
                                 <h4 className="font-medium text-xs md:text-sm text-foreground mb-2 line-clamp-2">
@@ -1275,7 +1311,7 @@ export function Projects({ user }: ProjectsProps) {
                 {activeChannel === 'direct' && (
                   <div className="space-y-2 mb-4">
                     <div className="text-xs font-medium text-muted-foreground mb-2">Team Members</div>
-                    {users.filter(u => u.id !== user.id).map((teamMember) => (
+                    {adminUsers.filter(u => u.id !== user.id).map((teamMember) => (
                       <div 
                         key={teamMember.id}
                         className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"

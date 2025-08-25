@@ -557,9 +557,9 @@ export function Messages({ user }: MessagesProps) {
           <div className="flex gap-2">
             <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Start a Chat
+                <Button size="sm" className="gap-2 w-28 text-xs">
+                  <Plus className="w-3 h-3" />
+                  Start Chat
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -669,8 +669,8 @@ export function Messages({ user }: MessagesProps) {
             {user.role === 'admin' && (
               <Dialog open={showNewGroup} onOpenChange={setShowNewGroup}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="gap-2">
-                    <Users className="w-4 h-4" />
+                  <Button size="sm" className="gap-2 w-20 text-xs">
+                    <Users className="w-3 h-3" />
                     Group
                   </Button>
                 </DialogTrigger>
@@ -697,30 +697,64 @@ export function Messages({ user }: MessagesProps) {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Select Members</label>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {users.filter(u => u.id !== user.id && u.role === 'admin').map(teamUser => (
-                          <div 
-                            key={teamUser.id}
-                            onClick={() => toggleMemberSelection(teamUser.id)}
-                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                              selectedMembers.includes(teamUser.id) 
-                                ? 'bg-primary/10 border border-primary' 
-                                : 'hover:bg-muted'
-                            }`}
-                          >
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={teamUser.avatar} />
-                              <AvatarFallback>{teamUser.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{teamUser.name}</p>
-                              <p className="text-xs text-muted-foreground">{teamUser.role}</p>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {/* Admin Users Section */}
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Team Members</h4>
+                          {users.filter(u => u.id !== user.id && u.role === 'admin').map(teamUser => (
+                            <div 
+                              key={teamUser.id}
+                              onClick={() => toggleMemberSelection(teamUser.id)}
+                              className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                                selectedMembers.includes(teamUser.id) 
+                                  ? 'bg-primary/10 border border-primary' 
+                                  : 'hover:bg-muted border border-transparent'
+                              }`}
+                            >
+                              <Avatar className="w-6 h-6">
+                                <AvatarImage src={teamUser.avatar} />
+                                <AvatarFallback className="text-xs">{teamUser.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{teamUser.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{teamUser.email}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Circle className={`w-2 h-2 fill-current ${teamUser.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                                <Badge variant="secondary" className="text-xs">Admin</Badge>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Circle className={`w-2 h-2 fill-current ${teamUser.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                          ))}
+                        </div>
+                        
+                        {/* Client Users Section */}
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Clients</h4>
+                          {users.filter(u => u.id !== user.id && u.role === 'client').map(clientUser => (
+                            <div 
+                              key={clientUser.id}
+                              onClick={() => toggleMemberSelection(clientUser.id)}
+                              className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                                selectedMembers.includes(clientUser.id) 
+                                  ? 'bg-primary/10 border border-primary' 
+                                  : 'hover:bg-muted border border-transparent'
+                              }`}
+                            >
+                              <Avatar className="w-6 h-6">
+                                <AvatarImage src={clientUser.avatar} />
+                                <AvatarFallback className="text-xs">{clientUser.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{clientUser.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{clientUser.email}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Circle className={`w-2 h-2 fill-current ${clientUser.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                                <Badge variant="outline" className="text-xs">Client</Badge>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2 pt-2">
