@@ -150,7 +150,13 @@ export function SettingsView({ user, onUserUpdate }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState('profile')
   
   // User management states
-  const [allUsers, setAllUsers] = useKV<User[]>('system-users', [])
+  const [allUsers, setAllUsers] = useKV<User[]>('system-users', [
+    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client', isOnline: false },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin', isOnline: true },
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client', isOnline: true }
+  ])
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
   const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)

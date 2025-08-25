@@ -96,10 +96,24 @@ export function Dashboard({ user }: DashboardProps) {
   const [selectedChart, setSelectedChart] = useState('revenue')
   const [showAdminManager, setShowAdminManager] = useState(false)
 
+  // Get client data from admin-managed storage if user is a client
+  const [adminKpiData] = useKV<{clientId: string, revenue: number, revenueGrowth: number, projects: number, projectsGrowth: number, teamMembers: number, conversations: number, conversationsGrowth: number, facebookReach: number, facebookReachGrowth: number, instagramEngagement: number, instagramEngagementGrowth: number, messagesReceived: number, messagesReceivedGrowth: number, growthRate: number}[]>('client-kpi-data', [])
+  const [adminChartData] = useKV<{name: string, revenue: number, conversations: number, messagesReceived: number, facebookReach: number, instagramEngagement: number, date: string, clientId?: string}[]>('client-chart-data', [])
+  const [adminProjectsData] = useKV<{id: string, name: string, client: string, status: 'in-progress' | 'review' | 'to-do' | 'completed', progress: number, deadline: string}[]>('client-projects-data', [])
+
   // Get KPI data - client-specific or admin aggregate
   const kpiStorageKey = user.role === 'client' ? `client-kpi-${user.id}` : 'admin-kpi'
-  const [kpiData] = useKV<KPIData>(kpiStorageKey, 
-    user.role === 'client' ? {
+  
+  let kpiData: KPIData
+  if (user.role === 'client') {
+    // For clients, get data from admin-managed storage
+    const clientKpi = adminKpiData.find(data => data.clientId === user.id)
+    kpiData = clientKpi ? {
+      ...clientKpi,
+      projectBudget: clientKpi.revenue || 0, // Use revenue as budget for clients
+      budgetUsed: Math.round((clientKpi.revenue || 0) * 0.7), // Assume 70% used
+      messagesGrowth: clientKpi.messagesReceivedGrowth || 0
+    } : {
       revenue: 0,
       revenueGrowth: 0,
       projects: 0,
@@ -117,7 +131,10 @@ export function Dashboard({ user }: DashboardProps) {
       projectBudget: 0,
       budgetUsed: 0,
       clientId: user.id
-    } : {
+    }
+  } else {
+    // For admin, use the default admin data
+    kpiData = {
       revenue: 125600,
       revenueGrowth: 12.5,
       projects: 28,
@@ -135,12 +152,16 @@ export function Dashboard({ user }: DashboardProps) {
       projectBudget: 85000,
       budgetUsed: 62400
     }
-  )
+  }
 
   // Get chart data - client-specific or admin aggregate  
-  const chartStorageKey = user.role === 'client' ? `client-chart-${user.id}` : 'admin-chart'
-  const [chartData] = useKV<ChartData[]>(chartStorageKey,
-    user.role === 'client' ? [] : [
+  let chartData: ChartData[]
+  if (user.role === 'client') {
+    // For clients, get data from admin-managed storage
+    chartData = adminChartData.filter(data => data.clientId === user.id)
+  } else {
+    // For admin, use default admin chart data
+    chartData = [
       {
         name: 'Week 1',
         revenue: 28400,
@@ -178,12 +199,22 @@ export function Dashboard({ user }: DashboardProps) {
         date: '2024-01-22'
       }
     ]
-  )
+  }
 
   // Get recent projects - client-specific or admin aggregate
-  const projectsStorageKey = user.role === 'client' ? `client-projects-${user.id}` : 'admin-recent-projects'
-  const [recentProjects] = useKV<RecentProject[]>(projectsStorageKey,
-    user.role === 'client' ? [] : [
+  let recentProjects: RecentProject[]
+  if (user.role === 'client') {
+    // For clients, get data from admin-managed storage
+    const clientProjects = adminProjectsData.filter(project => 
+      project.client === user.name || project.client === user.id
+    )
+    recentProjects = clientProjects.map(project => ({
+      ...project,
+      team: ['GKM Team'] // Always show as GKM Team for clients
+    }))
+  } else {
+    // For admin, use default admin projects
+    recentProjects = [
       {
         id: '1',
         name: 'Bakkerij de Korenbloem - Instagram Campaign',
@@ -212,7 +243,7 @@ export function Dashboard({ user }: DashboardProps) {
         team: ['Alex', 'Tom']
       }
     ]
-  )
+  }
 
   const [teamMembers] = useKV<TeamMember[]>('team-members', [
     { id: '1', name: 'Alex van der Berg', role: 'Creative Director', avatar: '', isOnline: true },

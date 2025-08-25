@@ -82,7 +82,7 @@ export function Messages({ user }: MessagesProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { addNotification } = useNotifications()
 
-  const [users] = useKV<User[]>('all-users', [
+  const [users] = useKV<User[]>('system-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin', isOnline: true },
     { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin', isOnline: true },
     { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client', isOnline: false },

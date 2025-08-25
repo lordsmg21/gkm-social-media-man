@@ -61,7 +61,22 @@ type Props = {
 }
 
 export default function ClientDataManager({ open, onClose }: Props) {
-  const [clients] = useKV<Client[]>('clients-list', [])
+  // Get all system users to filter clients
+  const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
+    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin' },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client' },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin' },
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client' }
+  ])
+
+  // Filter to get only clients
+  const clients = systemUsers.filter(user => user.role === 'client').map(user => ({
+    id: user.id,
+    name: user.name,
+    email: user.email
+  }))
+
   const [selectedClient, setSelectedClient] = useState('')
   const [searchClient, setSearchClient] = useState('')
   const [kpiData, setKpiData] = useKV<KPIData[]>('client-kpi-data', [])
