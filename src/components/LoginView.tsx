@@ -27,7 +27,7 @@ const demoUsers: Record<UserRole, User> = {
   client: { id: '2', name: 'Demo Client', email: 'client@demo.com', role: 'client' },
 }
 
-export default function LoginView({ onLogin }: Props) {
+export function LoginView({ onLogin }: Props) {
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
