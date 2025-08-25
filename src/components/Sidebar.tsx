@@ -12,7 +12,8 @@ import {
   Settings,
   Hexagon,
   Bell,
-  LogOut
+  LogOut,
+  Receipt
 } from 'lucide-react'
 import { User } from '../App'
 import { NotificationCenter, useNotifications } from './NotificationCenter'
@@ -57,6 +58,12 @@ export function Sidebar({ user, activeView, onViewChange }: SidebarProps) {
       id: 'files',
       label: 'Files',
       icon: FolderOpen,
+      roles: ['admin', 'client']
+    },
+    {
+      id: 'billing',
+      label: 'Billing',
+      icon: Receipt,
       roles: ['admin', 'client']
     },
     {

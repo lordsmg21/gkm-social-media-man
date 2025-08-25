@@ -8,6 +8,7 @@ import { Projects } from './components/Projects'
 import { CalendarView } from './components/CalendarView'
 import { FileManager } from './components/FileManager'
 import { SettingsView } from './components/SettingsView'
+import { BillingView } from './components/BillingView'
 
 export type UserRole = 'admin' | 'client'
 
@@ -48,6 +49,8 @@ function App() {
         return <CalendarView user={currentUser} />
       case 'files':
         return <FileManager user={currentUser} />
+      case 'billing':
+        return <BillingView user={currentUser} />
       case 'settings':
         return <SettingsView user={currentUser} />
       default:
