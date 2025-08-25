@@ -68,7 +68,7 @@ export function LoginView({ onLogin }: Props) {
           <CardDescription>Log in of gebruik een demo-account.</CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="text-center">
           <div className="flex bg-muted rounded-xl p-1 mb-4">
             <button
               type="button"
@@ -91,28 +91,28 @@ export function LoginView({ onLogin }: Props) {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
+            <div className="text-left">
+              <label htmlFor="email" className="block text-sm font-medium mb-1 text-center">
                 Email
               </label>
               <input
                 id="email"
                 type="email"
-                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring text-center"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
+            <div className="text-left">
+              <label htmlFor="password" className="block text-sm font-medium mb-1 text-center">
                 Wachtwoord
               </label>
               <input
                 id="password"
                 type="password"
-                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full px-4 py-3 rounded-xl border border-input bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring text-center"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -125,7 +125,7 @@ export function LoginView({ onLogin }: Props) {
           </form>
 
           <div className="space-y-2 mt-6">
-            <p className="text-sm text-muted-foreground">Demo</p>
+            <p className="text-sm text-muted-foreground text-center">Demo</p>
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" onClick={() => autofill('admin')}>
                 Admin Demo
@@ -137,8 +137,8 @@ export function LoginView({ onLogin }: Props) {
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-between">
-          <button className="text-sm text-muted-foreground" onClick={handleCreateAccount}>
+        <CardFooter className="flex justify-center">
+          <button className="text-sm text-muted-foreground text-center" onClick={handleCreateAccount}>
             Nog geen account? Maak er een aan
           </button>
         </CardFooter>
