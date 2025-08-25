@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -110,6 +111,8 @@ export function Projects({ user }: ProjectsProps) {
   const [userSuggestions, setUserSuggestions] = useState<User[]>([])
   const [mentionStartIndex, setMentionStartIndex] = useState(-1)
   const [mentionType, setMentionType] = useState<'task' | 'user' | null>(null)
+  const [deleteTaskDialog, setDeleteTaskDialog] = useState<Task | null>(null)
+  const [deleteProjectDialog, setDeleteProjectDialog] = useState<Project | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { addNotification } = useNotifications()
 
@@ -871,6 +874,50 @@ export function Projects({ user }: ProjectsProps) {
     })
   }
 
+  // Handle task deletion
+  const handleDeleteTask = (task: Task) => {
+    setTasks(prev => (prev || []).filter(t => t.id !== task.id))
+    setDeleteTaskDialog(null)
+    toast.success(`Task "${task.title}" deleted successfully`)
+    
+    // Add notification for task deletion
+    addNotification({
+      type: 'system',
+      title: 'Task Deleted',
+      message: `Task "${task.title}" has been deleted`,
+      read: false,
+      userId: user.id
+    })
+  }
+
+  // Handle project deletion
+  const handleDeleteProject = (project: Project) => {
+    const projectTasks = tasks.filter(task => task.projectId === project.id)
+    
+    // Delete all tasks in the project
+    setTasks(prev => (prev || []).filter(task => task.projectId !== project.id))
+    
+    // Delete the project
+    setProjects(prev => (prev || []).filter(p => p.id !== project.id))
+    
+    // Reset selected project if it was the deleted one
+    if (selectedProject === project.id) {
+      setSelectedProject('all')
+    }
+    
+    setDeleteProjectDialog(null)
+    toast.success(`Project "${project.name}" and ${projectTasks.length} task${projectTasks.length !== 1 ? 's' : ''} deleted successfully`)
+    
+    // Add notification for project deletion
+    addNotification({
+      type: 'system',
+      title: 'Project Deleted',
+      message: `Project "${project.name}" and ${projectTasks.length} task${projectTasks.length !== 1 ? 's' : ''} have been deleted`,
+      read: false,
+      userId: user.id
+    })
+  }
+
   // Handle new task creation
   const handleTaskCreated = (newTask: Task) => {
     setTasks((prevTasks) => [...(prevTasks || []), newTask])
@@ -914,33 +961,6 @@ export function Projects({ user }: ProjectsProps) {
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">New Task</span>
               </Button>
-              <Button 
-                size="sm" 
-                variant="destructive"
-                className="gap-2"
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to delete selected tasks? This action cannot be undone.')) {
-                    // Show options to delete tasks from current project or all tasks
-                    const projectTasks = selectedProject !== 'all' 
-                      ? visibleTasks.filter(task => task.projectId === selectedProject)
-                      : []
-                    
-                    if (selectedProject !== 'all' && projectTasks.length > 0) {
-                      const confirmDelete = window.confirm(`Delete all ${projectTasks.length} tasks from this project?`)
-                      if (confirmDelete) {
-                        setTasks(prev => (prev || []).filter(task => task.projectId !== selectedProject))
-                        toast.success(`Deleted ${projectTasks.length} tasks from project`)
-                      }
-                    } else {
-                      // Generic task deletion - this could be extended to allow selection
-                      toast.info('Select a specific project to delete tasks, or use individual task delete buttons')
-                    }
-                  }
-                }}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Delete Tasks</span>
-              </Button>
               {selectedProject !== 'all' && (
                 <Button 
                   size="sm" 
@@ -948,14 +968,8 @@ export function Projects({ user }: ProjectsProps) {
                   className="gap-2"
                   onClick={() => {
                     const project = projects.find(p => p.id === selectedProject)
-                    if (project && window.confirm(`Are you sure you want to delete project "${project.name}"? This will also delete all tasks in this project.`)) {
-                      // Delete all tasks in this project
-                      setTasks(prev => (prev || []).filter(task => task.projectId !== selectedProject))
-                      // Delete the project
-                      setProjects(prev => (prev || []).filter(p => p.id !== selectedProject))
-                      // Reset selected project
-                      setSelectedProject('all')
-                      toast.success(`Project "${project.name}" deleted successfully`)
+                    if (project) {
+                      setDeleteProjectDialog(project)
                     }
                   }}
                 >
@@ -1101,10 +1115,7 @@ export function Projects({ user }: ProjectsProps) {
                                         className="w-6 h-6 p-0 text-destructive hover:bg-destructive/10"
                                         onClick={(e) => {
                                           e.stopPropagation()
-                                          if (window.confirm(`Are you sure you want to delete task "${task.title}"?`)) {
-                                            setTasks(prev => (prev || []).filter(t => t.id !== task.id))
-                                            toast.success(`Task "${task.title}" deleted`)
-                                          }
+                                          setDeleteTaskDialog(task)
                                         }}
                                       >
                                         <Trash2 className="w-3 h-3" />
@@ -1870,6 +1881,71 @@ export function Projects({ user }: ProjectsProps) {
         availableClients={availableClients}
         currentUserId={user.id}
       />
+
+      {/* Delete Task Confirmation Dialog */}
+      <AlertDialog open={!!deleteTaskDialog} onOpenChange={() => setDeleteTaskDialog(null)}>
+        <AlertDialogContent className="glass-modal">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              Delete Task
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete task <strong>"{deleteTaskDialog?.title}"</strong>?
+              <br /><br />
+              This action cannot be undone and will permanently remove the task and all its files.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteTaskDialog(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteTaskDialog && handleDeleteTask(deleteTaskDialog)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Task
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Project Confirmation Dialog */}
+      <AlertDialog open={!!deleteProjectDialog} onOpenChange={() => setDeleteProjectDialog(null)}>
+        <AlertDialogContent className="glass-modal">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              Delete Project
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete project <strong>"{deleteProjectDialog?.name}"</strong>?
+              <br /><br />
+              This will permanently delete:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>The project and all its settings</li>
+                <li>All tasks within this project ({tasks.filter(t => t.projectId === deleteProjectDialog?.id).length} task{tasks.filter(t => t.projectId === deleteProjectDialog?.id).length !== 1 ? 's' : ''})</li>
+                <li>All files associated with project tasks</li>
+              </ul>
+              <br />
+              <strong className="text-destructive">This action cannot be undone.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteProjectDialog(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteProjectDialog && handleDeleteProject(deleteProjectDialog)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
