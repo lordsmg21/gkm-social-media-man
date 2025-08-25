@@ -1,19 +1,34 @@
+// src/components/CreateProjectModal.tsx
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { FolderPlus, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
 import { User } from '../App'
 
-interface Project {
+type Trajectory = 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
+
+export interface Project {
   id: string
   name: string
   description: string
-  trajectory: 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
+  trajectory: Trajectory
   budget: number
   clientId: string
   clientName: string
@@ -22,112 +37,83 @@ interface Project {
   status: 'active' | 'completed' | 'on-hold'
 }
 
-interface CreateProjectModalProps {
+type Client = { id: string; name: string; email: string }
+
+type CreateProjectModalProps = {
   open: boolean
   onClose: () => void
   onProjectCreated: (project: Project) => void
   user: User
-  availableClients: User[]
+  availableClients: Client[]
 }
 
-export default function CreateProjectModal({ 
-  open, 
-  onClose, 
-  onProjectCreated, 
-  user, 
-  availableClients 
+export default function CreateProjectModal({
+  open,
+  onClose,
+  onProjectCreated,
+  user,
+  availableClients,
 }: CreateProjectModalProps) {
-  // Only allow admins to create projects
-  if (user.role !== 'admin') {
-    return null
-  }
+  // Alleen admins mogen projecten aanmaken
+  if (user.role !== 'admin') return null
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string
+    description: string
+    trajectory: Trajectory
+    budget: number
+    clientId: string
+  }>({
     name: '',
     description: '',
-    trajectory: 'social-media' as Project['trajectory'],
+    trajectory: 'social-media',
     budget: 0,
-    clientId: ''
+    clientId: '',
   })
 
-  const trajectoryOptions = [
-    { 
-      value: 'social-media', 
+  const trajectoryOptions: { value: Trajectory; label: string; description: string }[] = [
+    {
+      value: 'social-media',
       label: '📱 Social Media Marketing',
-      description: 'Content creation, community management, and social advertising'
+      description: 'Content creation, community management, and social advertising',
     },
-    { 
-      value: 'website', 
+    {
+      value: 'website',
       label: '💻 Website Development',
-      description: 'Website design, development, and maintenance'
+      description: 'Website design, development, and maintenance',
     },
-    { 
-      value: 'branding', 
-      label: '🎨 Branding & Identity',
-      description: 'Logo design, brand guidelines, and visual identity'
+    {
+      value: 'branding',
+      label: '🎨 Branding',
+      description: 'Visual identity, logo, and brand guidelines',
     },
-    { 
-      value: 'advertising', 
-      label: '📢 Digital Advertising',
-      description: 'PPC campaigns, display ads, and social media advertising'
+    {
+      value: 'advertising',
+      label: '📢 Advertising',
+      description: 'Paid media campaigns across platforms',
     },
-    { 
-      value: 'full-campaign', 
+    {
+      value: 'full-campaign',
       label: '🚀 Full Campaign',
-      description: 'Comprehensive marketing campaign across all channels'
-    }
+      description: 'End-to-end multi-channel campaign',
+    },
   ]
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      trajectory: 'social-media',
-      budget: 0,
-      clientId: ''
-    })
-  }
-
-  const handleClose = () => {
-    onClose()
-    resetForm()
-  }
+  const handleClose = () => onClose()
 
   const handleSubmit = () => {
-    // Double-check admin role
-    if (user.role !== 'admin') {
-      toast.error('Only admins can create projects')
-      return
-    }
+    if (user.role !== 'admin') return
 
-    if (!formData.name.trim()) {
-      toast.error('Please enter a project name')
-      return
-    }
+    if (!formData.name.trim()) return toast.error('Please enter a project name')
+    if (!formData.description.trim()) return toast.error('Please enter a description')
+    if (!formData.clientId) return toast.error('Please select a client')
+    if (formData.budget <= 0) return toast.error('Please enter a valid budget')
 
-    if (!formData.description.trim()) {
-      toast.error('Please enter a project description')
-      return
-    }
-
-    if (!formData.clientId) {
-      toast.error('Please select a client')
-      return
-    }
-
-    if (formData.budget <= 0) {
-      toast.error('Please enter a valid budget amount')
-      return
-    }
-
-    const selectedClient = availableClients.find(c => c.id === formData.clientId)
-    if (!selectedClient) {
-      toast.error('Invalid client selection')
-      return
-    }
+    const selectedClient = availableClients.find((c) => c.id === formData.clientId)
+    if (!selectedClient) return toast.error('Selected client not found')
 
     const newProject: Project = {
-      id: `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `project-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       name: formData.name.trim(),
       description: formData.description.trim(),
       trajectory: formData.trajectory,
@@ -136,7 +122,7 @@ export default function CreateProjectModal({
       clientName: selectedClient.name,
       createdBy: user.id,
       createdAt: new Date().toISOString(),
-      status: 'active'
+      status: 'active',
     }
 
     onProjectCreated(newProject)
@@ -145,13 +131,16 @@ export default function CreateProjectModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-2xl glass-modal mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-heading flex items-center gap-2">
             <FolderPlus className="w-5 h-5 text-primary" />
             Create New Project
           </DialogTitle>
+          <DialogDescription>
+            Fill out the details below to create a new project.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 pb-4">
@@ -162,7 +151,7 @@ export default function CreateProjectModal({
                 id="project-name"
                 placeholder="e.g., Restaurant X - Summer Campaign 2024"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
                 className="mt-1"
               />
             </div>
@@ -173,7 +162,7 @@ export default function CreateProjectModal({
                 id="description"
                 placeholder="Describe the project goals, scope, and deliverables..."
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                 rows={3}
                 className="mt-1"
               />
@@ -182,8 +171,8 @@ export default function CreateProjectModal({
             <div>
               <Label>Client *</Label>
               <Select
-                value={formData.clientId} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, clientId: value }))}
+                value={formData.clientId}
+                onValueChange={(value) => setFormData((p) => ({ ...p, clientId: value }))}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select a client" />
@@ -210,11 +199,13 @@ export default function CreateProjectModal({
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="number"
-                  min="0"
-                  step="100"
+                  min={0}
+                  step={100}
                   placeholder="5000"
-                  value={formData.budget || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, budget: parseFloat(e.target.value) || 0 }))}
+                  value={formData.budget || 0}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, budget: parseFloat(e.target.value) || 0 }))
+                  }
                   className="pl-10"
                 />
               </div>
@@ -222,9 +213,11 @@ export default function CreateProjectModal({
 
             <div className="md:col-span-2">
               <Label>Project Trajectory *</Label>
-              <Select 
-                value={formData.trajectory} 
-                onValueChange={(value: Project['trajectory']) => setFormData(prev => ({ ...prev, trajectory: value }))}
+              <Select
+                value={formData.trajectory}
+                onValueChange={(value: Trajectory) =>
+                  setFormData((p) => ({ ...p, trajectory: value }))
+                }
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select project type" />
