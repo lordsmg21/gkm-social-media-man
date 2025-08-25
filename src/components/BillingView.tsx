@@ -1,17 +1,44 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Download, Upload, FileText, Calendar, Euro, User, Eye } from 'lucide-react'
-import { toast } from 'sonner'
-import { format } from 'date-fns'
-import { FileDropZone } from './FileDropZone'
-import type { User } from '../App'
+
+// Mock FileDropZone component since it's not available
+function FileDropZone({ onFilesSelected, acceptedFileTypes, maxFileSize, className }: {
+  onFilesSelected: (files: File[]) => void
+  acceptedFileTypes: string[]
+  maxFileSize: number
+  className?: string
+}) {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    onFilesSelected(files)
+  }
+
+  return (
+    <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center ${className}`}>
+      <input
+        type="file"
+        accept={acceptedFileTypes.join(',')}
+        onChange={handleFileChange}
+        className="hidden"
+        id="file-upload"
+      />
+      <label htmlFor="file-upload" className="cursor-pointer">
+        <div className="text-gray-500">
+          <div className="mb-2">📁</div>
+          <p>Click to upload or drag and drop</p>
+          <p className="text-sm">PDF files up to {maxFileSize}MB</p>
+        </div>
+      </label>
+    </div>
+  )
+}
+
+// Define User interface locally
+interface AppUser {
+  id: string
+  name: string
+  email: string
+  role: 'admin' | 'client'
+}
 
 interface Invoice {
   id: string
@@ -32,11 +59,11 @@ interface Invoice {
 }
 
 interface BillingViewProps {
-  user: User
+  user: AppUser
 }
 
 export function BillingView({ user }: BillingViewProps) {
-  const [invoices, setInvoices] = useKV<Invoice[]>('invoices', [
+  const [invoices, setInvoices] = useState<Invoice[]>([
     {
       id: '1',
       invoiceNumber: 'INV-2024-001',
@@ -73,11 +100,12 @@ export function BillingView({ user }: BillingViewProps) {
     }
   ])
   
-  const [clients] = useKV<User[]>('clients', [
+  const [clients] = useState<AppUser[]>([
     { id: '2', name: 'Sarah Johnson', email: 'sarah@company.com', role: 'client' },
     { id: '3', name: 'Mike Chen', email: 'mike@startup.com', role: 'client' },
     { id: '4', name: 'Emma Davis', email: 'emma@business.com', role: 'client' }
   ])
+  
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
@@ -126,7 +154,7 @@ export function BillingView({ user }: BillingViewProps) {
 
   const handleFileUpload = async (files: File[]) => {
     if (!newInvoice.invoiceNumber || !newInvoice.clientId) {
-      toast.error('Please fill in invoice details first')
+      alert('Please fill in invoice details first')
       return
     }
 
@@ -134,96 +162,18 @@ export function BillingView({ user }: BillingViewProps) {
     if (!file) return
 
     if (file.type !== 'application/pdf') {
-      toast.error('Only PDF files are allowed for invoices')
+      alert('Only PDF files are allowed for invoices')
       return
     }
 
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      toast.error('File size must be under 10MB')
+      alert('File size must be under 10MB')
       return
     }
 
     try {
-      // Create mock PDF blob for demo purposes
-      const mockPdfContent = `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
-/Resources <<
-/ProcSet [/PDF /Text]
-/Font <<
-/F1 5 0 R
->>
->>
->>
-endobj
-4 0 obj
-<<
-/Length 125
->>
-stream
-BT
-/F1 12 Tf
-72 720 Td
-(Invoice: ${newInvoice.invoiceNumber}) Tj
-0 -20 Td
-(Client: ${availableClients.find(c => c.id === newInvoice.clientId)?.name}) Tj
-0 -20 Td
-(Amount: €${newInvoice.amount}) Tj
-0 -20 Td
-(Description: ${newInvoice.description}) Tj
-ET
-endstream
-endobj
-5 0 obj
-<<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
-endobj
-xref
-0 6
-0000000000 65535 f 
-0000000010 00000 n 
-0000000053 00000 n 
-0000000125 00000 n 
-0000000348 00000 n 
-0000000565 00000 n 
-trailer
-<<
-/Size 6
-/Root 1 0 R
->>
-startxref
-665
-%%EOF`
-
-      // Create blob URL from the uploaded file or use mock PDF
-      let fileUrl: string
-      if (file.type === 'application/pdf') {
-        fileUrl = URL.createObjectURL(file)
-      } else {
-        // Create mock PDF blob
-        const pdfBlob = new Blob([mockPdfContent], { type: 'application/pdf' })
-        fileUrl = URL.createObjectURL(pdfBlob)
-      }
+      // Create blob URL from the uploaded file
+      const fileUrl = URL.createObjectURL(file)
       
       const selectedClient = availableClients.find(c => c.id === newInvoice.clientId)
       
@@ -235,7 +185,7 @@ startxref
         amount: parseFloat(newInvoice.amount) || 0,
         currency: 'EUR',
         dueDate: newInvoice.dueDate,
-        issueDate: format(new Date(), 'yyyy-MM-dd'),
+        issueDate: new Date().toISOString().split('T')[0],
         status: newInvoice.status,
         description: newInvoice.description,
         fileUrl,
@@ -258,9 +208,9 @@ startxref
       })
       
       setIsCreateModalOpen(false)
-      toast.success('Invoice uploaded successfully')
+      alert('Invoice uploaded successfully')
     } catch (error) {
-      toast.error('Failed to upload invoice')
+      alert('Failed to upload invoice')
     }
   }
 
@@ -272,7 +222,7 @@ startxref
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      toast.success('Invoice downloaded')
+      alert('Invoice downloaded')
     }
   }
 
@@ -287,17 +237,25 @@ startxref
         invoice.id === invoiceId ? { ...invoice, status } : invoice
       )
     )
-    toast.success('Invoice status updated')
+    alert('Invoice status updated')
   }
 
   const getStatusColor = (status: Invoice['status']) => {
     switch (status) {
-      case 'paid': return 'bg-green-100 text-green-800 border-green-200'
-      case 'sent': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'overdue': return 'bg-red-100 text-red-800 border-red-200'
-      case 'draft': return 'bg-gray-100 text-gray-800 border-gray-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'paid': return 'bg-green-100 text-green-800 border border-green-200'
+      case 'sent': return 'bg-blue-100 text-blue-800 border border-blue-200'
+      case 'overdue': return 'bg-red-100 text-red-800 border border-red-200'
+      case 'draft': return 'bg-gray-100 text-gray-800 border border-gray-200'
+      default: return 'bg-gray-100 text-gray-800 border border-gray-200'
     }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
   }
 
   const calculateTotalAmount = () => {
@@ -315,14 +273,14 @@ startxref
   const statusCounts = getStatusCounts()
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">
+          <h1 className="text-3xl font-bold text-gray-900">
             {user.role === 'admin' ? 'Invoice Management' : 'My Invoices'}
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-gray-600 mt-1">
             {user.role === 'admin' 
               ? 'Upload and manage client invoices' 
               : 'View and download your invoices'
@@ -331,305 +289,345 @@ startxref
         </div>
         
         {user.role === 'admin' && (
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Upload Invoice
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl glass-modal">
-              <DialogHeader>
-                <DialogTitle>Upload New Invoice</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                    <Input
-                      id="invoiceNumber"
-                      value={newInvoice.invoiceNumber}
-                      onChange={(e) => setNewInvoice(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                      placeholder="INV-2024-001"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client">Client</Label>
-                    <Select 
-                      value={newInvoice.clientId} 
-                      onValueChange={(value) => setNewInvoice(prev => ({ ...prev, clientId: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select client" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableClients.map(client => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="amount">Amount (EUR)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      step="0.01"
-                      value={newInvoice.amount}
-                      onChange={(e) => setNewInvoice(prev => ({ ...prev, amount: e.target.value }))}
-                      placeholder="1500.00"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="dueDate">Due Date</Label>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      value={newInvoice.dueDate}
-                      onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    id="description"
-                    value={newInvoice.description}
-                    onChange={(e) => setNewInvoice(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Social media management services for January 2024"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select 
-                    value={newInvoice.status} 
-                    onValueChange={(value: 'draft' | 'sent') => setNewInvoice(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="sent">Sent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label>Upload PDF Invoice</Label>
-                  <FileDropZone
-                    onFilesSelected={handleFileUpload}
-                    acceptedFileTypes={['.pdf']}
-                    maxFileSize={10}
-                    className="mt-2"
-                  />
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <span>➕</span>
+            Upload Invoice
+          </button>
         )}
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="glass-card p-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <Euro className="h-5 w-5 text-primary" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <span className="text-blue-600 text-xl">💰</span>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Amount</p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-sm text-gray-600">Total Amount</p>
+              <p className="text-2xl font-bold text-gray-900">
                 €{calculateTotalAmount().toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
-        </Card>
+        </div>
         
-        <Card className="glass-card p-6">
+        <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
-              <FileText className="h-5 w-5 text-green-600" />
+              <span className="text-green-600 text-xl">📄</span>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Paid</p>
-              <p className="text-2xl font-bold text-foreground">{statusCounts.paid}</p>
+              <p className="text-sm text-gray-600">Paid</p>
+              <p className="text-2xl font-bold text-gray-900">{statusCounts.paid}</p>
             </div>
           </div>
-        </Card>
+        </div>
         
-        <Card className="glass-card p-6">
+        <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <FileText className="h-5 w-5 text-blue-600" />
+              <span className="text-blue-600 text-xl">📤</span>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Sent</p>
-              <p className="text-2xl font-bold text-foreground">{statusCounts.sent}</p>
+              <p className="text-sm text-gray-600">Sent</p>
+              <p className="text-2xl font-bold text-gray-900">{statusCounts.sent}</p>
             </div>
           </div>
-        </Card>
+        </div>
         
-        <Card className="glass-card p-6">
+        <div className="bg-white p-6 rounded-lg shadow border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-100 rounded-lg">
-              <FileText className="h-5 w-5 text-red-600" />
+              <span className="text-red-600 text-xl">⚠️</span>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Overdue</p>
-              <p className="text-2xl font-bold text-foreground">{statusCounts.overdue}</p>
+              <p className="text-sm text-gray-600">Overdue</p>
+              <p className="text-2xl font-bold text-gray-900">{statusCounts.overdue}</p>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="glass-card p-4">
+      <div className="bg-white p-4 rounded-lg shadow border">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <Input
+            <input
+              type="text"
               placeholder="Search invoices..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Invoices</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Invoices</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+          </select>
         </div>
-      </Card>
+      </div>
 
       {/* Invoices List */}
       <div className="grid gap-4">
         {filteredInvoices.length === 0 ? (
-          <Card className="glass-card p-12 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg font-medium text-foreground">No invoices found</p>
-            <p className="text-muted-foreground">
+          <div className="bg-white p-12 text-center rounded-lg shadow border">
+            <div className="text-6xl mb-4">📄</div>
+            <p className="text-lg font-medium text-gray-900">No invoices found</p>
+            <p className="text-gray-600">
               {user.role === 'admin' 
                 ? 'Upload your first invoice to get started' 
                 : 'No invoices available yet'
               }
             </p>
-          </Card>
+          </div>
         ) : (
           filteredInvoices.map(invoice => (
-            <Card key={invoice.id} className="glass-card p-6">
+            <div key={invoice.id} className="bg-white p-6 rounded-lg shadow border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/20 rounded-lg">
-                    <FileText className="h-6 w-6 text-primary" />
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <span className="text-blue-600 text-xl">📄</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-foreground">{invoice.invoiceNumber}</h3>
-                      <Badge className={getStatusColor(invoice.status)}>
+                      <h3 className="font-semibold text-gray-900">{invoice.invoiceNumber}</h3>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(invoice.status)}`}>
                         {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </Badge>
+                      </span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
+                        <span>👤</span>
                         {invoice.clientName}
                       </div>
                       <div className="flex items-center gap-1">
-                        <Euro className="h-4 w-4" />
+                        <span>💰</span>
                         €{invoice.amount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
                       </div>
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        Due: {format(new Date(invoice.dueDate), 'MMM dd, yyyy')}
+                        <span>📅</span>
+                        Due: {formatDate(invoice.dueDate)}
                       </div>
                     </div>
                     {invoice.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{invoice.description}</p>
+                      <p className="text-sm text-gray-600 mt-1">{invoice.description}</p>
                     )}
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   {user.role === 'admin' && (
-                    <Select 
-                      value={invoice.status} 
-                      onValueChange={(value: Invoice['status']) => updateInvoiceStatus(invoice.id, value)}
+                    <select
+                      value={invoice.status}
+                      onChange={(e) => updateInvoiceStatus(invoice.id, e.target.value as Invoice['status'])}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="sent">Sent</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="overdue">Overdue</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <option value="draft">Draft</option>
+                      <option value="sent">Sent</option>
+                      <option value="paid">Paid</option>
+                      <option value="overdue">Overdue</option>
+                    </select>
                   )}
                   
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => handlePreview(invoice)}
-                    className="gap-1"
+                    className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition-colors flex items-center gap-1"
                   >
-                    <Eye className="h-4 w-4" />
+                    <span>👁️</span>
                     Preview
-                  </Button>
+                  </button>
                   
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => handleDownload(invoice)}
-                    className="gap-1"
+                    className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition-colors flex items-center gap-1"
                   >
-                    <Download className="h-4 w-4" />
+                    <span>⬇️</span>
                     Download
-                  </Button>
+                  </button>
                 </div>
               </div>
-            </Card>
+            </div>
           ))
         )}
       </div>
 
-      {/* Preview Modal */}
-      <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
-        <DialogContent className="max-w-4xl h-[80vh] glass-modal">
-          <DialogHeader>
-            <DialogTitle>
-              Invoice Preview - {selectedInvoice?.invoiceNumber}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            {selectedInvoice?.fileUrl ? (
-              <iframe
-                src={selectedInvoice.fileUrl}
-                className="w-full h-full border rounded-lg"
-                title="Invoice Preview"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">No file available for preview</p>
+      {/* Create Invoice Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Upload New Invoice</h2>
+                <button
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-xl">✕</span>
+                </button>
               </div>
-            )}
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Invoice Number
+                  </label>
+                  <input
+                    type="text"
+                    value={newInvoice.invoiceNumber}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, invoiceNumber: e.target.value }))}
+                    placeholder="INV-2024-001"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Client
+                  </label>
+                  <select
+                    value={newInvoice.clientId}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, clientId: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select client</option>
+                    {availableClients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Amount (EUR)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newInvoice.amount}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="1500.00"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newInvoice.dueDate}
+                    onChange={(e) => setNewInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={newInvoice.description}
+                  onChange={(e) => setNewInvoice(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Social media management services for January 2024"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={newInvoice.status}
+                  onChange={(e) => setNewInvoice(prev => ({ ...prev, status: e.target.value as 'draft' | 'sent' }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="sent">Sent</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload PDF Invoice
+                </label>
+                <FileDropZone
+                  onFilesSelected={handleFileUpload}
+                  acceptedFileTypes={['.pdf']}
+                  maxFileSize={10}
+                  className="mt-2"
+                />
+              </div>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewModalOpen && selectedInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 h-[80vh] overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Invoice Preview - {selectedInvoice.invoiceNumber}
+                </h2>
+                <button
+                  onClick={() => setPreviewModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-xl">✕</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 p-6 h-full overflow-hidden">
+              {selectedInvoice.fileUrl ? (
+                <iframe
+                  src={selectedInvoice.fileUrl}
+                  className="w-full h-full border rounded-lg"
+                  title="Invoice Preview"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-600">No file available for preview</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function App() {
+  const [currentUser] = useState<AppUser>({
+    id: '1',
+    name: 'Admin User',
+    email: 'admin@company.com',
+    role: 'admin'
+  })
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <BillingView user={currentUser} />
     </div>
   )
 }
