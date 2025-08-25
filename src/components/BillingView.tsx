@@ -23,7 +23,9 @@ function FileDropZone({ onFilesSelected, acceptedFileTypes, maxFileSize, classNa
       />
       <label htmlFor="file-upload" className="cursor-pointer">
         <div className="text-muted-foreground">
-          <div className="mb-2 text-2xl">📁</div>
+          <div className="p-4 bg-primary/20 rounded-lg inline-flex mb-3">
+            <span className="text-primary text-3xl">↑</span>
+          </div>
           <p className="font-medium">Click to upload or drag and drop</p>
           <p className="text-sm">PDF files up to {maxFileSize}MB</p>
         </div>
@@ -294,7 +296,7 @@ export function BillingView({ user }: BillingViewProps) {
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg flex items-center gap-2 transition-colors font-medium shadow-lg"
             >
-              <span>📄</span>
+              <span className="text-xl">$</span>
               Upload Invoice
             </button>
           )}
@@ -306,7 +308,7 @@ export function BillingView({ user }: BillingViewProps) {
         <div className="glass-card p-6 rounded-xl hover:scale-105 transition-transform">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary/20 rounded-lg">
-              <span className="text-primary text-xl">💰</span>
+              <span className="text-primary text-xl">€</span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Amount</p>
@@ -320,7 +322,7 @@ export function BillingView({ user }: BillingViewProps) {
         <div className="glass-card p-6 rounded-xl hover:scale-105 transition-transform">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-500/20 rounded-lg">
-              <span className="text-green-600 text-xl">✅</span>
+              <span className="text-green-600 text-xl">✓</span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Paid</p>
@@ -332,7 +334,7 @@ export function BillingView({ user }: BillingViewProps) {
         <div className="glass-card p-6 rounded-xl hover:scale-105 transition-transform">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-500/20 rounded-lg">
-              <span className="text-blue-600 text-xl">📤</span>
+              <span className="text-blue-600 text-xl">↗</span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Sent</p>
@@ -344,7 +346,7 @@ export function BillingView({ user }: BillingViewProps) {
         <div className="glass-card p-6 rounded-xl hover:scale-105 transition-transform">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-red-500/20 rounded-lg">
-              <span className="text-red-600 text-xl">⚠️</span>
+              <span className="text-red-600 text-xl">!</span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
@@ -384,7 +386,9 @@ export function BillingView({ user }: BillingViewProps) {
       <div className="grid gap-4">
         {filteredInvoices.length === 0 ? (
           <div className="glass-card p-12 text-center rounded-xl">
-            <div className="text-6xl mb-4">📄</div>
+            <div className="p-4 bg-primary/20 rounded-lg inline-flex mb-4">
+              <span className="text-primary text-6xl">$</span>
+            </div>
             <p className="text-lg font-medium text-foreground font-heading">No invoices found</p>
             <p className="text-muted-foreground">
               {user.role === 'admin' 
@@ -399,7 +403,7 @@ export function BillingView({ user }: BillingViewProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary/20 rounded-lg">
-                    <span className="text-primary text-xl">📄</span>
+                    <span className="text-primary text-xl">$</span>
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -414,11 +418,11 @@ export function BillingView({ user }: BillingViewProps) {
                         {invoice.clientName}
                       </div>
                       <div className="flex items-center gap-1">
-                        <span>💰</span>
+                        <span>€</span>
                         €{invoice.amount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
                       </div>
                       <div className="flex items-center gap-1">
-                        <span>📅</span>
+                        <span>⏱</span>
                         Due: {formatDate(invoice.dueDate)}
                       </div>
                     </div>
@@ -446,7 +450,7 @@ export function BillingView({ user }: BillingViewProps) {
                     onClick={() => handlePreview(invoice)}
                     className="px-4 py-2 text-sm bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors flex items-center gap-2"
                   >
-                    <span>👁️</span>
+                    <span>👁</span>
                     Preview
                   </button>
                   
@@ -454,7 +458,7 @@ export function BillingView({ user }: BillingViewProps) {
                     onClick={() => handleDownload(invoice)}
                     className="px-4 py-2 text-sm bg-accent hover:bg-accent/80 text-accent-foreground rounded-lg transition-colors flex items-center gap-2"
                   >
-                    <span>⬇️</span>
+                    <span>↓</span>
                     Download
                   </button>
                 </div>
@@ -475,7 +479,7 @@ export function BillingView({ user }: BillingViewProps) {
                   onClick={() => setIsCreateModalOpen(false)}
                   className="text-muted-foreground hover:text-foreground p-2 hover:bg-background/50 rounded-lg transition-colors"
                 >
-                  <span className="text-xl">✕</span>
+                  <span className="text-xl">×</span>
                 </button>
               </div>
             </div>
@@ -595,7 +599,7 @@ export function BillingView({ user }: BillingViewProps) {
                   onClick={() => setPreviewModalOpen(false)}
                   className="text-muted-foreground hover:text-foreground p-2 hover:bg-background/50 rounded-lg transition-colors"
                 >
-                  <span className="text-xl">✕</span>
+                  <span className="text-xl">×</span>
                 </button>
               </div>
             </div>
@@ -609,7 +613,9 @@ export function BillingView({ user }: BillingViewProps) {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="text-6xl mb-4">📄</div>
+                    <div className="p-6 bg-primary/20 rounded-lg inline-flex mb-4">
+                      <span className="text-primary text-6xl">$</span>
+                    </div>
                     <p className="text-muted-foreground">No file available for preview</p>
                   </div>
                 </div>
