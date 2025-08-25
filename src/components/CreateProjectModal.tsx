@@ -1,55 +1,76 @@
 import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { toast } from 'sonner'
 import { FolderPlus, DollarSign } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface Project {
   id: string
   name: string
   description: string
-  trajectory: 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
+  trajectory: 'social-media' | 'web-development' | 'branding' | 'advertising'
   budget: number
   clientId: string
   clientName: string
   createdBy: string
   createdAt: string
-  status: 'active' | 'completed' | 'on-hold'
+  status: 'active' | 'paused' | 'completed'
+}
+
+interface Client {
+  id: string
+  name: string
+  email: string
 }
 
 interface CreateProjectModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onProjectCreated: (project: Project) => void
-  availableClients: { id: string; name: string; email: string; role: 'client' }[]
   currentUserId: string
+  availableClients: Client[]
 }
 
-export function CreateProjectModal({ 
+export default function CreateProjectModal({ 
   open, 
-  onOpenChange, 
+  onOpenChange,
   onProjectCreated, 
-  availableClients,
-  currentUserId 
+  currentUserId,
+  availableClients = []
 }: CreateProjectModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    trajectory: 'social-media' as 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign',
+    trajectory: 'social-media' as Project['trajectory'],
     budget: 0,
     clientId: ''
   })
 
   const trajectoryOptions = [
-    { value: 'social-media', label: '📱 Social Media Campaign', description: 'Instagram, Facebook, TikTok management' },
-    { value: 'website', label: '🌐 Website Development', description: 'Website design and development' },
-    { value: 'branding', label: '🎨 Brand Identity', description: 'Logo design, brand guidelines, visual identity' },
-    { value: 'advertising', label: '📢 Digital Advertising', description: 'Google Ads, Facebook Ads, paid campaigns' },
-    { value: 'full-campaign', label: '🚀 Full Marketing Campaign', description: 'Complete integrated marketing approach' }
+    { 
+      value: 'social-media', 
+      label: '📱 Social Media Marketing',
+      description: 'Content creation, community management, and social advertising'
+    },
+    { 
+      value: 'web-development', 
+      label: '💻 Web Development',
+      description: 'Website design, development, and maintenance'
+    },
+    { 
+      value: 'branding', 
+      label: '🎨 Branding & Design',
+      description: 'Logo design, brand identity, and visual materials'
+    },
+    { 
+      value: 'advertising', 
+      label: '📢 Digital Advertising',
+      description: 'Paid advertising campaigns across multiple platforms'
+    }
   ]
 
   const resetForm = () => {
@@ -109,6 +130,7 @@ export function CreateProjectModal({
 
     onProjectCreated(newProject)
     handleClose()
+    toast.success('Project created successfully!')
   }
 
   return (
@@ -148,7 +170,7 @@ export function CreateProjectModal({
 
             <div>
               <Label>Client *</Label>
-              <Select 
+              <Select
                 value={formData.clientId} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, clientId: value }))}
               >
@@ -191,7 +213,7 @@ export function CreateProjectModal({
               <Label>Project Trajectory *</Label>
               <Select 
                 value={formData.trajectory} 
-                onValueChange={(value: any) => setFormData(prev => ({ ...prev, trajectory: value }))}
+                onValueChange={(value: Project['trajectory']) => setFormData(prev => ({ ...prev, trajectory: value }))}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select project type" />
