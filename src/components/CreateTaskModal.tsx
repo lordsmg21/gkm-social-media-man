@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { X, Plus, Upload, FileText, Image as ImageIcon, File, Trash2 } from 'lucide-react'
 import { User } from '../App'
+import { useKV } from '@github/spark/hooks'
 
 interface TaskFile {
   id: string
@@ -45,6 +46,21 @@ interface CreateTaskModalProps {
 }
 
 export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, currentUser }: CreateTaskModalProps) {
+  // Get client list from system users
+  const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
+    { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
+    { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin' },
+    { id: '3', name: 'Mike Visser', email: 'mike@client.nl', role: 'client' },
+    { id: '4', name: 'Lisa Bakker', email: 'lisa@gkm.nl', role: 'admin' },
+    { id: '5', name: 'Jan Peters', email: 'jan@restaurant.nl', role: 'client' },
+    { id: '6', name: 'Emma de Vries', email: 'emma@boutique.nl', role: 'client' },
+    { id: '7', name: 'Tom Hendriks', email: 'tom@cafe.nl', role: 'client' },
+    { id: '8', name: 'Sophie Jansen', email: 'sophie@salon.nl', role: 'client' }
+  ])
+  
+  // Filter to get only clients
+  const availableClients = systemUsers.filter(user => user.role === 'client')
+
   const [formData, setFormData] = useState({
     title: '',
     client: '',
@@ -87,7 +103,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     }
 
     if (!formData.client.trim()) {
-      toast.error('Please enter a client name')
+      toast.error('Please select a client')
       return
     }
 
@@ -99,7 +115,7 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
     const newTask: Task = {
       id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: formData.title.trim(),
-      client: formData.client.trim(),
+      client: availableClients.find(c => c.id === formData.client)?.name || formData.client,
       platform: formData.platform,
       status: 'to-do',
       priority: formData.priority,
@@ -227,13 +243,36 @@ export function CreateTaskModal({ open, onOpenChange, onTaskCreated, users, curr
             </div>
 
             <div>
-              <Label htmlFor="client">Client Name *</Label>
-              <Input
-                id="client"
-                placeholder="e.g., Bakkerij de Korenbloem"
-                value={formData.client}
-                onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-              />
+              <Label htmlFor="client">Client *</Label>
+              {currentUser.role === 'admin' ? (
+                <Select value={formData.client} onValueChange={(value) => 
+                  setFormData(prev => ({ ...prev, client: value }))
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableClients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full" />
+                          <div>
+                            <div className="font-medium">{client.name}</div>
+                            <div className="text-xs text-muted-foreground">{client.email}</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="client"
+                  placeholder="e.g., Bakkerij de Korenbloem"
+                  value={formData.client}
+                  onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
+                />
+              )}
             </div>
           </div>
 
