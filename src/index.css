@@ -234,7 +234,7 @@
     white-space: normal;
     line-height: 1.4;
     width: 100%;
-    max-width: 100%;
+    max-width: calc(100% - 4rem); /* Account for timestamp */
   }
 
   .notification-item p {
@@ -243,27 +243,16 @@
     white-space: normal;
     line-height: 1.5;
     width: 100%;
-    max-width: 100%;
-  }
-
-  .notification-item .flex-1 {
-    min-width: 0;
-    flex: 1;
-    width: 100%;
   }
 
   .notification-buttons {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-top: 0.75rem;
     width: 100%;
   }
 
   .notification-buttons button {
     flex-shrink: 0;
     white-space: nowrap;
+    min-width: fit-content;
   }
 
 }

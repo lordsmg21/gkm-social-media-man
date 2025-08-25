@@ -120,27 +120,29 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm" 
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm notification-overlay" 
         onClick={onClose}
       />
       
-      {/* Sheet - Properly sized for long text */}
-      <div className="fixed right-0 top-0 h-screen w-full max-w-lg bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+      {/* Sheet - GKM Glassmorphism Theme */}
+      <div className="fixed right-0 top-0 h-screen w-full max-w-md sm:max-w-lg glass-modal shadow-2xl border-l border-border overflow-hidden flex flex-col notification-panel">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="p-4 sm:p-6 border-b border-border glass-card">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3 flex-1 min-w-0 pr-4">
-              <span className="text-xl flex-shrink-0">🔔</span>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex-shrink-0">Notifications</h2>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-8 h-8 bg-primary/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">🔔</span>
+              </div>
+              <h2 className="text-lg font-semibold font-heading text-foreground">Notifications</h2>
               {unreadCount > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center flex-shrink-0">
+                <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium min-w-[20px] text-center flex-shrink-0">
                   {unreadCount}
                 </span>
               )}
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex-shrink-0"
+              className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -148,18 +150,18 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
             </button>
           </div>
           
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
+          <p className="text-sm text-muted-foreground mb-4">
             Stay updated with your team and projects
           </p>
 
-          <div className="flex flex-wrap justify-between items-center gap-3">
-            <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-muted-foreground">
               {notifications.length} notifications
             </span>
             {unreadCount > 0 && (
               <button 
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors px-3 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0"
+                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors px-3 py-1 rounded-md hover:bg-primary/10"
               >
                 Mark all as read
               </button>
@@ -167,11 +169,11 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
           </div>
         </div>
 
-        {/* Content - Fixed for long text */}
+        {/* Content - Fixed for proper text wrapping and button positioning */}
         <div className="flex-1 overflow-hidden">
           <div className="h-full p-4 pb-6 space-y-4 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-12 text-muted-foreground">
                 <div className="text-4xl mb-4">🔔</div>
                 <p className="text-lg font-medium mb-2">No notifications yet</p>
                 <p className="text-sm">You're all caught up!</p>
@@ -180,67 +182,61 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
               notifications.map((notification) => (
                 <div 
                   key={notification.id}
-                  className={`p-4 rounded-lg border transition-all hover:shadow-md ${
+                  className={`notification-item glass-card p-4 rounded-lg border transition-all hover:shadow-md ${
                     !notification.read 
-                      ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20 shadow-sm' 
-                      : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                      ? 'border-primary/30 bg-primary/5 shadow-sm' 
+                      : 'border-border bg-card/50 hover:border-border/80'
                   }`}
                 >
                   <div className="flex gap-3">
-                    <div className="flex-shrink-0 text-lg mt-0.5">
+                    <div className="flex-shrink-0 text-lg mt-0.5 w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center">
                       {getIcon(notification.type)}
                     </div>
                     
-                    {/* Text container with proper wrapping */}
+                    {/* Text container with proper word wrapping */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-2 gap-3">
-                        <h4 className={`font-medium text-sm leading-tight pr-2 ${
-                          !notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'
-                        } notification-item`} style={{ 
-                          wordBreak: 'break-word',
-                          overflowWrap: 'anywhere',
-                          hyphens: 'auto',
-                          maxWidth: '75%'
-                        }}>
+                        <h4 className={`font-medium text-sm leading-snug ${
+                          !notification.read ? 'text-foreground font-semibold' : 'text-foreground/80'
+                        }`}>
                           {notification.title}
                         </h4>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0 ml-auto">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
                           {formatTime(notification.timestamp)}
                         </span>
                       </div>
                       
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3 notification-item" style={{
-                        wordBreak: 'break-word',
-                        overflowWrap: 'anywhere',
-                        hyphens: 'auto'
-                      }}>
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                         {notification.message}
                       </p>
                       
-                      {/* Status and Action Buttons - Separate sections for better layout */}
-                      <div className="space-y-2">
-                        {!notification.read && (
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">New</span>
-                          </div>
-                        )}
-                        
-                        <div className="notification-buttons flex gap-3 justify-end">
+                      {/* Status and Buttons - Proper layout to prevent cutoff */}
+                      <div className="notification-buttons">
+                        <div className="flex items-center justify-between w-full gap-3">
                           {!notification.read && (
-                            <button
-                              onClick={() => markAsRead(notification.id)}
-                              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex-shrink-0"
-                            >
-                              Mark as read
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+                              <span className="text-xs text-primary font-medium">New</span>
+                            </div>
                           )}
-                          <button
-                            onClick={() => clearNotification(notification.id)}
-                            className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
-                          >
-                            Clear
-                          </button>
+                          
+                          {/* Buttons - Properly spaced and sized */}
+                          <div className="flex gap-2 ml-auto">
+                            {!notification.read && (
+                              <button
+                                onClick={() => markAsRead(notification.id)}
+                                className="text-xs text-primary hover:text-primary/80 font-medium px-3 py-1 rounded-md border border-primary/30 hover:bg-primary/10 transition-colors"
+                              >
+                                Mark as read
+                              </button>
+                            )}
+                            <button
+                              onClick={() => clearNotification(notification.id)}
+                              className="text-xs text-destructive hover:text-destructive/80 font-medium px-3 py-1 rounded-md border border-destructive/30 hover:bg-destructive/10 transition-colors"
+                            >
+                              Clear
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -255,108 +251,3 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
   )
 }
 
-export default function App() {
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
-  const { notifications, unreadCount, addNotification } = useNotifications()
-
-  const handleAddNotification = () => {
-    const types: Array<'message' | 'task' | 'file' | 'calendar' | 'team' | 'deadline'> = 
-      ['message', 'task', 'file', 'calendar', 'team', 'deadline']
-    const randomType = types[Math.floor(Math.random() * types.length)]
-    
-    const sampleNotifications = {
-      message: { title: 'New urgent message from team lead about project changes', message: 'We need to discuss the recent changes to the project scope and timeline adjustments that were requested by the client.' },
-      task: { title: 'High priority task requires your immediate attention', message: 'The design mockups for the new landing page need to be reviewed and approved before the end of day.' },
-      file: { title: 'Important document has been shared with you', message: 'The final project specifications and requirements document has been uploaded and needs your review.' },
-      calendar: { title: 'Meeting reminder for important client presentation', message: 'Don\'t forget about the client presentation scheduled for tomorrow at 2:00 PM in the main conference room.' },
-      team: { title: 'Team announcement regarding new project assignment', message: 'A new team member has been assigned to work on the upcoming marketing campaign project.' },
-      deadline: { title: 'Project deadline is approaching soon', message: 'The final deliverables for the website redesign project are due in 2 days. Please ensure all tasks are completed.' }
-    }
-    
-    addNotification({
-      type: randomType,
-      title: sampleNotifications[randomType].title,
-      message: sampleNotifications[randomType].message,
-      read: false,
-    })
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Notification System Demo</h1>
-        
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Dashboard</h2>
-              <p className="text-gray-600 dark:text-gray-400">Manage your notifications and stay up to date</p>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddNotification}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <span>➕</span>
-                Add Notification
-              </button>
-              
-              <button
-                onClick={() => setIsNotificationOpen(true)}
-                className="relative bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <span className="text-lg">🔔</span>
-                <span>Open Notifications</span>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">💬</span>
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Messages</h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400">{notifications.filter(n => n.type === 'message' && !n.read).length} unread</p>
-            </div>
-            
-            <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">✅</span>
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Tasks</h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400">{notifications.filter(n => n.type === 'task').length} total</p>
-            </div>
-            
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">📄</span>
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Files</h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400">{notifications.filter(n => n.type === 'file').length} total</p>
-            </div>
-            
-            <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">⏰</span>
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Deadlines</h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400">{notifications.filter(n => n.type === 'deadline').length} total</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <NotificationCenter 
-        isOpen={isNotificationOpen}
-        onClose={() => setIsNotificationOpen(false)}
-      />
-    </div>
-  )
-}
