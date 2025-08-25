@@ -1,15 +1,40 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Shield, Users } from 'lucide-react'
-import { toast } from 'sonner'
-import type { User as UserType, UserRole } from '../App'
+
+// Define UserRole and UserType locally
+type UserRole = 'admin' | 'client'
+
+interface UserType {
+  id: string
+  name: string
+  email: string
+  avatar?: string
+  role: UserRole
+  isOnline?: boolean
+}
 
 interface LoginViewProps {
   onLogin: (user: UserType) => void
+}
+
+// Mock Card components
+function Card({ children, className }: { children: React.ReactNode, className?: string }) {
+  return <div className={className}>{children}</div>
+}
+
+function CardHeader({ children, className }: { children: React.ReactNode, className?: string }) {
+  return <div className={className}>{children}</div>
+}
+
+function CardTitle({ children, className }: { children: React.ReactNode, className?: string }) {
+  return <h2 className={className}>{children}</h2>
+}
+
+function CardDescription({ children, className }: { children: React.ReactNode, className?: string }) {
+  return <p className={className}>{children}</p>
+}
+
+function CardContent({ children, className }: { children: React.ReactNode, className?: string }) {
+  return <div className={className}>{children}</div>
 }
 
 export function LoginView({ onLogin }: LoginViewProps) {
@@ -29,8 +54,8 @@ export function LoginView({ onLogin }: LoginViewProps) {
       isOnline: true
     },
     {
-      id: '2', 
-      name: 'Sarah Johnson',
+      id: '2',
+      name: 'Sarah Johnson', 
       email: 'sarah@client.com',
       avatar: '',
       role: 'client' as UserRole,
@@ -38,7 +63,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
     },
     {
       id: '3',
-      name: 'Mike Peters',
+      name: 'Mike Chen',
       email: 'mike@gkm.nl', 
       avatar: '',
       role: 'admin' as UserRole,
@@ -46,8 +71,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
     }
   ]
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleLogin = async () => {
     setIsLoading(true)
 
     try {
@@ -59,19 +83,19 @@ export function LoginView({ onLogin }: LoginViewProps) {
       
       if (user) {
         onLogin(user)
-        toast.success(`Welkom terug, ${user.name}!`)
+        alert(`Welkom terug, ${user.name}!`)
       } else {
-        toast.error('Ongeldige inloggegevens')
+        alert('Ongeldige inloggegevens')
       }
     } catch (error) {
-      toast.error('Er is een fout opgetreden bij het inloggen')
+      alert('Er is een fout opgetreden bij het inloggen')
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleCreateAccount = () => {
-    toast.info('Account aanmaken functionaliteit komt binnenkort beschikbaar')
+    alert('Account aanmaken functionaliteit komt binnenkort beschikbaar')
   }
 
   return (
@@ -93,115 +117,194 @@ export function LoginView({ onLogin }: LoginViewProps) {
           <CardContent className="space-y-6">
             {/* Login Type Toggle */}
             <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
-              <Button
+              <button
                 type="button"
-                variant={loginType === 'client' ? 'default' : 'ghost'}
-                size="sm"
                 onClick={() => setLoginType('client')}
-                className={`flex items-center gap-2 ${
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
                   loginType === 'client' 
                     ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md' 
-                    : 'text-gray-600 hover:text-gray-800'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                 }`}
               >
-                <User className="w-4 h-4" />
+                <span>👤</span>
                 Klant
-              </Button>
-              <Button
+              </button>
+              
+              <button
                 type="button"
-                variant={loginType === 'admin' ? 'default' : 'ghost'}
-                size="sm"
                 onClick={() => setLoginType('admin')}
-                className={`flex items-center gap-2 ${
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
                   loginType === 'admin'
                     ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-800'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                 }`}
               >
-                <Shield className="w-4 h-4" />
+                <span>🛡️</span>
                 Admin
-              </Button>
+              </button>
             </div>
 
             {/* Login Form */}
-            <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700">E-mailadres</Label>
-                <Input
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  E-mail
+                </label>
+                <input
                   id="email"
                   type="email"
-                  placeholder="je@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder="je@voorbeeld.nl"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                   required
-                  className="bg-white/80 border-gray-200 focus:border-amber-400 focus:ring-amber-400"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-700">Wachtwoord</Label>
-                <Input
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Wachtwoord
+                </label>
+                <input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                   required
-                  className="bg-white/80 border-gray-200 focus:border-amber-400 focus:ring-amber-400"
                 />
               </div>
 
-              <Button
-                type="submit"
+              <button
+                type="button"
+                onClick={handleLogin}
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-medium py-3 shadow-lg hover:shadow-xl transition-all"
+                className="w-full bg-gradient-to-r from-amber-400 to-orange-500 text-white py-2 px-4 rounded-md font-medium shadow-lg hover:from-amber-500 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? 'Inloggen...' : 'Inloggen'}
-              </Button>
-            </form>
+              </button>
+            </div>
+
+            {/* Demo Login Options */}
+            <div className="space-y-3">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-2 text-gray-500">Demo Inloggen</span>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('alex@gkm.nl')
+                    setLoginType('admin')
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md border border-gray-200 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span>🛡️</span>
+                    <div>
+                      <div className="font-medium">Admin - Alex van der Berg</div>
+                      <div className="text-gray-500">alex@gkm.nl</div>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('sarah@client.com')
+                    setLoginType('client')
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md border border-gray-200 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span>👤</span>
+                    <div>
+                      <div className="font-medium">Client - Sarah Johnson</div>
+                      <div className="text-gray-500">sarah@client.com</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
 
             {/* Create Account */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCreateAccount}
-              className="w-full border-gray-300 text-gray-600 hover:bg-gray-50"
-            >
-              Account aanmaken
-            </Button>
-
-            <div className="text-center text-sm text-gray-500 mt-4">
-              Voor klanten van GKM. Maak een account aan of log in met je bestaande gegevens.
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Demo Credentials */}
-        <Card className="mt-4 glass-card border-amber-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-amber-800 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Demo Inloggegevens
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-xs">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="font-medium text-gray-700">Admin:</div>
-                <div className="text-gray-600">alex@gkm.nl</div>
-                <div className="text-gray-600">mike@gkm.nl</div>
-              </div>
-              <div>
-                <div className="font-medium text-gray-700">Klant:</div>
-                <div className="text-gray-600">sarah@client.com</div>
-              </div>
-            </div>
-            <div className="text-gray-500 text-center pt-2 border-t">
-              Wachtwoord: willekeurig (demo)
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleCreateAccount}
+                className="text-sm text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              >
+                Nog geen account? Maak er een aan
+              </button>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
   )
+}
+
+export default function App() {
+  const [user, setUser] = useState<UserType | null>(null)
+
+  const handleLogin = (loggedInUser: UserType) => {
+    setUser(loggedInUser)
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+  }
+
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Welkom, {user.name}!
+                </h1>
+                <p className="text-gray-600">
+                  Je bent ingelogd als {user.role === 'admin' ? 'Administrator' : 'Client'}
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                Uitloggen
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">Projecten</h3>
+                <p className="text-blue-700">Beheer je actieve projecten</p>
+              </div>
+              
+              <div className="bg-green-50 p-6 rounded-lg">
+                <h3 className="font-semibold text-green-900 mb-2">Rapporten</h3>
+                <p className="text-green-700">Bekijk je maandelijkse rapporten</p>
+              </div>
+              
+              <div className="bg-purple-50 p-6 rounded-lg">
+                <h3 className="font-semibold text-purple-900 mb-2">Facturen</h3>
+                <p className="text-purple-700">Download je facturen</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return <LoginView onLogin={handleLogin} />
 }
