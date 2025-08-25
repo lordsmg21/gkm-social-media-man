@@ -616,8 +616,9 @@ export function BillingView({ user }: BillingViewProps) {
                     <p className="text-muted-foreground">No file available for preview</p>
                   </div>
                 </div>
-                </div>
               )}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -633,7 +634,7 @@ export default function App() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <BillingView user={currentUser} />
     </div>
   )
