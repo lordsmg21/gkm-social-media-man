@@ -10,6 +10,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { 
   Plus, 
@@ -31,7 +34,11 @@ import {
   Trash2,
   Paperclip,
   Send,
-  Minimize2
+  Minimize2,
+  MessageCircle,
+  CheckCircle,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react'
 import type { User } from '../types'
 import { useKV } from '@github/spark/hooks'
@@ -50,6 +57,18 @@ interface TaskFile {
   url: string // In real app, this would be a proper file URL
 }
 
+interface TaskFeedback {
+  id: string
+  fileId?: string  // Optional: feedback on a specific file
+  message: string
+  status: 'pending' | 'approved' | 'needs-revision'
+  submittedBy: string
+  submittedAt: string
+  resolvedBy?: string
+  resolvedAt?: string
+  priority: 'low' | 'medium' | 'high'
+}
+
 interface Task {
   id: string
   title: string
@@ -63,6 +82,7 @@ interface Task {
   description?: string
   tags: string[]
   files: TaskFile[]
+  feedback?: TaskFeedback[]
   projectId?: string
 }
 
@@ -113,6 +133,11 @@ export function Projects({ user }: ProjectsProps) {
   const [mentionType, setMentionType] = useState<'task' | 'user' | null>(null)
   const [deleteTaskDialog, setDeleteTaskDialog] = useState<Task | null>(null)
   const [deleteProjectDialog, setDeleteProjectDialog] = useState<Project | null>(null)
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false)
+  const [feedbackMessage, setFeedbackMessage] = useState('')
+  const [feedbackStatus, setFeedbackStatus] = useState<'approved' | 'needs-revision'>('needs-revision')
+  const [feedbackPriority, setFeedbackPriority] = useState<'low' | 'medium' | 'high'>('medium')
+  const [selectedFile, setSelectedFile] = useState<TaskFile | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { addNotification } = useNotifications()
 
@@ -170,6 +195,7 @@ export function Projects({ user }: ProjectsProps) {
           url: '#'
         }
       ],
+      feedback: [],
       projectId: 'project1'
     },
     {
@@ -192,9 +218,10 @@ export function Projects({ user }: ProjectsProps) {
           type: 'image/png',
           uploadedBy: '3',
           uploadedAt: new Date().toISOString(),
-          url: '#'
+          url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iIzMzNzNkYyIvPjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NZW51IFBob3RvczwvdGV4dD48L3N2Zz4='
         }
       ],
+      feedback: [],
       projectId: 'project2'
     },
     {
@@ -210,6 +237,7 @@ export function Projects({ user }: ProjectsProps) {
       description: 'Comprehensive social media strategy for Q1 2024',
       tags: ['strategy', 'fitness', 'planning', 'q1'],
       files: [],
+      feedback: [],
       projectId: 'project3'
     },
     {
@@ -235,6 +263,7 @@ export function Projects({ user }: ProjectsProps) {
           url: '#'
         }
       ],
+      feedback: [],
       projectId: 'project4'
     },
     {
@@ -250,6 +279,7 @@ export function Projects({ user }: ProjectsProps) {
       description: 'Valentine\'s Day fashion promotion',
       tags: ['holiday', 'fashion', 'promotion', 'valentines'],
       files: [],
+      feedback: [],
       projectId: 'project5'
     }
   ])
@@ -930,6 +960,56 @@ export function Projects({ user }: ProjectsProps) {
     toast.success(`Project "${newProject.name}" created successfully`)
   }
 
+  // Handle feedback submission
+  const handleFeedbackSubmit = () => {
+    if (!selectedTask || !feedbackMessage.trim()) {
+      toast.error('Please provide feedback message')
+      return
+    }
+
+    const newFeedback: TaskFeedback = {
+      id: Date.now().toString(),
+      fileId: selectedFile?.id,
+      message: feedbackMessage.trim(),
+      status: feedbackStatus,
+      submittedBy: user.id,
+      submittedAt: new Date().toISOString(),
+      priority: feedbackPriority
+    }
+
+    // Update task with new feedback
+    setTasks(prevTasks => (prevTasks || []).map(task => {
+      if (task.id === selectedTask.id) {
+        return {
+          ...task,
+          feedback: [...(task.feedback || []), newFeedback],
+          // If needs revision, move back to in-progress
+          status: feedbackStatus === 'needs-revision' ? 'in-progress' : task.status
+        }
+      }
+      return task
+    }))
+
+    // Close dialog and reset form
+    setShowFeedbackDialog(false)
+    setFeedbackMessage('')
+    setSelectedFile(null)
+    setFeedbackStatus('needs-revision')
+    setFeedbackPriority('medium')
+
+    // Show success message
+    toast.success(`Feedback ${feedbackStatus === 'approved' ? 'approved' : 'submitted'} successfully`)
+
+    // Add notification for the admin team
+    addNotification({
+      type: feedbackStatus === 'approved' ? 'success' : 'warning',
+      title: `Task ${feedbackStatus === 'approved' ? 'Approved' : 'Needs Revision'}`,
+      message: `${user.name} ${feedbackStatus === 'approved' ? 'approved' : 'provided feedback on'} "${selectedTask.title}"`,
+      read: false,
+      userId: 'admin'
+    })
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] bg-background">
       {/* Header */}
@@ -1544,6 +1624,70 @@ export function Projects({ user }: ProjectsProps) {
                       </div>
                     )}
 
+                    {/* Existing Feedback Section */}
+                    {(selectedTask.feedback || []).length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-3">Feedback History</h3>
+                        <div className="space-y-3">
+                          {(selectedTask.feedback || []).map((feedback) => {
+                            const submitter = users.find(u => u.id === feedback.submittedBy)
+                            const resolver = feedback.resolvedBy ? users.find(u => u.id === feedback.resolvedBy) : null
+                            
+                            return (
+                              <div 
+                                key={feedback.id} 
+                                className={`p-4 border rounded-lg ${
+                                  feedback.status === 'approved' ? 'bg-green-50 border-green-200' :
+                                  feedback.status === 'needs-revision' ? 'bg-red-50 border-red-200' :
+                                  'bg-yellow-50 border-yellow-200'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`p-1 rounded-full ${
+                                      feedback.status === 'approved' ? 'bg-green-100' :
+                                      feedback.status === 'needs-revision' ? 'bg-red-100' :
+                                      'bg-yellow-100'
+                                    }`}>
+                                      {feedback.status === 'approved' ? (
+                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                      ) : feedback.status === 'needs-revision' ? (
+                                        <XCircle className="w-4 h-4 text-red-600" />
+                                      ) : (
+                                        <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-sm">{submitter?.name || 'Unknown User'}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {new Date(feedback.submittedAt).toLocaleString()}
+                                        {feedback.fileId && ' • On specific file'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge 
+                                    variant={feedback.priority === 'high' ? 'destructive' : 
+                                            feedback.priority === 'medium' ? 'default' : 'secondary'}
+                                    className="text-xs"
+                                  >
+                                    {feedback.priority} priority
+                                  </Badge>
+                                </div>
+                                
+                                <p className="text-sm mb-2">{feedback.message}</p>
+                                
+                                {feedback.resolvedBy && feedback.resolvedAt && (
+                                  <div className="text-xs text-muted-foreground pt-2 border-t border-current/10">
+                                    Resolved by {resolver?.name || 'Unknown'} on {new Date(feedback.resolvedAt).toLocaleDateString()}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Files List */}
                     {(selectedTask.files || []).length > 0 && (
                       <div>
@@ -1625,6 +1769,15 @@ export function Projects({ user }: ProjectsProps) {
                 <Button variant="outline" onClick={() => setShowTaskModal(false)}>
                   Close
                 </Button>
+                {user.role === 'client' && selectedTask.status === 'review' && (
+                  <Button 
+                    onClick={() => setShowFeedbackDialog(true)}
+                    className="gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Provide Feedback
+                  </Button>
+                )}
                 {user.role === 'admin' && (
                   <Button onClick={() => {
                     // In real app, this would save task changes
@@ -1640,12 +1793,123 @@ export function Projects({ user }: ProjectsProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Feedback Dialog */}
+      <Dialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
+        <DialogContent className="glass-modal max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              Provide Feedback
+            </DialogTitle>
+            {selectedTask && (
+              <p className="text-sm text-muted-foreground">
+                Task: {selectedTask.title}
+              </p>
+            )}
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Feedback Status */}
+            <div>
+              <Label className="text-sm font-medium">Decision</Label>
+              <RadioGroup 
+                value={feedbackStatus} 
+                onValueChange={(value) => setFeedbackStatus(value as 'approved' | 'needs-revision')}
+                className="flex gap-6 mt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="approved" id="approved-dialog" />
+                  <Label htmlFor="approved-dialog" className="flex items-center gap-2 cursor-pointer">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    Approve
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="needs-revision" id="needs-revision-dialog" />
+                  <Label htmlFor="needs-revision-dialog" className="flex items-center gap-2 cursor-pointer">
+                    <XCircle className="w-4 h-4 text-red-600" />
+                    Needs Revision
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Priority Level */}
+            <div>
+              <Label className="text-sm font-medium">Priority</Label>
+              <Select value={feedbackPriority} onValueChange={(value) => setFeedbackPriority(value as 'low' | 'medium' | 'high')}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">
+                    <span className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      Low Priority
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="medium">
+                    <span className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      Medium Priority
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="high">
+                    <span className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      High Priority
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Feedback Message */}
+            <div>
+              <Label className="text-sm font-medium">
+                {feedbackStatus === 'approved' ? 'Comments (Optional)' : 'Revision Notes'}
+              </Label>
+              <Textarea
+                value={feedbackMessage}
+                onChange={(e) => setFeedbackMessage(e.target.value)}
+                placeholder={feedbackStatus === 'approved' ? 
+                  "Any additional comments..." : 
+                  "Please describe what changes you'd like to see..."}
+                className="mt-2 min-h-[100px]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFeedbackDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleFeedbackSubmit}
+              disabled={feedbackStatus === 'needs-revision' && !feedbackMessage.trim()}
+            >
+              {feedbackStatus === 'approved' ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Approve Task
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Submit Feedback
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* File Preview Modal */}
       <Dialog open={!!showFilePreview} onOpenChange={() => setShowFilePreview(null)}>
-        <DialogContent className="glass-modal max-w-4xl max-h-[85vh]">
+        <DialogContent className="glass-modal max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
           {showFilePreview && (
             <>
-              <DialogHeader>
+              <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="flex items-center gap-3">
                   {getTaskFileIcon(showFilePreview.type)}
                   <div>
@@ -1657,43 +1921,155 @@ export function Projects({ user }: ProjectsProps) {
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="flex-1 flex items-center justify-center min-h-[400px] bg-muted/20 rounded-lg">
-                {showFilePreview.type.startsWith('image/') ? (
-                  <img 
-                    src={showFilePreview.url} 
-                    alt={showFilePreview.name}
-                    className="max-w-full max-h-full object-contain rounded"
-                  />
-                ) : showFilePreview.type === 'application/pdf' ? (
-                  <iframe
-                    src={showFilePreview.url}
-                    className="w-full h-[400px] border rounded"
-                    title={showFilePreview.name}
-                  />
-                ) : (
-                  <div className="text-center">
-                    {getTaskFileIcon(showFilePreview.type)}
-                    <p className="text-muted-foreground mt-2">
-                      Preview not available for this file type
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="mt-3"
-                      onClick={() => {
-                        const link = document.createElement('a')
-                        link.href = showFilePreview.url
-                        link.download = showFilePreview.name
-                        link.click()
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download File
-                    </Button>
+              <div className="flex-1 overflow-auto">
+                <ScrollArea className="h-full">
+                  <div className="flex flex-col items-center justify-center min-h-[400px] bg-muted/20 rounded-lg">
+                    {showFilePreview.type.startsWith('image/') ? (
+                      <img 
+                        src={showFilePreview.url} 
+                        alt={showFilePreview.name}
+                        className="max-w-full max-h-full object-contain rounded"
+                      />
+                    ) : showFilePreview.type === 'application/pdf' ? (
+                      <iframe
+                        src={showFilePreview.url}
+                        className="w-full h-[400px] border rounded"
+                        title={showFilePreview.name}
+                      />
+                    ) : (
+                      <div className="text-center">
+                        {getTaskFileIcon(showFilePreview.type)}
+                        <p className="text-muted-foreground mt-2">
+                          Preview not available for this file type
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="mt-3"
+                          onClick={() => {
+                            const link = document.createElement('a')
+                            link.href = showFilePreview.url
+                            link.download = showFilePreview.name
+                            link.click()
+                          }}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download File
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Client feedback section for review status */}
+                    {user.role === 'client' && selectedTask && selectedTask.status === 'review' && (
+                      <div className="w-full mt-6 p-6 space-y-4">
+                        <Separator />
+                        <div className="bg-card/50 p-4 rounded-lg">
+                          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                            <MessageCircle className="w-5 h-5" />
+                            Provide Feedback on This File
+                          </h3>
+                          
+                          <div className="space-y-4">
+                            {/* Feedback Status */}
+                            <div>
+                              <Label className="text-sm font-medium">Decision</Label>
+                              <RadioGroup 
+                                value={feedbackStatus} 
+                                onValueChange={(value) => setFeedbackStatus(value as 'approved' | 'needs-revision')}
+                                className="flex gap-6 mt-2"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="approved" id="approved-preview" />
+                                  <Label htmlFor="approved-preview" className="flex items-center gap-2 cursor-pointer">
+                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    Approve
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="needs-revision" id="needs-revision-preview" />
+                                  <Label htmlFor="needs-revision-preview" className="flex items-center gap-2 cursor-pointer">
+                                    <XCircle className="w-4 h-4 text-red-600" />
+                                    Needs Revision
+                                  </Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+
+                            {/* Priority Level */}
+                            <div>
+                              <Label className="text-sm font-medium">Priority</Label>
+                              <Select value={feedbackPriority} onValueChange={(value) => setFeedbackPriority(value as 'low' | 'medium' | 'high')}>
+                                <SelectTrigger className="mt-2">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="low">
+                                    <span className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                      Low Priority
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="medium">
+                                    <span className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                      Medium Priority
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="high">
+                                    <span className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                      High Priority
+                                    </span>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Feedback Message */}
+                            <div>
+                              <Label className="text-sm font-medium">
+                                {feedbackStatus === 'approved' ? 'Comments (Optional)' : 'Revision Notes'}
+                              </Label>
+                              <Textarea
+                                value={feedbackMessage}
+                                onChange={(e) => setFeedbackMessage(e.target.value)}
+                                placeholder={feedbackStatus === 'approved' ? 
+                                  "Any additional comments..." : 
+                                  "Please describe what changes you'd like to see..."}
+                                className="mt-2 min-h-[100px]"
+                              />
+                            </div>
+
+                            {/* Submit Feedback Button */}
+                            <Button 
+                              onClick={() => {
+                                setSelectedFile(showFilePreview)
+                                handleFeedbackSubmit()
+                                setShowFilePreview(null)
+                              }}
+                              className="w-full"
+                              disabled={feedbackStatus === 'needs-revision' && !feedbackMessage.trim()}
+                            >
+                              {feedbackStatus === 'approved' ? (
+                                <>
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Approve File
+                                </>
+                              ) : (
+                                <>
+                                  <MessageCircle className="w-4 h-4 mr-2" />
+                                  Submit Feedback
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </ScrollArea>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="flex-shrink-0">
                 <Button
                   variant="outline"
                   onClick={() => {

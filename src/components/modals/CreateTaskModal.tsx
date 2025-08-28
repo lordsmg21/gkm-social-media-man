@@ -139,6 +139,7 @@ export default function CreateTaskModal({ open, onClose, onTaskCreated, user, av
       description: formData.description.trim() || '',
       tags: tags,
       files: uploadedFiles,
+      feedback: [],
       projectId: formData.projectId === 'no-project' ? undefined : formData.projectId
     }
 

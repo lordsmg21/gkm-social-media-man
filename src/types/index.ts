@@ -21,6 +21,7 @@ export interface Task {
   client?: string
   tags?: string[]
   files?: TaskFile[]
+  feedback?: TaskFeedback[]
   projectId?: string
 }
 
@@ -32,6 +33,18 @@ export interface TaskFile {
   url: string
   uploadedAt: string
   uploadedBy: string
+}
+
+export interface TaskFeedback {
+  id: string
+  fileId?: string  // Optional: feedback on a specific file
+  message: string
+  status: 'pending' | 'approved' | 'needs-revision'
+  submittedBy: string
+  submittedAt: string
+  resolvedBy?: string
+  resolvedAt?: string
+  priority: 'low' | 'medium' | 'high'
 }
 
 export interface Project {
