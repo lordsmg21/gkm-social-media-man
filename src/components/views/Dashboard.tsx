@@ -99,6 +99,23 @@ export function Dashboard({ user }: DashboardProps) {
   const [showAdminManager, setShowAdminManager] = useState(false)
   const [showFacebookModal, setShowFacebookModal] = useState(false)
 
+  // Get Facebook account data
+  const [facebookAccounts] = useKV<{
+    id: string
+    name: string
+    status: 'connected' | 'disconnected'
+    accountId: string
+    connectedAt?: string
+    lastSync?: string
+    campaigns?: any[]
+    totalSpend?: number
+    totalReach?: number
+    totalConversions?: number
+  }[]>('facebook-accounts', [])
+
+  // Get connected Facebook data
+  const connectedFacebookAccount = facebookAccounts.find(acc => acc.status === 'connected')
+
   // Get client data from admin-managed storage if user is a client
   const [adminKpiData] = useKV<{clientId: string, revenue: number, revenueGrowth: number, projects: number, projectsGrowth: number, teamMembers: number, conversations: number, conversationsGrowth: number, facebookReach: number, facebookReachGrowth: number, instagramEngagement: number, instagramEngagementGrowth: number, messagesReceived: number, messagesReceivedGrowth: number, growthRate: number}[]>('client-kpi-data', [])
   const [adminChartData] = useKV<{name: string, revenue: number, conversations: number, messagesReceived: number, facebookReach: number, instagramEngagement: number, date: string, clientId?: string}[]>('client-chart-data', [])
@@ -136,16 +153,19 @@ export function Dashboard({ user }: DashboardProps) {
       clientId: user.id
     }
   } else {
-    // For admin, use the default admin data
+    // For admin, use Facebook data if available, otherwise default data
+    const baseFacebookReach = connectedFacebookAccount?.totalReach || 45200
+    const baseFacebookConversions = connectedFacebookAccount?.totalConversions || 1847
+    
     kpiData = {
       revenue: 125600,
       revenueGrowth: 12.5,
       projects: 28,
       projectsGrowth: 8.2,
       teamMembers: 12,
-      conversations: 1847,
+      conversations: baseFacebookConversions,
       conversationsGrowth: 23.1,
-      facebookReach: 45200,
+      facebookReach: baseFacebookReach,
       facebookReachGrowth: 15.3,
       instagramEngagement: 8.7,
       instagramEngagementGrowth: 18.9,
@@ -342,10 +362,23 @@ export function Dashboard({ user }: DashboardProps) {
           <div className="flex gap-2">
             <Button 
               onClick={() => setShowFacebookModal(true)}
-              className="glass-card bg-gradient-to-r from-blue-600/20 to-blue-800/20 backdrop-blur-md border-blue-600/30 text-foreground hover:from-blue-600/30 hover:to-blue-800/30 hover:border-blue-600/50 hover:text-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className={`glass-card backdrop-blur-md transition-all duration-300 shadow-lg hover:shadow-xl ${
+                connectedFacebookAccount 
+                  ? 'bg-gradient-to-r from-green-600/20 to-green-800/20 border-green-600/30 text-foreground hover:from-green-600/30 hover:to-green-800/30 hover:border-green-600/50 hover:text-green-600'
+                  : 'bg-gradient-to-r from-blue-600/20 to-blue-800/20 border-blue-600/30 text-foreground hover:from-blue-600/30 hover:to-blue-800/30 hover:border-blue-600/50 hover:text-blue-600'
+              }`}
             >
-              <Link className="w-4 h-4 mr-2" />
-              Connect Facebook Account
+              {connectedFacebookAccount ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Facebook Connected ({connectedFacebookAccount.campaigns?.length || 0} campaigns)
+                </>
+              ) : (
+                <>
+                  <Link className="w-4 h-4 mr-2" />
+                  Connect Facebook Account
+                </>
+              )}
             </Button>
             <Button 
               onClick={() => setShowAdminManager(true)}
@@ -461,7 +494,12 @@ export function Dashboard({ user }: DashboardProps) {
           {/* Facebook Reach */}
           <Card className="glass-card hover:glass-modal transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Facebook Reach</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Facebook Reach</CardTitle>
+                {user.role === 'admin' && connectedFacebookAccount && (
+                  <div className="w-2 h-2 bg-green-500 rounded-full" title="Facebook account connected"></div>
+                )}
+              </div>
               <Facebook className="w-4 h-4 text-blue-600" />
             </CardHeader>
             <CardContent>
@@ -470,6 +508,11 @@ export function Dashboard({ user }: DashboardProps) {
                 {React.createElement(getGrowthIcon(kpiData?.facebookReachGrowth || 0), { className: 'w-3 h-3 mr-1' })}
                 {formatGrowthValue(kpiData?.facebookReachGrowth, user.role === 'client')} from last month
               </div>
+              {user.role === 'admin' && connectedFacebookAccount && (
+                <div className="text-xs text-blue-600 mt-1">
+                  Live data from {connectedFacebookAccount.name}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -739,6 +782,109 @@ export function Dashboard({ user }: DashboardProps) {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Facebook Campaign Insights - Admin Only */}
+      {user.role === 'admin' && connectedFacebookAccount && connectedFacebookAccount.campaigns && (
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Facebook className="w-5 h-5 text-blue-600" />
+              <CardTitle>Facebook Campaign Insights</CardTitle>
+            </div>
+            <Badge className="bg-green-100 text-green-700 border-green-300">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              {connectedFacebookAccount.campaigns.length} campaigns active
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card className="p-4 bg-blue-50/50 border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-blue-600">Total Ad Spend</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      ${connectedFacebookAccount.totalSpend?.toLocaleString() || '0'}
+                    </p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-blue-600 opacity-70" />
+                </div>
+              </Card>
+              <Card className="p-4 bg-green-50/50 border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-green-600">Total Reach</p>
+                    <p className="text-2xl font-bold text-green-700">
+                      {connectedFacebookAccount.totalReach?.toLocaleString() || '0'}
+                    </p>
+                  </div>
+                  <Eye className="h-8 w-8 text-green-600 opacity-70" />
+                </div>
+              </Card>
+              <Card className="p-4 bg-purple-50/50 border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-purple-600">Conversions</p>
+                    <p className="text-2xl font-bold text-purple-700">
+                      {connectedFacebookAccount.totalConversions || '0'}
+                    </p>
+                  </div>
+                  <Target className="h-8 w-8 text-purple-600 opacity-70" />
+                </div>
+              </Card>
+              <Card className="p-4 bg-orange-50/50 border-orange-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-orange-600">Active Campaigns</p>
+                    <p className="text-2xl font-bold text-orange-700">
+                      {connectedFacebookAccount.campaigns.filter(c => c.status === 'active').length}
+                    </p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-orange-600 opacity-70" />
+                </div>
+              </Card>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm">Top Performing Campaigns</h4>
+              {connectedFacebookAccount.campaigns
+                .sort((a, b) => b.conversions - a.conversions)
+                .slice(0, 3)
+                .map((campaign) => (
+                  <div key={campaign.id} className="flex items-center justify-between p-3 bg-white/50 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        campaign.status === 'active' ? 'bg-green-500' : 
+                        campaign.status === 'paused' ? 'bg-yellow-500' : 'bg-gray-500'
+                      }`}></div>
+                      <div>
+                        <div className="font-medium text-sm">{campaign.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {campaign.conversions} conversions • ${campaign.spent.toLocaleString()} spent
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">{campaign.ctr}% CTR</div>
+                      <div className="text-xs text-muted-foreground">${campaign.cpc} CPC</div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFacebookModal(true)}
+                className="hover:bg-blue-50"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Facebook Connection
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Enhanced Recent Projects & Budget Overview */}
