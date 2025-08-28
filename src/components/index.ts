@@ -17,9 +17,9 @@ export { CreateProjectModal } from './CreateProjectModal'
 export { CreateTaskModal } from './CreateTaskModal'
 
 // Shared
-export { FileDropZone } from './FileDropZone'
-export { AdminDataManager } from './AdminDataManager'
-export { AdminDataManagerWrapper } from './AdminDataManagerWrapper'
+export { FileDropZone } from './shared/FileDropZone'
+export { AdminDataManager } from './shared/AdminDataManager'
+export { AdminDataManagerWrapper } from './shared/AdminDataManagerWrapper'
 
 // Social Media Integration
 export { SocialMediaIntegration } from './SocialMediaIntegration'

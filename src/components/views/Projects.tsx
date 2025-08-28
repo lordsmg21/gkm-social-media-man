@@ -33,12 +33,12 @@ import {
   Send,
   Minimize2
 } from 'lucide-react'
-import { User } from '../types'
+import type { User } from '@/types'
 import { useKV } from '@github/spark/hooks'
-import { FileDropZone } from './FileDropZone'
-import CreateTaskModal from './modals/CreateTaskModal'
-import CreateProjectModal from './modals/CreateProjectModal'
-import { useNotifications } from './NotificationCenter'
+import { FileDropZone } from '../shared/FileDropZone'
+import CreateTaskModal from '../modals/CreateTaskModal'
+import CreateProjectModal from '../modals/CreateProjectModal'
+import { useNotifications } from '@/hooks'
 
 interface TaskFile {
   id: string
