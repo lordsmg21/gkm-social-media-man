@@ -31,7 +31,7 @@ import {
   Plus,
   AlertTriangle
 } from 'lucide-react'
-import { User, UserRole } from '../App'
+import { User, UserRole } from '../types'
 import { useKV } from '@github/spark/hooks'
 
 interface SettingsViewProps {

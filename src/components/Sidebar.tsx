@@ -15,7 +15,7 @@ import {
   LogOut,
   Receipt
 } from 'lucide-react'
-import { User } from '../App'
+import { User } from '../types'
 import { NotificationCenter, useNotifications } from './NotificationCenter'
 import GKMLogo from '@/assets/images/gkm-logo.svg'
 

@@ -24,7 +24,7 @@ import {
   Users,
   User as UserIcon
 } from 'lucide-react'
-import { User } from '../App'
+import { User } from '../types'
 import { useKV } from '@github/spark/hooks'
 
 interface FileItem {

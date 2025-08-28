@@ -15,8 +15,6 @@ export { NotificationCenter } from './NotificationCenter'
 // Modals
 export { CreateProjectModal } from './CreateProjectModal'
 export { CreateTaskModal } from './CreateTaskModal'
-export { FacebookConnectionModal } from './modals/FacebookConnectionModal'
-export { InstagramConnectionModal } from './modals/InstagramConnectionModal'
 
 // Shared
 export { FileDropZone } from './FileDropZone'

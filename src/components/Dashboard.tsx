@@ -34,7 +34,7 @@ import {
   Plus,
   Edit
 } from 'lucide-react'
-import { User } from '../App'
+import { User } from '../types'
 import { useKV } from '@github/spark/hooks'
 import { AdminDataManagerWrapper as AdminDataManager } from './AdminDataManagerWrapper'
 

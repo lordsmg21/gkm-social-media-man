@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { User as UserIcon, Shield } from 'lucide-react'
 import { useKV } from '@github/spark/hooks'
-import { User, UserRole } from '../App'
+import { User, UserRole } from '../types'
 import GKMLogo from '@/assets/images/gkm-logo.svg'
 
 type Props = { onLogin?: (user: User) => void }

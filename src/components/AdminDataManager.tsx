@@ -60,7 +60,7 @@ type Props = {
   onClose: () => void
 }
 
-export default function ClientDataManager({ open, onClose }: Props) {
+export function AdminDataManager({ open, onClose }: Props) {
   const [systemUsers] = useKV<{ id: string; name: string; email: string; role: 'admin' | 'client' }[]>('system-users', [
     { id: '1', name: 'Alex van der Berg', email: 'alex@gkm.nl', role: 'admin' },
     { id: '2', name: 'Sarah de Jong', email: 'sarah@gkm.nl', role: 'admin' },

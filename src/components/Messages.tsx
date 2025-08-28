@@ -32,7 +32,7 @@ import {
   Image as ImageIcon,
   Eye
 } from 'lucide-react'
-import { User } from '../App'
+import { User } from '../types'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { useNotifications } from './NotificationCenter'

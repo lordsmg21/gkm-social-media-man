@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select'
 import { FolderPlus, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
-import { User } from '../App'
+import { User } from '../types'
 
 type Trajectory = 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
 
@@ -47,7 +47,7 @@ type CreateProjectModalProps = {
   availableClients: Client[]
 }
 
-export default function CreateProjectModal({
+export function CreateProjectModal({
   open,
   onClose,
   onProjectCreated,

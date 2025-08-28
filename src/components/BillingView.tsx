@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { User } from '../App'
+import { User } from '../types'
 
 // Mock FileDropZone component since it's not available
 function FileDropZone({ onFilesSelected, acceptedFileTypes, maxFileSize, className }: {
@@ -618,21 +618,6 @@ export function BillingView({ user }: BillingViewProps) {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-export default function App() {
-  const [currentUser] = useState<AppUser>({
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@company.com',
-    role: 'admin'
-  })
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <BillingView user={currentUser} />
     </div>
   )
 }
