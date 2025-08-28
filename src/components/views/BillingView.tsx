@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { User } from '../App'
+import type { User } from '@/types'
 
 // Mock FileDropZone component since it's not available
 function FileDropZone({ onFilesSelected, acceptedFileTypes, maxFileSize, className }: {

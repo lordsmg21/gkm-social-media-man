@@ -33,7 +33,7 @@ import {
   Send,
   Minimize2
 } from 'lucide-react'
-import { User } from '../App'
+import type { User } from '@/types'
 import { useKV } from '@github/spark/hooks'
 import { FileDropZone } from './FileDropZone'
 import { CreateTaskModal } from './CreateTaskModal'

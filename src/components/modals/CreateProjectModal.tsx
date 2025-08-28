@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select'
 import { FolderPlus, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
-import { User } from '../App'
+import type { User } from '@/types'
 
 type Trajectory = 'social-media' | 'website' | 'branding' | 'advertising' | 'full-campaign'
 

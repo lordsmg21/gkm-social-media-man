@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { X, Plus, Upload, FileText, Image as ImageIcon, File, Trash2 } from 'lucide-react'
-import { User } from '../App'
+import type { User } from '@/types'
 import { useKV } from '@github/spark/hooks'
 
 interface TaskFile {
