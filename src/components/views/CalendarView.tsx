@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import type { User } from '@/types'
 import { useKV } from '@github/spark/hooks'
-import { useNotifications } from './NotificationCenter'
+import { useNotifications } from '@/hooks'
 
 interface CalendarEvent {
   id: string

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -36,26 +35,9 @@ import {
   Settings,
   Link
 } from 'lucide-react'
-import type { User } from '../../types'
-import { useKV, useSocialMediaSync } from '../../hooks'
+import type { User } from '@/types'
+import { useKV, useSocialMediaSync } from '@/hooks'
 import { AdminDataManagerWrapper as AdminDataManager } from '../shared/AdminDataManagerWrapper'
-import { SocialMediaIntegration } from '../SocialMediaIntegration'
-import { CampaignAnalytics } from '../CampaignAnalytics'
-import { toast } from 'sonner'
-  ArrowDown,
-  Calendar,
-  Filter,
-  Download,
-  BarChart3,
-  LineChart,
-  PieChart,
-  Plus,
-  Edit,
-  Link
-} from 'lucide-react'
-import type { User } from '../../types'
-import { useKV, useSocialMediaSync } from '../../hooks'
-import { AdminDataManagerWrapper as AdminDataManager } from '../AdminDataManagerWrapper'
 import { SocialMediaIntegration } from '../SocialMediaIntegration'
 import { CampaignAnalytics } from '../CampaignAnalytics'
 import { toast } from 'sonner'

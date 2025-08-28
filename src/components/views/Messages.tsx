@@ -35,7 +35,7 @@ import {
 import type { User } from '@/types'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
-import { useNotifications } from './NotificationCenter'
+import { useNotifications } from '@/hooks'
 
 interface Message {
   id: string

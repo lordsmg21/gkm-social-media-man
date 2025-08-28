@@ -38,7 +38,7 @@ import { useKV } from '@github/spark/hooks'
 import { FileDropZone } from './FileDropZone'
 import { CreateTaskModal } from './CreateTaskModal'
 import CreateProjectModal from './CreateProjectModal'
-import { useNotifications } from './NotificationCenter'
+import { useNotifications } from '@/hooks'
 
 interface TaskFile {
   id: string
