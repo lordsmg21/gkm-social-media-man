@@ -32,11 +32,13 @@ import {
   LineChart,
   PieChart,
   Plus,
-  Edit
+  Edit,
+  Link
 } from 'lucide-react'
 import type { User } from '@/types'
 import { useKV } from '@github/spark/hooks'
 import { AdminDataManagerWrapper as AdminDataManager } from '@/components/shared/AdminDataManagerWrapper'
+import { FacebookConnectionModal } from '@/components'
 
 interface RecentProject {
   id: string
@@ -95,6 +97,7 @@ export function Dashboard({ user }: DashboardProps) {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
   const [selectedChart, setSelectedChart] = useState('revenue')
   const [showAdminManager, setShowAdminManager] = useState(false)
+  const [showFacebookModal, setShowFacebookModal] = useState(false)
 
   // Get client data from admin-managed storage if user is a client
   const [adminKpiData] = useKV<{clientId: string, revenue: number, revenueGrowth: number, projects: number, projectsGrowth: number, teamMembers: number, conversations: number, conversationsGrowth: number, facebookReach: number, facebookReachGrowth: number, instagramEngagement: number, instagramEngagementGrowth: number, messagesReceived: number, messagesReceivedGrowth: number, growthRate: number}[]>('client-kpi-data', [])
@@ -338,6 +341,13 @@ export function Dashboard({ user }: DashboardProps) {
         {user.role === 'admin' && (
           <div className="flex gap-2">
             <Button 
+              onClick={() => setShowFacebookModal(true)}
+              className="glass-card bg-gradient-to-r from-blue-600/20 to-blue-800/20 backdrop-blur-md border-blue-600/30 text-foreground hover:from-blue-600/30 hover:to-blue-800/30 hover:border-blue-600/50 hover:text-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <Link className="w-4 h-4 mr-2" />
+              Connect Facebook Account
+            </Button>
+            <Button 
               onClick={() => setShowAdminManager(true)}
               className="glass-card bg-gradient-to-r from-primary/20 to-accent/20 backdrop-blur-md border-primary/30 text-foreground hover:from-primary/30 hover:to-accent/30 hover:border-primary/50 hover:text-primary transition-all duration-300 shadow-lg hover:shadow-xl"
             >
@@ -347,11 +357,6 @@ export function Dashboard({ user }: DashboardProps) {
           </div>
         )}
       </div>
-
-      {/* Admin Data Manager Modal */}
-      {user.role === 'admin' && showAdminManager && (
-        <AdminDataManager onClose={() => setShowAdminManager(false)} />
-      )}
 
       {/* Show message for clients with no data */}
       {user.role === 'client' && (!kpiData || (kpiData.revenue === 0 && kpiData.conversations === 0 && kpiData.projects === 0)) && (
@@ -881,6 +886,20 @@ export function Dashboard({ user }: DashboardProps) {
           </Card>
         </div>
       )}
+
+      {/* Admin Data Manager Modal */}
+      {showAdminManager && user.role === 'admin' && (
+        <AdminDataManager 
+          open={showAdminManager}
+          onOpenChange={setShowAdminManager}
+        />
+      )}
+
+      {/* Facebook Connection Modal */}
+      <FacebookConnectionModal
+        open={showFacebookModal}
+        onOpenChange={setShowFacebookModal}
+      />
     </div>
   )
 }
