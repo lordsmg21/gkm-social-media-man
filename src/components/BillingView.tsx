@@ -1,40 +1,7 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { User } from '../types'
-
-// Mock FileDropZone component since it's not available
-function FileDropZone({ onFilesSelected, acceptedFileTypes, maxFileSize, className }: {
-  onFilesSelected: (files: File[]) => void
-  acceptedFileTypes: string[]
-  maxFileSize: number
-  className?: string
-}) {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    onFilesSelected(files)
-  }
-
-  return (
-    <div className={`glass-card border-2 border-dashed border-primary/30 rounded-xl p-6 text-center hover:border-primary/50 transition-colors ${className}`}>
-      <input
-        type="file"
-        accept={acceptedFileTypes.join(',')}
-        onChange={handleFileChange}
-        className="hidden"
-        id="file-upload"
-      />
-      <label htmlFor="file-upload" className="cursor-pointer">
-        <div className="text-muted-foreground">
-          <div className="p-4 bg-primary/20 rounded-lg inline-flex mb-3">
-            <span className="text-primary text-3xl">↑</span>
-          </div>
-          <p className="font-medium">Click to upload or drag and drop</p>
-          <p className="text-sm">PDF files up to {maxFileSize}MB</p>
-        </div>
-      </label>
-    </div>
-  )
-}
+import { FileDropZone } from './FileDropZone'
 
 interface Invoice {
   id: string

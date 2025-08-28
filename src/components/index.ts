@@ -12,14 +12,9 @@ export { LoginView } from './LoginView'
 export { Sidebar } from './Sidebar'
 export { NotificationCenter } from './NotificationCenter'
 
-// Modals
-export { CreateProjectModal } from './CreateProjectModal'
-export { CreateTaskModal } from './CreateTaskModal'
-
 // Shared
-export { FileDropZone } from './shared/FileDropZone'
-export { AdminDataManager } from './shared/AdminDataManager'
-export { AdminDataManagerWrapper } from './shared/AdminDataManagerWrapper'
+export { FileDropZone } from './FileDropZone'
+export { AdminDataManager } from './AdminDataManager'
 
 // Social Media Integration
 export { SocialMediaIntegration } from './SocialMediaIntegration'

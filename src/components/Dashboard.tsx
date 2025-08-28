@@ -36,7 +36,7 @@ import {
 } from 'lucide-react'
 import { User } from '../types'
 import { useKV } from '@github/spark/hooks'
-import { AdminDataManagerWrapper as AdminDataManager } from './AdminDataManagerWrapper'
+import { AdminDataManager } from './AdminDataManager'
 
 interface RecentProject {
   id: string
@@ -350,7 +350,7 @@ export function Dashboard({ user }: DashboardProps) {
 
       {/* Admin Data Manager Modal */}
       {user.role === 'admin' && showAdminManager && (
-        <AdminDataManager onClose={() => setShowAdminManager(false)} />
+        <AdminDataManager open={showAdminManager} onClose={() => setShowAdminManager(false)} />
       )}
 
       {/* Show message for clients with no data */}
