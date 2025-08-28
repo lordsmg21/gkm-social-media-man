@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scrollarea'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { X, Bell, Trash2 } from 'lucide-react'
 import { useNotifications } from '@/hooks'
 import type { User } from '@/types'
