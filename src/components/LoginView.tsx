@@ -59,12 +59,12 @@ export function LoginView({ onLogin }: Props) {
         return
       }
 
-      // Create new user
+      // Only allow client registration - force role to client
       const newUser: User = {
-        id: `${loginType}-${Date.now()}`,
+        id: `client-${Date.now()}`,
         name: name.trim(),
         email: email.toLowerCase().trim(),
-        role: loginType,
+        role: 'client', // Always force client role for registration
         isOnline: false
       }
 
@@ -94,6 +94,7 @@ export function LoginView({ onLogin }: Props) {
 
   const switchToRegister = () => {
     setShowRegistration(true)
+    setLoginType('client') // Force client role for registration
     setEmail('')
     setPassword('')
     setName('')
@@ -127,32 +128,43 @@ export function LoginView({ onLogin }: Props) {
           </div>
           <CardTitle className="text-center">GKM Portal</CardTitle>
           <CardDescription className="text-center">
-            {showRegistration ? 'Maak een nieuw account aan' : 'Log in of gebruik een demo-account.'}
+            {showRegistration ? 'Maak een nieuw client account aan' : 'Log in of gebruik een demo-account.'}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="text-center">
-          {/* Rol-toggle */}
-          <div className="flex bg-muted rounded-xl p-1 mb-4">
-            <button
-              type="button"
-              className={`flex-1 px-4 py-2 rounded-lg text-sm ${
-                loginType === 'admin' ? 'bg-background/80 backdrop-blur-sm shadow' : ''
-              }`}
-              onClick={() => setLoginType('admin')}
-            >
-              Admin
-            </button>
-            <button
-              type="button"
-              className={`flex-1 px-4 py-2 rounded-lg text-sm ${
-                loginType === 'client' ? 'bg-background/80 backdrop-blur-sm shadow' : ''
-              }`}
-              onClick={() => setLoginType('client')}
-            >
-              Client
-            </button>
-          </div>
+          {/* Rol-toggle - Only show during login, not registration */}
+          {!showRegistration && (
+            <div className="flex bg-muted rounded-xl p-1 mb-4">
+              <button
+                type="button"
+                className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                  loginType === 'admin' ? 'bg-background/80 backdrop-blur-sm shadow' : ''
+                }`}
+                onClick={() => setLoginType('admin')}
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                className={`flex-1 px-4 py-2 rounded-lg text-sm ${
+                  loginType === 'client' ? 'bg-background/80 backdrop-blur-sm shadow' : ''
+                }`}
+                onClick={() => setLoginType('client')}
+              >
+                Client
+              </button>
+            </div>
+          )}
+
+          {/* Registration notice for clients only */}
+          {showRegistration && (
+            <div className="mb-4 p-3 bg-blue-50/80 border border-blue-200/50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                Nieuwe accounts worden aangemaakt als client accounts.
+              </p>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={showRegistration ? handleCreateAccount : handleLogin} className="space-y-4">
@@ -234,7 +246,7 @@ export function LoginView({ onLogin }: Props) {
           >
             {showRegistration 
               ? 'Al een account? Log hier in' 
-              : 'Nog geen account? Maak er een aan'
+              : 'Nog geen client account? Maak er een aan'
             }
           </button>
         </CardFooter>
