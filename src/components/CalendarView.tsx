@@ -60,7 +60,10 @@ export function CalendarView({ user }: CalendarViewProps) {
   const { addNotification } = useNotifications()
   
   // Get clients for role-based filtering
-  const [clients] = useKV<Array<{id: string, name: string, email: string}>>('users-clients', [])
+  const [clients] = useKV<Array<{id: string, name: string, email: string, role: string}>>('users-clients', [])
+  
+  // Get all users for client selection
+  const [allUsers] = useKV<Array<{id: string, name: string, email: string, role: string}>>('users', [])
   
   const [events, setEvents] = useKV<CalendarEvent[]>('calendar-events', [
     {
@@ -118,9 +121,9 @@ export function CalendarView({ user }: CalendarViewProps) {
       // Admins see all events
       return events || []
     } else {
-      // Clients see only their events (events where client matches their name or no client specified for team events)
+      // Clients see only their events (events where client matches their name or events without client assignment)
       return (events || []).filter(event => 
-        !event.client || event.client === user.name
+        event.client === user.name || !event.client
       )
     }
   }, [events, user.role, user.name])
@@ -273,7 +276,7 @@ export function CalendarView({ user }: CalendarViewProps) {
 
     setEvents(prev => [...(prev || []), eventToAdd])
     
-    // Generate notification for new event
+    // Generate notification for the event creator
     addNotification({
       type: 'deadline',
       title: 'Event Created',
@@ -282,6 +285,21 @@ export function CalendarView({ user }: CalendarViewProps) {
       userId: user.id,
       actionData: { eventId: eventToAdd.id }
     })
+    
+    // If admin creates event for a client, notify the client too
+    if (user.role === 'admin' && newEvent.client) {
+      const selectedClient = allUsers.find(u => u.name === newEvent.client && u.role === 'client')
+      if (selectedClient) {
+        addNotification({
+          type: 'deadline',
+          title: 'New Event Scheduled',
+          message: `"${newEvent.title}" has been scheduled for ${eventDate.toLocaleDateString('nl-NL')} at ${eventDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`,
+          read: false,
+          userId: selectedClient.id,
+          actionData: { eventId: eventToAdd.id }
+        })
+      }
+    }
     
     setShowCreateModal(false)
     setNewEvent({
@@ -669,30 +687,31 @@ export function CalendarView({ user }: CalendarViewProps) {
             
             <div>
               <label className="text-sm font-medium text-muted-foreground">Client (Optional)</label>
-              {user.role === 'admin' && clients.length > 0 ? (
+              {user.role === 'admin' ? (
                 <Select 
                   value={newEvent.client} 
                   onValueChange={(value) => setNewEvent(prev => ({ ...prev, client: value }))}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select client" />
+                    <SelectValue placeholder="Select client (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.name}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="">No specific client</SelectItem>
+                    {allUsers
+                      .filter(user => user.role === 'client')
+                      .map((client) => (
+                        <SelectItem key={client.id} value={client.name}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               ) : (
                 <Input 
-                  placeholder="Client name" 
+                  placeholder="This event is for you" 
                   className="mt-1" 
-                  value={newEvent.client}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, client: e.target.value }))}
-                  disabled={user.role === 'client'}
+                  value={user.name}
+                  disabled={true}
                 />
               )}
             </div>
