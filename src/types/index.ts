@@ -119,3 +119,63 @@ export interface CalendarEvent {
   attendees?: string[]
   projectId?: string
 }
+
+export interface SocialMediaAccount {
+  id: string
+  platform: 'facebook' | 'instagram'
+  accountId: string
+  accountName: string
+  accessToken?: string
+  isConnected: boolean
+  connectedAt?: string
+  lastSyncAt?: string
+}
+
+export interface Campaign {
+  id: string
+  platform: 'facebook' | 'instagram'
+  accountId: string
+  name: string
+  status: 'active' | 'paused' | 'completed'
+  objective: string
+  budget: number
+  budgetType: 'daily' | 'lifetime'
+  spend: number
+  impressions: number
+  clicks: number
+  reach: number
+  conversions: number
+  cpm: number
+  cpc: number
+  ctr: number
+  startDate: string
+  endDate?: string
+  createdAt: string
+  updatedAt: string
+  clientId?: string
+}
+
+export interface AdInsight {
+  campaignId: string
+  platform: 'facebook' | 'instagram'
+  date: string
+  impressions: number
+  clicks: number
+  spend: number
+  reach: number
+  conversions: number
+  videoViews?: number
+  engagements?: number
+  comments?: number
+  shares?: number
+  saves?: number
+}
+
+export interface SocialMediaSync {
+  isEnabled: boolean
+  syncInterval: number // in minutes
+  lastSync: string
+  accounts: SocialMediaAccount[]
+  campaigns: Campaign[]
+  insights: AdInsight[]
+}

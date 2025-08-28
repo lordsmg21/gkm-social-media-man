@@ -22,3 +22,7 @@ export { InstagramConnectionModal } from './modals/InstagramConnectionModal'
 export { FileDropZone } from './shared/FileDropZone'
 export { AdminDataManager } from './shared/AdminDataManager'
 export { AdminDataManagerWrapper } from './shared/AdminDataManagerWrapper'
+
+// Social Media Integration
+export { SocialMediaIntegration } from './SocialMediaIntegration'
+export { CampaignAnalytics } from './CampaignAnalytics'

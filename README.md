@@ -1,139 +1,23 @@
-# GKM Portal - Optimized Structure
+# ✨ Welcome to Your Spark Template!
+You've just launched your brand-new Spark Template Codespace — everything’s fired up and ready for you to explore, build, and create with Spark!
 
-## 🏗️ Project Architecture
+This template is your blank canvas. It comes with a minimal setup to help you get started quickly with Spark development.
 
-### Directory Structure
-```
-src/
-├── components/
-│   ├── layout/              # Layout components (Sidebar, NotificationCenter)
-│   ├── views/               # Main view components (Dashboard, Messages, etc.)
-│   ├── modals/              # Modal components (CreateTaskModal, etc.)
-│   ├── shared/              # Reusable components
-│   ├── ui/                  # shadcn/ui components
-│   └── index.ts             # Component exports
-├── hooks/                   # Custom React hooks
-│   ├── useAuth.ts           # Authentication management
-│   ├── useProjects.ts       # Projects & tasks management
-│   ├── useMessages.ts       # Messaging system
-│   ├── useFileUpload.ts     # File management
-│   ├── useNotifications.ts  # Notification system
-│   ├── useUserManagement.ts # User & client management
-│   └── index.ts             # Hook exports
-├── types/                   # TypeScript type definitions
-│   └── index.ts             # All interfaces and types
-├── lib/                     # Utilities and constants
-│   ├── utils.ts             # Utility functions
-│   └── constants.ts         # App constants
-└── assets/                  # Static assets
-    ├── images/
-    ├── video/
-    ├── audio/
-    └── documents/
-```
+🚀 What's Inside?
+- A clean, minimal Spark environment
+- Pre-configured for local development
+- Ready to scale with your ideas
+  
+🧠 What Can You Do?
 
-## 📦 Core Components
+Right now, this is just a starting point — the perfect place to begin building and testing your Spark applications.
 
-### Layout Components (`/components/layout/`)
-- **Sidebar**: Main navigation with glassmorphism theme
-- **NotificationCenter**: Real-time notification panel
+🧹 Just Exploring?
+No problem! If you were just checking things out and don’t need to keep this code:
 
-### View Components (`/components/views/`)
-- **Dashboard**: KPI cards and analytics
-- **Messages**: Team communication system
-- **Projects**: Kanban board with task management
-- **CalendarView**: Google Calendar integration
-- **FileManager**: File upload/preview system
-- **BillingView**: Invoice management
-- **SettingsView**: User preferences & management
-- **LoginView**: Authentication interface
+- Simply delete your Spark.
+- Everything will be cleaned up — no traces left behind.
 
-### Modal Components (`/components/modals/`)
-- **CreateTaskModal**: Task creation form
-- **CreateProjectModal**: Project creation form
+📄 License For Spark Template Resources 
 
-## 🎣 Custom Hooks
-
-### Authentication (`useAuth`)
-```typescript
-const { currentUser, login, logout, updateUser, isAdmin, isClient } = useAuth()
-```
-
-### Projects & Tasks (`useTasks`, `useProjects`)
-```typescript
-const { tasks, addTask, updateTask, deleteTask } = useTasks()
-const { projects, addProject, deleteProject } = useProjects()
-```
-
-### Messaging (`useMessages`)
-```typescript
-const { messages, sendMessage, createConversation } = useMessages()
-```
-
-### File Management (`useFileUpload`)
-```typescript
-const { files, uploadFile, deleteFile, getFilesByUser } = useFileUpload()
-```
-
-### Notifications (`useNotifications`)
-```typescript
-const { addNotification, getUserNotifications, markAsRead } = useNotifications()
-```
-
-### User Management (`useUserManagement`)
-```typescript
-const { users, addUser, getClientUsers, updateClientData } = useUserManagement()
-```
-
-## 🎨 Design System
-
-### Glassmorphism Theme
-- **Primary Color**: GKM Gold/Orange gradient
-- **Background**: Semi-transparent cards with backdrop blur
-- **Consistency**: Unified design language across components
-
-### Component Organization
-- Centralized exports via index files
-- Consistent import patterns
-- Type-safe interfaces
-
-## 🔧 Optimizations Implemented
-
-1. **Modular Architecture**: Components organized by function
-2. **Custom Hooks**: Business logic separated from UI
-3. **Type Safety**: Centralized TypeScript definitions
-4. **Reusable Utilities**: Common functions in utils library
-5. **Constants Management**: Centralized configuration
-6. **Clean Imports**: Index files for organized imports
-7. **Performance**: Optimized state management with useKV hooks
-
-## 🚀 Usage Examples
-
-### Adding New Features
-```typescript
-// Import optimized hooks and types
-import { useTasks, useNotifications } from '@/hooks'
-import type { Task } from '@/types'
-
-// Use centralized business logic
-const { addTask } = useTasks()
-const { addNotification } = useNotifications()
-```
-
-### Component Organization
-```typescript
-// Clean imports from organized structure
-import { 
-  Dashboard, 
-  Projects, 
-  CreateTaskModal 
-} from '@/components'
-```
-
-This optimized structure provides:
-- ✅ Better maintainability
-- ✅ Improved code reusability
-- ✅ Type safety throughout
-- ✅ Consistent patterns
-- ✅ Easier testing and debugging
-- ✅ Scalable architecture for future features
+The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
