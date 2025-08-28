@@ -61,7 +61,7 @@ interface CreateTaskModalProps {
   users: User[]
 }
 
-export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableClients, projects, users }: CreateTaskModalProps) {
+export default function CreateTaskModal({ open, onClose, onTaskCreated, user, availableClients, projects, users }: CreateTaskModalProps) {
   // Only allow admins to create tasks
   if (user.role !== 'admin') {
     return null

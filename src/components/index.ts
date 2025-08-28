@@ -13,15 +13,15 @@ export { Sidebar } from './Sidebar'
 export { NotificationCenter } from './NotificationCenter'
 
 // Modals
-export { CreateProjectModal } from './CreateProjectModal'
-export { CreateTaskModal } from './CreateTaskModal'
+export { default as CreateProjectModal } from './modals/CreateProjectModal'
+export { default as CreateTaskModal } from './modals/CreateTaskModal'
 export { FacebookConnectionModal } from './modals/FacebookConnectionModal'
 export { InstagramConnectionModal } from './modals/InstagramConnectionModal'
 
 // Shared
-export { FileDropZone } from './FileDropZone'
-export { AdminDataManager } from './AdminDataManager'
-export { AdminDataManagerWrapper } from './AdminDataManagerWrapper'
+export { FileDropZone } from './shared/FileDropZone'
+export { AdminDataManager } from './shared/AdminDataManager'
+export { AdminDataManagerWrapper } from './shared/AdminDataManagerWrapper'
 
 // Social Media Integration
 export { SocialMediaIntegration } from './SocialMediaIntegration'
