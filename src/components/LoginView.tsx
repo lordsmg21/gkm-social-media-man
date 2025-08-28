@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { User as UserIcon, Shield } from 'lucide-react'
 import { useKV } from '@github/spark/hooks'
 import { User, UserRole } from '../types'
+import { useAuth } from '../hooks'
 import GKMLogo from '@/assets/images/gkm-logo.svg'
 
 type Props = { onLogin?: (user: User) => void }
@@ -24,9 +25,12 @@ const defaultUsers: User[] = [
 export function LoginView({ onLogin }: Props) {
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
+  const [name, setName] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [loginType, setLoginType] = useState<UserRole>('client')
+  const [showRegistration, setShowRegistration] = useState<boolean>(false)
   const [allUsers, setAllUsers] = useKV<User[]>('system-users', defaultUsers)
+  const { registerUser } = useAuth()
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,8 +46,57 @@ export function LoginView({ onLogin }: Props) {
     setIsLoading(false)
   }
 
-  const handleCreateAccount = () => {
-    alert('Account aanmaken is nog niet beschikbaar in deze demo.')
+  const handleCreateAccount = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    
+    try {
+      // Check if user already exists
+      const existingUser = allUsers.find(user => user.email === email)
+      if (existingUser) {
+        alert('Een gebruiker met dit e-mailadres bestaat al.')
+        setIsLoading(false)
+        return
+      }
+
+      // Create new user
+      const newUser: User = {
+        id: `${loginType}-${Date.now()}`,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        role: loginType,
+        isOnline: false
+      }
+
+      // Add to users list in system and auth
+      const updatedUsers = [...allUsers, newUser]
+      setAllUsers(updatedUsers)
+      registerUser(newUser)
+
+      // Log in the new user
+      const loginUser = { ...newUser, isOnline: true }
+      onLogin?.(loginUser)
+      
+    } catch (error) {
+      console.error('Registration error:', error)
+      alert('Er is een fout opgetreden bij het aanmaken van de account.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const switchToLogin = () => {
+    setShowRegistration(false)
+    setName('')
+    setEmail('')
+    setPassword('')
+  }
+
+  const switchToRegister = () => {
+    setShowRegistration(true)
+    setEmail('')
+    setPassword('')
+    setName('')
   }
 
   const autofill = (role: UserRole) => {
@@ -73,7 +126,9 @@ export function LoginView({ onLogin }: Props) {
             <img src={GKMLogo} alt="GKM Logo" className="h-16 w-auto" />
           </div>
           <CardTitle className="text-center">GKM Portal</CardTitle>
-          <CardDescription className="text-center">Log in of gebruik een demo-account.</CardDescription>
+          <CardDescription className="text-center">
+            {showRegistration ? 'Maak een nieuw account aan' : 'Log in of gebruik een demo-account.'}
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="text-center">
@@ -100,7 +155,23 @@ export function LoginView({ onLogin }: Props) {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={showRegistration ? handleCreateAccount : handleLogin} className="space-y-4">
+            {showRegistration && (
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-1">
+                  Volledige naam
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  className="w-full px-3 py-2 border border-input rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-ring text-left"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={showRegistration}
+                />
+              </div>
+            )}
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-1">
                 Email
@@ -130,33 +201,41 @@ export function LoginView({ onLogin }: Props) {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Bezig met inloggen…' : 'Inloggen'}
+              {isLoading 
+                ? (showRegistration ? 'Account wordt aangemaakt…' : 'Bezig met inloggen…')
+                : (showRegistration ? 'Account aanmaken' : 'Inloggen')
+              }
             </Button>
           </form>
 
-          {/* Demo-accounts */}
-          <div className="mt-6">
-            <p className="text-sm text-muted-foreground mb-2">Demo accounts:</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Button type="button" variant="outline" className="text-xs" onClick={() => autofill('admin')}>
-                <UserIcon className="w-3 h-3 mr-2" />
-                Admin Demo
-              </Button>
-              <Button type="button" variant="outline" className="text-xs" onClick={() => autofill('client')}>
-                <UserIcon className="w-3 h-3 mr-2" />
-                Client Demo
-              </Button>
+          {/* Demo-accounts - only show when not registering */}
+          {!showRegistration && (
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground mb-2">Demo accounts:</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Button type="button" variant="outline" className="text-xs" onClick={() => autofill('admin')}>
+                  <UserIcon className="w-3 h-3 mr-2" />
+                  Admin Demo
+                </Button>
+                <Button type="button" variant="outline" className="text-xs" onClick={() => autofill('client')}>
+                  <UserIcon className="w-3 h-3 mr-2" />
+                  Client Demo
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
 
         <CardFooter className="flex justify-center">
           <button
             type="button"
             className="text-sm text-muted-foreground hover:underline"
-            onClick={handleCreateAccount}
+            onClick={showRegistration ? switchToLogin : switchToRegister}
           >
-            Nog geen account? Maak er een aan
+            {showRegistration 
+              ? 'Al een account? Log hier in' 
+              : 'Nog geen account? Maak er een aan'
+            }
           </button>
         </CardFooter>
       </Card>
