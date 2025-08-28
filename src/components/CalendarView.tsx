@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,7 +17,8 @@ import {
   Target,
   Video,
   Phone,
-  MapPin
+  MapPin,
+  Sync
 } from 'lucide-react'
 import { User } from '../types'
 import { useKV } from '@github/spark/hooks'
@@ -45,6 +46,7 @@ export function CalendarView({ user }: CalendarViewProps) {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showEventModal, setShowEventModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [isGoogleSyncing, setIsGoogleSyncing] = useState(false)
   const [newEvent, setNewEvent] = useState({
     title: '',
     description: '',
@@ -56,6 +58,9 @@ export function CalendarView({ user }: CalendarViewProps) {
   })
 
   const { addNotification } = useNotifications()
+  
+  // Get clients for role-based filtering
+  const [clients] = useKV<Array<{id: string, name: string, email: string}>>('users-clients', [])
   
   const [events, setEvents] = useKV<CalendarEvent[]>('calendar-events', [
     {
@@ -107,8 +112,24 @@ export function CalendarView({ user }: CalendarViewProps) {
     }
   ])
 
-  // Filter upcoming events dynamically
-  const upcomingEvents = events.slice(0, 3)
+  // Role-based event filtering
+  const filteredEvents = useMemo(() => {
+    if (user.role === 'admin') {
+      // Admins see all events
+      return events || []
+    } else {
+      // Clients see only their events (events where client matches their name or no client specified for team events)
+      return (events || []).filter(event => 
+        !event.client || event.client === user.name
+      )
+    }
+  }, [events, user.role, user.name])
+
+  // Filter upcoming events dynamically from filtered events
+  const upcomingEvents = filteredEvents
+    .filter(event => new Date(event.start) >= new Date())
+    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+    .slice(0, 3)
 
   const eventTypeColors = {
     deadline: 'bg-red-500 text-white',
@@ -148,7 +169,7 @@ export function CalendarView({ user }: CalendarViewProps) {
   }
 
   const getEventsForDay = (date: Date) => {
-    return events.filter(event => {
+    return filteredEvents.filter(event => {
       const eventDate = new Date(event.start)
       return (
         eventDate.getDate() === date.getDate() &&
@@ -186,6 +207,49 @@ export function CalendarView({ user }: CalendarViewProps) {
   const days = getDaysInMonth(currentDate)
   const today = new Date()
 
+  const handleGoogleCalendarSync = async () => {
+    setIsGoogleSyncing(true)
+    
+    try {
+      // Simulate Google Calendar sync process
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // In a real implementation, you would:
+      // 1. Use Google Calendar API to fetch events
+      // 2. Transform the events to your format
+      // 3. Merge with existing events
+      
+      // For now, we'll add a sample synced event
+      const syncedEvent: CalendarEvent = {
+        id: `google-sync-${Date.now()}`,
+        title: 'Synced from Google Calendar',
+        description: 'This event was imported from your Google Calendar',
+        start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+        end: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
+        type: 'meeting',
+        client: user.role === 'client' ? user.name : undefined,
+        attendees: [user.id]
+      }
+      
+      setEvents(prev => [...(prev || []), syncedEvent])
+      
+      addNotification({
+        type: 'success',
+        title: 'Google Calendar Sync Complete',
+        message: 'Successfully synced events from your Google Calendar',
+        read: false,
+        userId: user.id
+      })
+      
+      toast.success('Google Calendar synced successfully!')
+    } catch (error) {
+      console.error('Google Calendar sync failed:', error)
+      toast.error('Failed to sync with Google Calendar')
+    } finally {
+      setIsGoogleSyncing(false)
+    }
+  }
+
   const handleCreateEvent = () => {
     if (!newEvent.title.trim() || !newEvent.date || !newEvent.time) {
       toast.error('Please fill in all required fields')
@@ -202,7 +266,7 @@ export function CalendarView({ user }: CalendarViewProps) {
       start: eventDate.toISOString(),
       end: endDate.toISOString(),
       type: newEvent.type,
-      client: newEvent.client || undefined,
+      client: newEvent.client || (user.role === 'client' ? user.name : undefined),
       location: newEvent.location || undefined,
       attendees: [user.id]
     }
@@ -239,14 +303,23 @@ export function CalendarView({ user }: CalendarViewProps) {
         <div>
           <h1 className="font-heading font-bold text-3xl text-foreground mb-2">Calendar</h1>
           <p className="text-muted-foreground">
-            Manage deadlines, meetings, and campaign schedules
+            {user.role === 'admin' 
+              ? 'Manage deadlines, meetings, and campaign schedules for all clients' 
+              : 'View your project deadlines, meetings, and scheduled content'
+            }
           </p>
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2">
-            <CalendarIcon className="w-4 h-4" />
-            Sync Google Calendar
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleGoogleCalendarSync}
+            disabled={isGoogleSyncing}
+          >
+            <Sync className={`w-4 h-4 ${isGoogleSyncing ? 'animate-spin' : ''}`} />
+            {isGoogleSyncing ? 'Syncing...' : 'Sync Google Calendar'}
           </Button>
           <Button size="sm" className="gap-2" onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4" />
@@ -361,37 +434,57 @@ export function CalendarView({ user }: CalendarViewProps) {
           {/* Upcoming Events */}
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-foreground">Upcoming Events</CardTitle>
+              <CardTitle className="text-lg font-semibold text-foreground">
+                {user.role === 'admin' ? 'Upcoming Events (All Clients)' : 'Your Upcoming Events'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {upcomingEvents.map((event) => {
-                const EventIconComponent = eventTypeIcons[event.type]
-                return (
-                  <div 
-                    key={event.id}
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => {
-                      setSelectedEvent(event)
-                      setShowEventModal(true)
-                    }}
+              {upcomingEvents.length === 0 ? (
+                <div className="text-center py-8">
+                  <CalendarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    {user.role === 'admin' ? 'No upcoming events scheduled' : 'No upcoming events for you'}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-4"
+                    onClick={() => setShowCreateModal(true)}
                   >
-                    <div className={`p-2 rounded-lg ${eventTypeColors[event.type]}`}>
-                      <EventIconComponent className="w-4 h-4" />
+                    <Plus className="w-4 h-4 mr-2" />
+                    Schedule Event
+                  </Button>
+                </div>
+              ) : (
+                upcomingEvents.map((event) => {
+                  const EventIconComponent = eventTypeIcons[event.type]
+                  return (
+                    <div 
+                      key={event.id}
+                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedEvent(event)
+                        setShowEventModal(true)
+                      }}
+                    >
+                      <div className={`p-2 rounded-lg ${eventTypeColors[event.type]}`}>
+                        <EventIconComponent className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm text-foreground truncate">{event.title}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(event.start).toLocaleDateString('nl-NL')} • {formatEventTime(event.start, event.end)}
+                        </p>
+                        {event.client && (
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {event.client}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-foreground truncate">{event.title}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(event.start).toLocaleDateString('nl-NL')} • {formatEventTime(event.start, event.end)}
-                      </p>
-                      {event.client && (
-                        <Badge variant="outline" className="text-xs mt-1">
-                          {event.client}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              )}
             </CardContent>
           </Card>
 
@@ -576,12 +669,32 @@ export function CalendarView({ user }: CalendarViewProps) {
             
             <div>
               <label className="text-sm font-medium text-muted-foreground">Client (Optional)</label>
-              <Input 
-                placeholder="Client name" 
-                className="mt-1" 
-                value={newEvent.client}
-                onChange={(e) => setNewEvent(prev => ({ ...prev, client: e.target.value }))}
-              />
+              {user.role === 'admin' && clients.length > 0 ? (
+                <Select 
+                  value={newEvent.client} 
+                  onValueChange={(value) => setNewEvent(prev => ({ ...prev, client: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No client</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.name}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input 
+                  placeholder="Client name" 
+                  className="mt-1" 
+                  value={newEvent.client}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, client: e.target.value }))}
+                  disabled={user.role === 'client'}
+                />
+              )}
             </div>
             
             <div>

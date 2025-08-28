@@ -2,12 +2,13 @@ import { useState } from 'react'
 
 interface Notification {
   id: string
-  type: 'message' | 'task' | 'file' | 'calendar' | 'team' | 'deadline' | 'other'
+  type: 'message' | 'task' | 'file' | 'calendar' | 'team' | 'deadline' | 'success' | 'other'
   title: string
   message: string
   timestamp: Date
   read: boolean
   userId?: string
+  actionData?: any
 }
 
 export function useNotifications() {
@@ -96,6 +97,7 @@ export function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClo
       calendar: '📅',
       team: '👥',
       deadline: '⏰',
+      success: '🎉',
       other: '🔔'
     }
     return iconMap[type] || iconMap.other
