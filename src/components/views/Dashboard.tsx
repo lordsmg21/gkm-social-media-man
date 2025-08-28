@@ -38,7 +38,7 @@ import {
 import type { User } from '@/types'
 import { useKV } from '@github/spark/hooks'
 import { AdminDataManagerWrapper as AdminDataManager } from '@/components/shared/AdminDataManagerWrapper'
-import { FacebookConnectionModal } from '@/components'
+import { FacebookConnectionModal, InstagramConnectionModal } from '@/components'
 
 interface RecentProject {
   id: string
@@ -98,6 +98,7 @@ export function Dashboard({ user }: DashboardProps) {
   const [selectedChart, setSelectedChart] = useState('revenue')
   const [showAdminManager, setShowAdminManager] = useState(false)
   const [showFacebookModal, setShowFacebookModal] = useState(false)
+  const [showInstagramModal, setShowInstagramModal] = useState(false)
 
   // Get Facebook account data
   const [facebookAccounts] = useKV<{
@@ -113,8 +114,27 @@ export function Dashboard({ user }: DashboardProps) {
     totalConversions?: number
   }[]>('facebook-accounts', [])
 
+  // Get Instagram account data
+  const [instagramAccounts] = useKV<{
+    id: string
+    name: string
+    username: string
+    status: 'connected' | 'disconnected'
+    accountId: string
+    connectedAt?: string
+    lastSync?: string
+    campaigns?: any[]
+    totalSpend?: number
+    totalReach?: number
+    totalEngagement?: number
+    followerCount?: number
+  }[]>('instagram-accounts', [])
+
   // Get connected Facebook data
   const connectedFacebookAccount = facebookAccounts.find(acc => acc.status === 'connected')
+  
+  // Get connected Instagram data
+  const connectedInstagramAccount = instagramAccounts.find(acc => acc.status === 'connected')
 
   // Get client data from admin-managed storage if user is a client
   const [adminKpiData] = useKV<{clientId: string, revenue: number, revenueGrowth: number, projects: number, projectsGrowth: number, teamMembers: number, conversations: number, conversationsGrowth: number, facebookReach: number, facebookReachGrowth: number, instagramEngagement: number, instagramEngagementGrowth: number, messagesReceived: number, messagesReceivedGrowth: number, growthRate: number}[]>('client-kpi-data', [])
@@ -153,9 +173,14 @@ export function Dashboard({ user }: DashboardProps) {
       clientId: user.id
     }
   } else {
-    // For admin, use Facebook data if available, otherwise default data
+    // For admin, use Facebook and Instagram data if available, otherwise default data
     const baseFacebookReach = connectedFacebookAccount?.totalReach || 45200
     const baseFacebookConversions = connectedFacebookAccount?.totalConversions || 1847
+    
+    // Calculate Instagram engagement from connected account
+    const baseInstagramEngagement = connectedInstagramAccount?.totalEngagement 
+      ? ((connectedInstagramAccount.totalEngagement / (connectedInstagramAccount.totalReach || 1)) * 100)
+      : 8.7
     
     kpiData = {
       revenue: 125600,
@@ -167,7 +192,7 @@ export function Dashboard({ user }: DashboardProps) {
       conversationsGrowth: 23.1,
       facebookReach: baseFacebookReach,
       facebookReachGrowth: 15.3,
-      instagramEngagement: 8.7,
+      instagramEngagement: baseInstagramEngagement,
       instagramEngagementGrowth: 18.9,
       messagesReceived: 2341,
       messagesGrowth: 19.7,
@@ -183,15 +208,19 @@ export function Dashboard({ user }: DashboardProps) {
     // For clients, get data from admin-managed storage
     chartData = adminChartData.filter(data => data.clientId === user.id)
   } else {
-    // For admin, use default admin chart data
+    // For admin, use enhanced data with connected account information
+    const baseInstagramEngagement = connectedInstagramAccount?.totalEngagement 
+      ? ((connectedInstagramAccount.totalEngagement / (connectedInstagramAccount.totalReach || 1)) * 100)
+      : 8.0
+    
     chartData = [
       {
         name: 'Week 1',
         revenue: 28400,
         conversations: 412,
         messagesReceived: 523,
-        facebookReach: 10200,
-        instagramEngagement: 7.2,
+        facebookReach: connectedFacebookAccount?.totalReach ? Math.floor(connectedFacebookAccount.totalReach * 0.23) : 10200,
+        instagramEngagement: Math.max(baseInstagramEngagement * 0.85, 7.2),
         date: '2024-01-01'
       },
       {
@@ -199,8 +228,8 @@ export function Dashboard({ user }: DashboardProps) {
         revenue: 31200,
         conversations: 456,
         messagesReceived: 578,
-        facebookReach: 11800,
-        instagramEngagement: 8.1,
+        facebookReach: connectedFacebookAccount?.totalReach ? Math.floor(connectedFacebookAccount.totalReach * 0.26) : 11800,
+        instagramEngagement: Math.max(baseInstagramEngagement * 0.90, 8.1),
         date: '2024-01-08'
       },
       {
@@ -208,8 +237,8 @@ export function Dashboard({ user }: DashboardProps) {
         revenue: 33600,
         conversations: 498,
         messagesReceived: 634,
-        facebookReach: 12400,
-        instagramEngagement: 8.8,
+        facebookReach: connectedFacebookAccount?.totalReach ? Math.floor(connectedFacebookAccount.totalReach * 0.27) : 12400,
+        instagramEngagement: Math.max(baseInstagramEngagement * 0.98, 8.8),
         date: '2024-01-15'
       },
       {
@@ -217,8 +246,8 @@ export function Dashboard({ user }: DashboardProps) {
         revenue: 32400,
         conversations: 481,
         messagesReceived: 606,
-        facebookReach: 10800,
-        instagramEngagement: 8.9,
+        facebookReach: connectedFacebookAccount?.totalReach ? Math.floor(connectedFacebookAccount.totalReach * 0.24) : 10800,
+        instagramEngagement: Math.min(baseInstagramEngagement * 1.05, 12.0),
         date: '2024-01-22'
       }
     ]
@@ -377,6 +406,26 @@ export function Dashboard({ user }: DashboardProps) {
                 <>
                   <Link className="w-4 h-4 mr-2" />
                   Connect Facebook Account
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={() => setShowInstagramModal(true)}
+              className={`glass-card backdrop-blur-md transition-all duration-300 shadow-lg hover:shadow-xl ${
+                connectedInstagramAccount 
+                  ? 'bg-gradient-to-r from-green-600/20 to-green-800/20 border-green-600/30 text-foreground hover:from-green-600/30 hover:to-green-800/30 hover:border-green-600/50 hover:text-green-600'
+                  : 'bg-gradient-to-r from-pink-600/20 to-pink-800/20 border-pink-600/30 text-foreground hover:from-pink-600/30 hover:to-pink-800/30 hover:border-pink-600/50 hover:text-pink-600'
+              }`}
+            >
+              {connectedInstagramAccount ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Instagram Connected ({connectedInstagramAccount.campaigns?.length || 0} campaigns)
+                </>
+              ) : (
+                <>
+                  <Instagram className="w-4 h-4 mr-2" />
+                  Connect Instagram Account
                 </>
               )}
             </Button>
@@ -1045,6 +1094,12 @@ export function Dashboard({ user }: DashboardProps) {
       <FacebookConnectionModal
         open={showFacebookModal}
         onOpenChange={setShowFacebookModal}
+      />
+
+      {/* Instagram Connection Modal */}
+      <InstagramConnectionModal
+        open={showInstagramModal}
+        onOpenChange={setShowInstagramModal}
       />
     </div>
   )
