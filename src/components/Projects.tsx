@@ -73,6 +73,7 @@ interface Task {
   id: string
   title: string
   client: string
+  clientId?: string // Add clientId to properly track which client owns the task
   platform: 'facebook' | 'instagram' | 'both'
   status: 'to-do' | 'in-progress' | 'final-design' | 'review' | 'completed' | 'scheduled' | 'ads'
   priority: 'low' | 'medium' | 'high'
@@ -167,6 +168,7 @@ export function Projects({ user }: ProjectsProps) {
       id: '1',
       title: 'Instagram Story Campaign - Bakkerij de Korenbloem',
       client: 'De Korenbloem',
+      clientId: '1', // Map to client ID
       platform: 'instagram',
       status: 'in-progress',
       priority: 'high',
@@ -202,6 +204,7 @@ export function Projects({ user }: ProjectsProps) {
       id: '2',
       title: 'Facebook Ad Campaign - Restaurant Bella Vista',
       client: 'Bella Vista',
+      clientId: '5', // Map to Jan Peters (Bella Vista)
       platform: 'facebook',
       status: 'review',
       priority: 'medium',
@@ -228,6 +231,7 @@ export function Projects({ user }: ProjectsProps) {
       id: '3',
       title: 'Social Media Strategy - Fitness First',
       client: 'Fitness First',
+      clientId: '3', // Map to Mike Visser (Fitness First)
       platform: 'both',
       status: 'to-do',
       priority: 'low',
@@ -244,6 +248,7 @@ export function Projects({ user }: ProjectsProps) {
       id: '4',
       title: 'Product Launch - TechStart',
       client: 'TechStart',
+      clientId: '7', // Map to Tom Hendriks (TechStart)
       platform: 'both',
       status: 'completed',
       priority: 'high',
@@ -270,6 +275,7 @@ export function Projects({ user }: ProjectsProps) {
       id: '5',
       title: 'Holiday Campaign - Fashion Boutique',
       client: 'Fashion Boutique',
+      clientId: '6', // Map to Emma de Vries (Fashion Boutique)
       platform: 'instagram',
       status: 'scheduled',
       priority: 'medium',
@@ -291,7 +297,7 @@ export function Projects({ user }: ProjectsProps) {
       description: 'Complete social media campaign for artisan bakery including Instagram stories and Facebook posts',
       trajectory: 'social-media',
       budget: 5000,
-      clientId: '1',
+      clientId: '1', // Map to correct client from systemUsers
       clientName: 'De Korenbloem',
       createdBy: '1',
       createdAt: new Date().toISOString(),
@@ -303,7 +309,7 @@ export function Projects({ user }: ProjectsProps) {
       description: 'Facebook advertising campaign to promote dinner specials',
       trajectory: 'advertising',
       budget: 3500,
-      clientId: '2',
+      clientId: '5', // Jan Peters
       clientName: 'Bella Vista',
       createdBy: '2',
       createdAt: new Date().toISOString(),
@@ -315,7 +321,7 @@ export function Projects({ user }: ProjectsProps) {
       description: 'Comprehensive social media strategy development for Q1 2024',
       trajectory: 'social-media',
       budget: 8000,
-      clientId: '3',
+      clientId: '3', // Mike Visser
       clientName: 'Fitness First',
       createdBy: '1',
       createdAt: new Date().toISOString(),
@@ -327,7 +333,7 @@ export function Projects({ user }: ProjectsProps) {
       description: 'Multi-channel launch campaign for new SaaS product',
       trajectory: 'full-campaign',
       budget: 15000,
-      clientId: '4',
+      clientId: '7', // Tom Hendriks
       clientName: 'TechStart',
       createdBy: '2',
       createdAt: new Date().toISOString(),
@@ -339,7 +345,7 @@ export function Projects({ user }: ProjectsProps) {
       description: 'Valentine\'s Day promotion across Instagram',
       trajectory: 'social-media',
       budget: 2500,
-      clientId: '5',
+      clientId: '6', // Emma de Vries
       clientName: 'Fashion Boutique',
       createdBy: '2',
       createdAt: new Date().toISOString(),
@@ -418,9 +424,16 @@ export function Projects({ user }: ProjectsProps) {
   ])
 
   // Filter tasks based on user role and selected project
-  const filteredTasks = user.role === 'admin' ? (tasks || []) : (tasks || []).filter(task => 
-    task.assignedTo?.includes(user.id) || task.client === 'My Client' // Simplified client filtering
-  )
+  const filteredTasks = user.role === 'admin' 
+    ? (tasks || []) 
+    : (tasks || []).filter(task => 
+        task.clientId === user.id // Filter by clientId for clients
+      )
+
+  // Filter projects based on user role 
+  const filteredProjects = user.role === 'admin'
+    ? (projects || [])
+    : (projects || []).filter(project => project.clientId === user.id)
 
   const visibleTasks = selectedProject === 'all' 
     ? filteredTasks 
@@ -1047,7 +1060,7 @@ export function Projects({ user }: ProjectsProps) {
                   variant="destructive"
                   className="gap-2"
                   onClick={() => {
-                    const project = projects.find(p => p.id === selectedProject)
+                    const project = filteredProjects.find(p => p.id === selectedProject)
                     if (project) {
                       setDeleteProjectDialog(project)
                     }
@@ -1087,7 +1100,7 @@ export function Projects({ user }: ProjectsProps) {
                       </div>
                     </div>
                   </SelectItem>
-                  {(projects || []).map((project) => (
+                  {(filteredProjects || []).map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${
@@ -2098,7 +2111,7 @@ export function Projects({ user }: ProjectsProps) {
         onTaskCreated={handleTaskCreated}
         user={user}
         availableClients={availableClients}
-        projects={projects}
+        projects={filteredProjects}
         users={users}
       />
 

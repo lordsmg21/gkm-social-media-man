@@ -39,6 +39,7 @@ interface Task {
   id: string
   title: string
   client: string
+  clientId?: string // Add clientId to properly track which client owns the task
   platform: 'facebook' | 'instagram' | 'both'
   status: 'to-do' | 'in-progress' | 'final-design' | 'review' | 'completed' | 'scheduled' | 'ads'
   priority: 'low' | 'medium' | 'high'
@@ -130,6 +131,7 @@ export default function CreateTaskModal({ open, onClose, onTaskCreated, user, av
       id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title: formData.title.trim(),
       client: availableClients.find(c => c.id === formData.client)?.name || formData.client,
+      clientId: formData.client, // Store the client ID
       platform: formData.platform,
       status: 'to-do',
       priority: formData.priority,
