@@ -1,23 +1,23 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
+import type { SocialMediaSync, SocialMediaAccount, Campaign, AdInsight } from '../types'
 
+export function useSocialMediaSync() {
   const [sync, setSync, deleteSync] = useKV<SocialMediaSync>('social-media-sync', {
-
+    isEnabled: false,
+    syncInterval: 60,
+    lastSync: new Date().toISOString(),
     accounts: [],
+    campaigns: [],
     insights: []
+  })
 
-  const [isSyncing, setIsSyncing] =
-  // Mock Faceboo
-    setIsConnecti
-    try {
-      await new 
-    
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [isConnecting, setIsConnecting] = useState<'facebook' | 'instagram' | null>(null)
 
-        accountId: 'act_123456789',
-        accessToken: 'mock_facebook_token', // In r
-
-      }
-      setSync(current => ({
+  // Mock Facebook connection
+  const connectFacebook = useCallback(async () => {
     setIsConnecting('facebook')
     
     try {
@@ -29,8 +29,8 @@ import { toast } from 'sonner'
         id: 'fb_' + Date.now(),
         platform: 'facebook',
         accountId: 'act_123456789',
-        accountName: 'GKM Media - Facebook Ads',
-        accessToken: 'mock_facebook_token', // In real app, store securely
+        accountName: 'GKM Business',
+        accessToken: 'mock_facebook_token', // In real app, get from OAuth
         isConnected: true,
         connectedAt: new Date().toISOString(),
         lastSyncAt: new Date().toISOString()
@@ -38,19 +38,21 @@ import { toast } from 'sonner'
 
       setSync(current => ({
         ...current,
-        accounts: [...current.accounts.filter(acc => acc.platform !== 'facebook'), mockAccount]
+        accounts: [...current.accounts.filter(acc => acc.platform !== 'facebook'), mockAccount],
+        isEnabled: true
       }))
 
-      toast.success('Facebook Ad Account connected successfully!')
+      toast.success('Facebook account connected successfully!')
+      
     } catch (error) {
-      console.error('Failed to connect Facebook account:', error)
       toast.error('Failed to connect Facebook account')
     } finally {
-        ...current,
+      setIsConnecting(null)
     }
   }, [setSync])
 
-      console.error('Failed to connect Instagram account:',
+  // Mock Instagram connection
+  const connectInstagram = useCallback(async () => {
     setIsConnecting('instagram')
     
     try {
@@ -60,202 +62,165 @@ import { toast } from 'sonner'
       // Mock account data - in real implementation, get this from Instagram Graph API
       const mockAccount: SocialMediaAccount = {
         id: 'ig_' + Date.now(),
-        ),
+        platform: 'instagram',
         accountId: 'ig_123456789',
-        ),
-        accessToken: 'mock_instagram_token', // In real app, store securely
-            campaign.id ==
+        accountName: 'GKM_Official',
+        accessToken: 'mock_instagram_token', // In real app, get from OAuth
+        isConnected: true,
         connectedAt: new Date().toISOString(),
-        )
+        lastSyncAt: new Date().toISOString()
       }
 
       setSync(current => ({
         ...current,
-        accounts: [...current.accounts.filter(acc => acc.platform !== 'instagram'), mockAccount]
+        accounts: [...current.accounts.filter(acc => acc.platform !== 'instagram'), mockAccount],
+        isEnabled: true
       }))
 
-      toast.success('Instagram Business Account connected successfully!')
+      toast.success('Instagram account connected successfully!')
+      
     } catch (error) {
-      console.error('Failed to connect Instagram account:', error)
       toast.error('Failed to connect Instagram account')
-    }
+    } finally {
       setIsConnecting(null)
-    
+    }
   }, [setSync])
 
-  const disconnectAccount = useCallback(async (accountId: string) => {
-      con
-      setSync(current => ({
-      for (const ac
-        accounts: current.accounts.map(acc => 
-        
-            ? { ...acc, isConnected: false, accessToken: undefined }
-          
-          
-        campaigns: current.campaigns.filter(campaign => 
-          current.accounts.find(acc => acc.id === accountId)?.accountId !== campaign.accountId
-        ),
-        insights: current.insights.filter(insight => 
-          !current.campaigns.some(campaign => 
-            campaign.id === insight.campaignId && 
-            current.accounts.find(acc => acc.id === accountId)?.accountId === campaign.accountId
-          )
-        )
-      }))
-
-      const account = sync.accounts.find(acc => acc.id === accountId)
-      toast.success(`${account?.platform.charAt(0).toUpperCase()}${account?.platform.slice(1)} account disconnected`)
-    } catch (error) {
-      console.error('Failed to disconnect account:', error)
-      toast.error('Failed to disconnect account')
-     
-  }, [sync.accounts, setSync])
-
-  const syncCampaignData = useCallback(async (force = false) => {
-              impressions: Math.flo
+  // Disconnect account
+  const disconnectAccount = useCallback(async (platform: 'facebook' | 'instagram') => {
+    setSync(current => ({
+      ...current,
+      accounts: current.accounts.filter(acc => acc.platform !== platform)
+    }))
     
-    const connectedAccounts = sync.accounts.filter(acc => acc.isConnected)
-    if (connectedAccounts.length === 0) {
-                videoViews: Math.floor(Math.random
+    toast.success(`${platform.charAt(0).toUpperCase() + platform.slice(1)} account disconnected`)
+  }, [setSync])
+
+  // Manual sync campaigns and insights
+  const syncData = useCallback(async () => {
+    if (!sync.accounts.length) {
+      toast.error('No connected accounts to sync')
       return
-     
+    }
 
-            }
+    setIsSyncing(true)
     
-         
-      // Simulate API calls to fetch campaign data
+    try {
       await new Promise(resolve => setTimeout(resolve, 3000))
       
-      // Mock campaign data - in real implementation, fetch from Facebook/Instagram APIs
-      const mockCampaigns: Campaign[] = []
-        accounts: current.accounts.map(acc
+      // Mock campaign data
+      const mockCampaigns: Campaign[] = [
+        {
+          id: 'camp_1',
+          platform: 'facebook',
+          accountId: 'act_123456789',
+          name: 'Lead Generation Campaign',
+          status: 'active',
+          objective: 'LEAD_GENERATION',
+          budget: 1000,
+          budgetType: 'daily',
+          spend: 750,
+          impressions: 25000,
+          clicks: 1200,
+          reach: 18000,
+          conversions: 45,
+          cpm: 30,
+          cpc: 0.625,
+          ctr: 4.8,
+          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'camp_2',
+          platform: 'instagram',
+          accountId: 'ig_123456789',
+          name: 'Brand Awareness Campaign',
+          status: 'active',
+          objective: 'BRAND_AWARENESS',
+          budget: 800,
+          budgetType: 'daily',
+          spend: 600,
+          impressions: 35000,
+          clicks: 2100,
+          reach: 28000,
+          conversions: 38,
+          cpm: 17.14,
+          cpc: 0.286,
+          ctr: 6.0,
+          startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      ]
+
+      // Mock insights data
+      const mockInsights: AdInsight[] = []
+      const days = 7
       
-      for (const account of connectedAccounts) {
-        // Generate mock campaigns for each account
-        const campaignCount = Math.floor(Math.random() * 5) + 1
-        
-        for (let i = 0; i < campaignCount; i++) {
-          const campaignId = `${account.platform}_campaign_${Date.now()}_${i}`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      mockCampaigns.forEach(campaign => {
+        for (let i = 0; i < days; i++) {
+          const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+          mockInsights.push({
+            campaignId: campaign.id,
+            platform: campaign.platform,
+            date: date.toISOString().split('T')[0],
+            impressions: Math.floor(campaign.impressions / days) + Math.floor(Math.random() * 1000),
+            clicks: Math.floor(campaign.clicks / days) + Math.floor(Math.random() * 100),
+            spend: Math.floor(campaign.spend / days) + Math.floor(Math.random() * 50),
+            reach: Math.floor(campaign.reach / days) + Math.floor(Math.random() * 500),
+            conversions: Math.floor(campaign.conversions / days) + Math.floor(Math.random() * 5),
+            videoViews: campaign.platform === 'instagram' ? Math.floor(Math.random() * 1000) : undefined,
+            engagements: campaign.platform === 'instagram' ? Math.floor(Math.random() * 500) : undefined,
+            comments: Math.floor(Math.random() * 50),
+            shares: Math.floor(Math.random() * 25),
+            saves: campaign.platform === 'instagram' ? Math.floor(Math.random() * 75) : undefined
+          })
+        }
+      })
+
+      setSync(current => ({
+        ...current,
+        campaigns: mockCampaigns,
+        insights: mockInsights,
+        lastSync: new Date().toISOString()
+      }))
+
+      toast.success('Campaign data synced successfully!')
+      
+    } catch (error) {
+      toast.error('Failed to sync campaign data')
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [sync.accounts, setSync])
+
+  // Get campaign performance summary
+  const getCampaignSummary = useCallback(() => {
+    const totalSpend = sync.campaigns.reduce((sum, campaign) => sum + campaign.spend, 0)
+    const totalImpressions = sync.campaigns.reduce((sum, campaign) => sum + campaign.impressions, 0)
+    const totalClicks = sync.campaigns.reduce((sum, campaign) => sum + campaign.clicks, 0)
+    const totalConversions = sync.campaigns.reduce((sum, campaign) => sum + campaign.conversions, 0)
+    
+    return {
+      totalSpend,
+      totalImpressions,
+      totalClicks,
+      totalConversions,
+      averageCTR: totalClicks > 0 ? (totalClicks / totalImpressions) * 100 : 0,
+      averageCPC: totalClicks > 0 ? totalSpend / totalClicks : 0,
+      conversionRate: totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0
+    }
+  }, [sync.campaigns])
+
+  return {
+    sync,
+    connectFacebook,
+    connectInstagram,
+    disconnectAccount,
+    syncData,
+    getCampaignSummary,
+    isSyncing,
+    isConnecting
+  }
+}

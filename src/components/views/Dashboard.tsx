@@ -38,16 +38,10 @@ import {
 } from 'lucide-react'
 import type { User } from '../../types'
 import { useKV, useSocialMediaSync } from '../../hooks'
-import { AdminDataManagerWrapper as AdminDataManager } from '../AdminDataManagerWrapper'
+import { AdminDataManagerWrapper as AdminDataManager } from '../shared/AdminDataManagerWrapper'
 import { SocialMediaIntegration } from '../SocialMediaIntegration'
 import { CampaignAnalytics } from '../CampaignAnalytics'
 import { toast } from 'sonner'
-  CheckCircle,
-  AlertCircle,
-  MoreHorizontal,
-  Eye,
-  Heart,
-  ArrowUp,
   ArrowDown,
   Calendar,
   Filter,
