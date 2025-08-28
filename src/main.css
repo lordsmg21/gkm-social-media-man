@@ -3,41 +3,24 @@
 
 @config '../tailwind.config.js';
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-*/
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+  * {
+    @apply border-border;
   }
-}
-
-/* Custom glassmorphism styles for GKM Portal */
-@layer components {
-  .glass-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+  
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-heading {
+    font-family: 'Poppins', sans-serif;
   }
 
-  .glass-modal {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-
-  .glass-card:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 }
 
@@ -111,4 +94,126 @@
   --radius-xl: calc(var(--radius) * 2);
   --radius-2xl: calc(var(--radius) * 3);
   --radius-full: 9999px;
+}
+
+/* Custom glassmorphism styles for GKM Portal */
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .glass-modal {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Drag and Drop Enhancements */
+  .dragging {
+    opacity: 0.5;
+    transform: scale(0.95) rotate(3deg);
+    z-index: 1000;
+  }
+
+  .drag-over {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px dashed var(--primary);
+    transform: scale(1.02);
+  }
+
+  .task-card-draggable {
+    cursor: grab;
+    transition: all 0.2s ease;
+  }
+
+  .task-card-draggable:active {
+    cursor: grabbing;
+  }
+
+  .task-card-draggable:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  /* File Drop Zone */
+  .file-drop-zone {
+    transition: all 0.2s ease;
+  }
+
+  .file-drop-zone.drag-over {
+    background: rgba(var(--primary), 0.05);
+    border-color: var(--primary);
+    transform: scale(1.02);
+  }
+
+  /* Board + Chat Layout Mobile Responsive */
+  @media (max-width: 768px) {
+    .board-chat-layout {
+      flex-direction: column !important;
+      gap: 1rem !important;
+    }
+    
+    .board-section {
+      min-height: 60vh;
+    }
+    
+    .chat-section {
+      min-height: 40vh;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* Custom scrollbar styles */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  /* Task mention styling */
+  .task-mention {
+    background: var(--accent);
+    color: var(--accent-foreground);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+
+  .task-mention:hover {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Notification panel styling */
+  .notification-overlay {
+    backdrop-filter: blur(8px);
+  }
 }
