@@ -69,7 +69,7 @@ export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableC
 
   const [formData, setFormData] = useState({
     title: '',
-    client: '',
+    client: 'placeholder',
     platform: 'facebook' as 'facebook' | 'instagram' | 'both',
     priority: 'medium' as 'low' | 'medium' | 'high',
     description: '',
@@ -86,7 +86,7 @@ export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableC
   const resetForm = () => {
     setFormData({
       title: '',
-      client: '',
+      client: 'placeholder',
       platform: 'facebook',
       priority: 'medium',
       description: '',
@@ -116,7 +116,7 @@ export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableC
       return
     }
 
-    if (!formData.client.trim()) {
+    if (!formData.client.trim() || formData.client === 'placeholder') {
       toast.error('Please select a client')
       return
     }
@@ -317,6 +317,15 @@ export function CreateTaskModal({ open, onClose, onTaskCreated, user, availableC
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="placeholder" disabled>
+                      <div className="flex items-center gap-2 opacity-50">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full" />
+                        <div>
+                          <div className="font-medium">Select a client...</div>
+                          <div className="text-xs text-muted-foreground">Choose from available clients</div>
+                        </div>
+                      </div>
+                    </SelectItem>
                     {availableClients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         <div className="flex items-center gap-2">

@@ -696,7 +696,7 @@ export function CalendarView({ user }: CalendarViewProps) {
                     <SelectValue placeholder="Select client (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No specific client</SelectItem>
+                    <SelectItem value="no-client">No specific client</SelectItem>
                     {allUsers
                       .filter(user => user.role === 'client')
                       .map((client) => (

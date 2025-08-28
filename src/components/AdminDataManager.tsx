@@ -79,7 +79,7 @@ export function AdminDataManager({ open, onClose }: Props) {
     email: user.email
   }))
 
-  const [selectedClient, setSelectedClient] = useState('')
+  const [selectedClient, setSelectedClient] = useState<string | undefined>(undefined)
   const [searchClient, setSearchClient] = useState('')
   const [kpiData, setKpiData] = useKV<KPIData[]>('client-kpi-data', [])
   const [chartData, setChartData] = useKV<ChartData[]>('client-chart-data', [])

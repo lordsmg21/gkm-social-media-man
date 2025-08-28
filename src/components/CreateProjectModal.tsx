@@ -68,7 +68,7 @@ export function CreateProjectModal({
     description: '',
     trajectory: 'social-media',
     budget: 0,
-    clientId: '',
+    clientId: 'placeholder',
   })
 
   const trajectoryOptions: { value: Trajectory; label: string; description: string }[] = [
@@ -106,7 +106,7 @@ export function CreateProjectModal({
 
     if (!formData.name.trim()) return toast.error('Please enter a project name')
     if (!formData.description.trim()) return toast.error('Please enter a description')
-    if (!formData.clientId) return toast.error('Please select a client')
+    if (!formData.clientId || formData.clientId === 'placeholder') return toast.error('Please select a client')
     if (formData.budget <= 0) return toast.error('Please enter a valid budget')
 
     const selectedClient = availableClients.find((c) => c.id === formData.clientId)
@@ -178,6 +178,15 @@ export function CreateProjectModal({
                   <SelectValue placeholder="Select a client" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="placeholder" disabled>
+                    <div className="flex items-center gap-3 opacity-50">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full" />
+                      <div>
+                        <div className="font-medium">Select a client...</div>
+                        <div className="text-xs text-muted-foreground">Choose from available clients</div>
+                      </div>
+                    </div>
+                  </SelectItem>
                   {availableClients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       <div className="flex items-center gap-3">
