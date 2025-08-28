@@ -18,7 +18,7 @@ import {
   Video,
   Phone,
   MapPin,
-  Sync
+  RefreshCw
 } from 'lucide-react'
 import { User } from '../types'
 import { useKV } from '@github/spark/hooks'
@@ -336,7 +336,7 @@ export function CalendarView({ user }: CalendarViewProps) {
             onClick={handleGoogleCalendarSync}
             disabled={isGoogleSyncing}
           >
-            <Sync className={`w-4 h-4 ${isGoogleSyncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isGoogleSyncing ? 'animate-spin' : ''}`} />
             {isGoogleSyncing ? 'Syncing...' : 'Sync Google Calendar'}
           </Button>
           <Button size="sm" className="gap-2" onClick={() => setShowCreateModal(true)}>
