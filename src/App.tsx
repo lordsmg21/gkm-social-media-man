@@ -1,42 +1,34 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Toaster } from 'sonner'
-import { Sidebar } from './components/Sidebar'
-import { Dashboard } from './components/Dashboard'
-import { Messages } from './components/Messages'
-import { Projects } from './components/Projects'
-import { CalendarView } from './components/CalendarView'
-import { FileManager } from './components/FileManager'
-import { SettingsView } from './components/SettingsView'
-import { BillingView } from './components/BillingView'
-import { LoginView } from './components/LoginView'
-
-export type UserRole = 'admin' | 'client'
-
-export interface User {
-  id: string
-  name: string
-  email: string
-  avatar?: string
-  role: UserRole
-  isOnline?: boolean
-}
+import { 
+  Sidebar, 
+  Dashboard, 
+  Messages, 
+  Projects, 
+  CalendarView, 
+  FileManager, 
+  SettingsView, 
+  BillingView, 
+  LoginView 
+} from './components'
+import { useAuth } from './hooks'
+import type { User } from './types'
 
 function App() {
-  const [currentUser, setCurrentUser] = useKV<User | null>('current-user', null)
+  const { currentUser, login, logout, updateUser } = useAuth()
   const [activeView, setActiveView] = useState('dashboard')
 
   const handleLogin = (user: User) => {
-    setCurrentUser(user)
+    login(user)
   }
 
   const handleLogout = () => {
-    setCurrentUser(null)
+    logout()
     setActiveView('dashboard')
   }
 
-  const updateUser = (updatedUser: User) => {
-    setCurrentUser(updatedUser)
+  const handleUserUpdate = (updatedUser: User) => {
+    updateUser(updatedUser)
   }
 
   const renderActiveView = () => {
@@ -58,7 +50,7 @@ function App() {
       case 'billing':
         return <BillingView user={currentUser} />
       case 'settings':
-        return <SettingsView user={currentUser} onUserUpdate={updateUser} />
+        return <SettingsView user={currentUser} onUserUpdate={handleUserUpdate} />
       default:
         return <Dashboard user={currentUser} />
     }

@@ -15,8 +15,9 @@ import {
   LogOut,
   Receipt
 } from 'lucide-react'
-import { User } from '../App'
-import { NotificationCenter, useNotifications } from './NotificationCenter'
+import type { User } from '@/types'
+import { useNotifications } from '@/hooks'
+import { NotificationCenter } from './NotificationCenter'
 import GKMLogo from '@/assets/images/gkm-logo.svg'
 
 interface SidebarProps {
@@ -178,6 +179,7 @@ export function Sidebar({ user, activeView, onViewChange, onLogout }: SidebarPro
       <NotificationCenter 
         isOpen={isNotificationOpen}
         onClose={() => setIsNotificationOpen(false)}
+        user={user}
       />
     </div>
   )
