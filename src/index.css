@@ -36,13 +36,13 @@
   --popover-foreground: oklch(0.25 0.02 240);
   
   /* GKM Primary - Gold/Orange Gradient */
-  --primary: oklch(0.70 0.15 60);
+  --primary: oklch(76.9% 0.188 70.08);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.25 0.02 240);
   --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.95 0.01 60);
   --muted-foreground: oklch(0.55 0.02 240);
-  --accent: oklch(0.75 0.20 50);
+  --accent: oklch(76.9% 0.188 70.08);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.65 0.20 25);
   --destructive-foreground: oklch(1 0 0);
