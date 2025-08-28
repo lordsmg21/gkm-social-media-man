@@ -1,27 +1,27 @@
 // Views
-export { Dashboard } from './views/Dashboard'
-export { Messages } from './views/Messages'
-export { Projects } from './views/Projects'
-export { CalendarView } from './views/CalendarView'
-export { FileManager } from './views/FileManager'
-export { BillingView } from './views/BillingView'
-export { SettingsView } from './views/SettingsView'
-export { LoginView } from './views/LoginView'
+export { Dashboard } from './Dashboard'
+export { Messages } from './Messages'
+export { Projects } from './Projects'
+export { CalendarView } from './CalendarView'
+export { FileManager } from './FileManager'
+export { BillingView } from './BillingView'
+export { SettingsView } from './SettingsView'
+export { LoginView } from './LoginView'
 
 // Layout
-export { Sidebar } from './layout/Sidebar'
-export { NotificationCenter } from './layout/NotificationCenter'
+export { Sidebar } from './Sidebar'
+export { NotificationCenter } from './NotificationCenter'
 
 // Modals
-export { CreateProjectModal } from './modals/CreateProjectModal'
-export { CreateTaskModal } from './modals/CreateTaskModal'
+export { CreateProjectModal } from './CreateProjectModal'
+export { CreateTaskModal } from './CreateTaskModal'
 export { FacebookConnectionModal } from './modals/FacebookConnectionModal'
 export { InstagramConnectionModal } from './modals/InstagramConnectionModal'
 
 // Shared
-export { FileDropZone } from './shared/FileDropZone'
-export { AdminDataManager } from './shared/AdminDataManager'
-export { AdminDataManagerWrapper } from './shared/AdminDataManagerWrapper'
+export { FileDropZone } from './FileDropZone'
+export { AdminDataManager } from './AdminDataManager'
+export { AdminDataManagerWrapper } from './AdminDataManagerWrapper'
 
 // Social Media Integration
 export { SocialMediaIntegration } from './SocialMediaIntegration'
